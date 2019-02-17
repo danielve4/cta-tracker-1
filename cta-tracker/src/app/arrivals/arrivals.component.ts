@@ -26,16 +26,24 @@ export class ArrivalsComponent implements OnInit {
   }
 
   ngOnInit() {
+    const offlineTesting = true;
     this.activatedRoute.paramMap.pipe(switchMap(params => {
       this.forRoute = params.get('route');
       this.forDirection = params.get('direction');
       this.forStopId = +params.get('stopId');
       this.forStopName = params.get('stopName');
-      return this.busService.arrivals(this.forStopId);
+      if (offlineTesting) {
+        return this.sampleArrivalsResponse();
+      } else {
+        return this.busService.arrivals(this.forStopId);
+      }
     })).subscribe((response: BustimeResponse) => {
       this.handleArrivalsResponse(response);
       timer(this.refreshInterval).pipe(
-        switchMap(() => this.busService.arrivals(this.forStopId))
+        switchMap(() => {
+          if (offlineTesting) return this.sampleArrivalsResponse()
+          else return this.busService.arrivals(this.forStopId)
+        })
       ).subscribe(result => {
         this.handleArrivalsResponse(result);
       });
@@ -47,7 +55,7 @@ export class ArrivalsComponent implements OnInit {
       this.error$ = of(response.error);
     } else {
       for (let i = 0; i < response.prd.length; i++) {
-        if (response.prd[0].dly) {
+        if (response.prd[i].dly) {
           response.prd[i].prdctdn = this.getMinutesDifference(
             response.prd[i].tmstmp,
             response.prd[i].prdtm);
@@ -76,6 +84,11 @@ export class ArrivalsComponent implements OnInit {
       +dateTime[1].slice(0, 2), // Hour
       +dateTime[1].slice(3, 5) // Minutes
     );
+  }
+
+  sampleArrivalsResponse(): Observable<BustimeResponse> {
+    const response = '{"prd":[{"tmstmp":"20190216 14:26","typ":"A","stpnm":"North Avenue + Lawndale","stpid":"881","vid":"8203","dstp":1920,"rt":"72","rtdd":"72","rtdir":"Eastbound","des":"Clark","prdtm":"20190216 14:28","tablockid":"72 -801","tatripid":"1017023","dly":false,"prdctdn":"DUE","zone":""},{"tmstmp":"20190216 14:26","typ":"A","stpnm":"North Avenue + Lawndale","stpid":"881","vid":"8127","dstp":4785,"rt":"72","rtdd":"72","rtdir":"Eastbound","des":"Clark","prdtm":"20190216 14:33","tablockid":"72 -810","tatripid":"1017024","dly":false,"prdctdn":"6","zone":""},{"tmstmp":"20190216 14:26","typ":"A","stpnm":"North Avenue + Lawndale","stpid":"881","vid":"8152","dstp":13369,"rt":"72","rtdd":"72","rtdir":"Eastbound","des":"Clark","prdtm":"20190216 14:44","tablockid":"72 -814","tatripid":"1017025","dly":false,"prdctdn":"17","zone":""},{"tmstmp":"20190216 14:26","typ":"A","stpnm":"North Avenue + Lawndale","stpid":"881","vid":"8196","dstp":23904,"rt":"72","rtdd":"72","rtdir":"Eastbound","des":"Clark","prdtm":"20190216 14:55","tablockid":"72 -807","tatripid":"1017026","dly":true,"prdctdn":"DLY","zone":""}]}';
+    return of(<BustimeResponse>JSON.parse(response));
   }
 
 }
