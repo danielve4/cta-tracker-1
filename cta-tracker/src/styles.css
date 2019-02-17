@@ -7,8 +7,8 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
 /* stylelint-enable */
 
 :root {
-  --background: #04060A ;
-  /* --background: #010104; */
+  /* --background: #04060A ; */
+  --background: #060d13;
   /* --background: rgb(2, 0, 25); */
   /* --secondary: #04060A; */
   /* --background: #02020E; */
@@ -33,9 +33,24 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --cta-pink: rgb(226,126,166);
   --cta-pink-opacity: rgba(226,126,166,0.17);
   --cta-yellow: rgb(249,227,0);
-  --cta-yellow-opacity: rgba(249,227,0,0.17);
+  --cta-yellow-opacity: rgba(249,227,0,0.14);
   --cta-grey: rgb(86,90,92);
   --cta-grey-opacity: rgba(86,90,92,0.17);
+
+  --aqua: rgb(0,245,234);
+  --aqua-opacity: rgba(0,245,234,0.15);
+  --blue: rgb(32,148,250);
+  --blue-opacity: rgba(32,148,250,0.17);
+  --green: rgb(4,222,113);
+  --green-opacity: rgba(4,222,113,0.17);
+  --orage: rgba(255,149,0);
+  --orage-opacity: rgba(255,149,0,0.15);
+  --pink: rgb(250,17,79);
+  --pink-opacity: rgba(250,17,79,0.17);
+  --red: rgb(226, 94, 63);
+  --red-opacity: rgba(226, 94, 63, 0.17);
+  --yellow: rgb(255,230,32);
+  --yellow-opacity: rgba(255,230,32,0.17);
 }
 
 * {
@@ -51,17 +66,11 @@ html {
   line-height: 1.2em;
   min-height: 100%;
   height: 100%;
+  touch-action: manipulation;
 }
 
 body {
-  height: 100%;
-  /* padding: 16px; */
-  /* display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 56px 1fr;
-  grid-column-gap: 16px;
-  grid-template-areas: "top-bar top-bar top-bar top-bar"
-                       "content content content content"; */
+  height: 100%;                    
 }
 
 router-outlet {
@@ -77,6 +86,20 @@ app-arrivals {
   display: grid;
   grid-column-gap: 16px;
   grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+h1 {
+  font-size: 37.325px;
+  line-height: 1.2em;
+  font-weight: 900;
+  margin-bottom: 16px;
+}
+
+h2 {
+  font-size: 25.92px;
+  line-height: 1.2em;
+  font-weight: 900;
+  margin-bottom: 16px;
 }
 
 .cols-1 {
@@ -111,7 +134,7 @@ app-arrivals {
   height: 56px;
   border: none;
   border-bottom: 1px solid white;
-  background-color: hsla(220, 43%, 7%, 1);
+  background-color: #1e2225;
   width: 100%;
   font-weight: 900;
 }
