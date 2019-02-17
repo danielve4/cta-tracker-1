@@ -26,7 +26,7 @@ export class ArrivalsComponent implements OnInit {
   }
 
   ngOnInit() {
-    const offlineTesting = true;
+    const offlineTesting = false;
     this.activatedRoute.paramMap.pipe(switchMap(params => {
       this.forRoute = params.get('route');
       this.forDirection = params.get('direction');
