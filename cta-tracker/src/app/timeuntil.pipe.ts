@@ -12,7 +12,7 @@ export class TimeuntilPipe implements PipeTransform {
       let valueReturned: string = value;
       switch (args) {
         case 'minutes':
-          valueReturned = isNaN(parseInt(value)) ? value : value + 'm';
+          valueReturned = isNaN(parseInt(value)) ? '' : 'min';
           break;
         case 'time':
           if (minutes || value.toLowerCase() === 'due') {
