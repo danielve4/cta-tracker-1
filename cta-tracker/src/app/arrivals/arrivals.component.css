@@ -1,0 +1,101 @@
+.arrivals-list {
+  display: grid;
+  row-gap: 16px;
+  width: 100%;
+}
+
+.an-arrival {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.grid-4 {
+  display: grid;
+  grid-column-gap: 16px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.arrivals-area {
+  grid-template-areas: "destination destination destination destination"
+                       "route route minutes minutes"
+                       "time time minutes minutes";
+  row-gap: 8px;
+  padding: 16px;
+  border-radius: 8px;
+  z-index: 2;
+  /* background-color: hsla(202, 52%, 11%, 0.6); */
+  background-color: #191919;
+  backdrop-filter: saturate(180%) blur(20px); 
+}
+
+.destination {
+  grid-area: destination;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.route {
+  grid-area: route;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 600;
+}
+
+.minutes-left {
+  grid-area: minutes;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 40px;
+  border-radius: 4px;
+  background-color: #333333;
+}
+
+.time-left {
+  grid-area: time;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-weight: 600;
+}
+
+.route-number {
+  border-radius: 4px;
+  padding: 0 4px;
+  background: #FFFFFF;
+  color: #000000;
+}
+
+.delayed {
+  border-radius: 4px;
+  background-color: var(--pink-opacity);
+  color: var(--pink);
+  padding: 0 12px;
+  margin-right: 8px;
+}
+
+.loading {
+  animation: loading 0.5s linear 1;
+}
+
+@keyframes loading {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+
+  50% {
+    transform: scale(1.05) translateY(10px);
+  }
+
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}

@@ -37,6 +37,6 @@ app.get('/trainstoparrivals', train.stopArrivals);
 
 app.get('/trainfollow', train.follow);
 
-app.listen(app.get('port'), () => {
+app.listen(app.get('port'), '10.0.0.112',() => {
   console.log('Node app is running on port', app.get('port'));
 });

@@ -10,6 +10,7 @@ import { StopsComponent } from './stops/stops.component';
 import { DirectionsComponent } from './directions/directions.component';
 import { FollowVehicleComponent } from './follow-vehicle/follow-vehicle.component';
 import { AppRoutingModule } from './/app-routing.module';
+import { TimeuntilPipe } from './timeuntil.pipe';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { AppRoutingModule } from './/app-routing.module';
     RoutesComponent,
     StopsComponent,
     DirectionsComponent,
-    FollowVehicleComponent
+    FollowVehicleComponent,
+    TimeuntilPipe
   ],
   imports: [
     BrowserModule,
