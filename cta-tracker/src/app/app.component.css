@@ -19,7 +19,7 @@ nav {
   position: fixed;
   bottom: 0;
   left: 0;
-  background-color: hsla(0, 0%, 13%, 0.7);
+  background-color: hsla(0, 0%, 13%, 0.98);
   z-index: 10;
 }
 
@@ -54,12 +54,12 @@ nav ul li {
 
 nav ul li.active a {
   color: #FFFFFF;
-  /* background-color: var(--top-bottom-color-light-reg); */
 }
 
 @supports (backdrop-filter: blur(15px)) {
   nav {
     backdrop-filter: saturate(180%) blur(20px);
+    background-color: hsla(0, 0%, 13%, 0.3);
   }
 
   /* nav ul li {
