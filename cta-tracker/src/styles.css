@@ -8,8 +8,8 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
 
 :root {
   /* --background: #04060A ; */
-  --background: #060d13;
-  /* --background: rgb(2, 0, 25); */
+  /* --background: #060d13; */
+  --background: #000000;
   /* --secondary: #04060A; */
   /* --background: #02020E; */
   --top-bottom-color: hsl(222, 100%, 5%);
