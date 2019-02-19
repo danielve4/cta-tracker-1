@@ -1,16 +1,16 @@
 <h2 class="cols-4">{{forStopName}} {{forDirection}}</h2>
 <ul class="cols-4 arrivals-list">
   <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival">
+  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [class.loading]="loading==true">
     <ul class="grid-4 arrivals-area">
       <li class="destination">
         <span *ngIf="vehicle.dly" class="delayed">DELAYED</span>To {{vehicle.des}}
       </li>
       <li class="route">
-        RT {{vehicle.rt}}
+        <span class="route-number">RT {{vehicle.rt}}</span>
       </li>
       <li class="minutes-left">
-        {{vehicle.prdctdn | timeuntil:'minutes'}}
+        {{vehicle.prdctdn}}{{vehicle.prdctdn | timeuntil:'minutes'}}
       </li>
       <li class="time-left">
         {{vehicle.prdctdn |  timeuntil:'time'}}

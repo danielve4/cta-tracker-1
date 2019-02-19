@@ -19,33 +19,29 @@ export class ArrivalsComponent implements OnInit {
   @Input() vehicles$: Observable<Prd[]>;
   error$: Observable<Error[]>;
   refreshInterval: number;
+  loading: boolean;
 
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService) {
     this.refreshInterval = 30 * 1000; // In seconds
+    this.loading = true;
   }
 
   ngOnInit() {
     const offlineTesting = false;
-    this.activatedRoute.paramMap.pipe(switchMap(params => {
-      this.forRoute = params.get('route');
-      this.forDirection = params.get('direction');
-      this.forStopId = +params.get('stopId');
-      this.forStopName = params.get('stopName');
-      if (offlineTesting) {
-        return this.sampleArrivalsResponse();
-      } else {
-        return this.busService.arrivals(this.forStopId);
-      }
-    })).subscribe((response: BustimeResponse) => {
-      this.handleArrivalsResponse(response);
-      timer(this.refreshInterval).pipe(
-        switchMap(() => {
-          if (offlineTesting) return this.sampleArrivalsResponse()
-          else return this.busService.arrivals(this.forStopId)
-        })
-      ).subscribe(result => {
-        this.handleArrivalsResponse(result);
+    this.activatedRoute.params.subscribe(params => {
+      this.forRoute = params.route;
+      this.forDirection = params.direction;
+      this.forStopId = +params.stopId;
+      this.forStopName = params.stopName;
+      timer(0, this.refreshInterval).subscribe(() => {
+        let arrivals;
+        if (offlineTesting) arrivals = this.sampleArrivalsResponse();
+        else arrivals = this.busService.arrivals(this.forStopId);
+
+        arrivals.subscribe((response: BustimeResponse) => {
+          this.handleArrivalsResponse(response);
+        });
       });
     });
   }
@@ -54,6 +50,7 @@ export class ArrivalsComponent implements OnInit {
     if (response.error) {
       this.error$ = of(response.error);
     } else {
+      
       for (let i = 0; i < response.prd.length; i++) {
         if (response.prd[i].dly) {
           response.prd[i].prdctdn = this.getMinutesDifference(
@@ -61,7 +58,9 @@ export class ArrivalsComponent implements OnInit {
             response.prd[i].prdtm);
         }
       }
+      this.loading = true;
       this.vehicles$ = of(response.prd);
+      setTimeout(() => this.loading = false, 1000);
     }
   }
 
