@@ -1,8 +1,8 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { of, Observable, timer } from 'rxjs';
+import { of, Observable, timer, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
@@ -20,6 +20,7 @@ export class ArrivalsComponent implements OnInit {
   error$: Observable<Error[]>;
   refreshInterval: number;
   loading: boolean;
+  timerRef: Subscription;
 
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService) {
@@ -34,7 +35,7 @@ export class ArrivalsComponent implements OnInit {
       this.forDirection = params.direction;
       this.forStopId = +params.stopId;
       this.forStopName = params.stopName;
-      timer(0, this.refreshInterval).subscribe(() => {
+      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         let arrivals;
         if (offlineTesting) arrivals = this.sampleArrivalsResponse();
         else arrivals = this.busService.arrivals(this.forStopId);
@@ -44,6 +45,10 @@ export class ArrivalsComponent implements OnInit {
         });
       });
     });
+  }
+
+  ngOnDestroy() {
+    this.timerRef.unsubscribe();
   }
 
   handleArrivalsResponse(response: BustimeResponse): void {
