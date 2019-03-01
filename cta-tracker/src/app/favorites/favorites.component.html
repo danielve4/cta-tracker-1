@@ -1,3 +1,9 @@
-<p class="cols-4">
-  favorites works!
-</p>
+<h2 class="cols-4">Favorites</h2>
+
+<ul class="cols-4">
+  <li *ngFor="let favorite of favorites$ | async" class="bus-stop">
+    <a routerLink="/arrivals/{{favorite.route}}/{{favorite.direction}}/{{favorite.stopId}}/{{favorite.stopName}}">
+      {{favorite.stopName}}
+    </a>
+  </li>
+</ul>
