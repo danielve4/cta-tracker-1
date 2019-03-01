@@ -1,12 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-
-interface Favorite {
-  route: string,
-  stopId: number,
-  stopName: string,
-  direction: string
-}
+import { map, switchMap } from 'rxjs/operators';
+import { Favorite } from './Favorite';
 
 @Injectable({
   providedIn: 'root'
@@ -15,15 +10,17 @@ export class FavoritesService {
 
   readonly localStorageKey: string = 'favorites';
 
-  favorites: [Favorite];
+  favorites: Observable<Array<Favorite>>;
 
   constructor() { }
 
-  getFavorites(): Observable<Favorite[]> {
+  getFavorites(): Observable<Array<Favorite>> {
+    if (this.favorites) return this.favorites;
     const cachedFavorites = localStorage.getItem(this.localStorageKey);
     if (cachedFavorites) {
       try {
-        return of(<Favorite[]>JSON.parse(cachedFavorites));
+        this.favorites = of(<Array<Favorite>>JSON.parse(cachedFavorites));
+        return this.favorites;
       } catch (e) {
         console.log("Unable to cast favorites");
       }
@@ -31,12 +28,51 @@ export class FavoritesService {
     return of([]);
   }
 
-  addToFavorites(stop: Favorite): void {
+  addToFavorites(stop: Favorite): Observable<boolean> {
     const cachedFavorites = this.getFavorites();
-    cachedFavorites.subscribe((favorites: Favorite[]) => {
-      if(favorites.length === 0) {
-        console.log("No current favorites!");
-      }
-    });
+    return this.search(cachedFavorites, stop).pipe(
+      map((index: number) => {
+        if (index < 0) {
+          cachedFavorites.subscribe((favorites: Array<Favorite>) => {
+            favorites.push(stop);
+            this.storeFavorites(favorites);
+          });
+          return true;
+        } else {
+          return false;
+        }
+      }));
+  }
+
+  removeFromFavorites(stop: Favorite): Observable<boolean> {
+    const cachedFavorites = this.getFavorites();
+    return this.search(cachedFavorites, stop).pipe(
+      map((index: number) => {
+        if (index >= 0) {
+          cachedFavorites.subscribe((favorites: Array<Favorite>) => {
+            favorites.splice(index, 1);
+            this.storeFavorites(favorites);
+          });
+          return true;
+        } else {
+          return false;
+        }
+      }));
+  }
+
+  storeFavorites(favorites: Array<Favorite>): void {
+    localStorage.setItem(this.localStorageKey, JSON.stringify(favorites));
+    this.favorites = of(favorites);
+  }
+
+  search(currentFavorites: Observable<Array<Favorite>>, stop: Favorite): Observable<number> {
+    return currentFavorites.pipe(
+      map((favorites: Array<Favorite>) => {
+        for (let i = 0; i < favorites.length; i++) {
+          if (favorites[i].stopId === stop.stopId)
+            return i;
+        }
+        return -1;
+      }));
   }
 }
