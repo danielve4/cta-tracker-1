@@ -3,7 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { of, Observable, timer, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { FavoritesService } from '../services/favorites.service';
+import { Favorite } from '../services/Favorite';
 
 @Component({
   selector: 'app-arrivals',
@@ -23,7 +24,7 @@ export class ArrivalsComponent implements OnInit {
   timerRef: Subscription;
 
   constructor(private activatedRoute: ActivatedRoute,
-    private busService: BusService) {
+    private busService: BusService, private favoritesService: FavoritesService) {
     this.refreshInterval = 30 * 1000; // In seconds
     this.loading = true;
   }
@@ -35,6 +36,13 @@ export class ArrivalsComponent implements OnInit {
       this.forDirection = params.direction;
       this.forStopId = +params.stopId;
       this.forStopName = params.stopName;
+      const fav: Favorite = {
+        route: this.forRoute,
+        stopId: this.forStopId,
+        stopName: this.forStopName,
+        direction: this.forDirection
+      };
+      this.favoritesService.addToFavorites(fav).subscribe().unsubscribe();
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         let arrivals;
         if (offlineTesting) arrivals = this.sampleArrivalsResponse();
@@ -55,7 +63,7 @@ export class ArrivalsComponent implements OnInit {
     if (response.error) {
       this.error$ = of(response.error);
     } else {
-      
+
       for (let i = 0; i < response.prd.length; i++) {
         if (response.prd[i].dly) {
           response.prd[i].prdctdn = this.getMinutesDifference(
