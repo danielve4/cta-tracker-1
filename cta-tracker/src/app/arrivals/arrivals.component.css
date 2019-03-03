@@ -116,7 +116,7 @@
 }
 
 .favorited {
-  animation: favorited 0.3s linear 0s 1;
+  animation: favorited 0.5s linear 0s 1;
 }
 
 @keyframes favorited {
