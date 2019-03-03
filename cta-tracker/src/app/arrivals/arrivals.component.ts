@@ -22,27 +22,35 @@ export class ArrivalsComponent implements OnInit {
   refreshInterval: number;
   loading: boolean;
   timerRef: Subscription;
+  isFavorite: boolean;
+  favoriteStop: Observable<Favorite>;
+  favorited: boolean;
 
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService, private favoritesService: FavoritesService) {
     this.refreshInterval = 30 * 1000; // In seconds
     this.loading = true;
+    this.isFavorite = true;
+    this.favorited = false;
   }
 
   ngOnInit() {
-    const offlineTesting = false;
+    const offlineTesting = !false;
     this.activatedRoute.params.subscribe(params => {
       this.forRoute = params.route;
       this.forDirection = params.direction;
       this.forStopId = +params.stopId;
       this.forStopName = params.stopName;
-      const fav: Favorite = {
+      const tempFavoriteStop: Favorite = {
         route: this.forRoute,
         stopId: this.forStopId,
         stopName: this.forStopName,
         direction: this.forDirection
       };
-      this.favoritesService.addToFavorites(fav).subscribe().unsubscribe();
+      this.favoritesService.search(tempFavoriteStop).subscribe((index: number) => {
+        this.isFavorite = index < 0 ? false : true;
+      });
+      this.favoriteStop = of(tempFavoriteStop);
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         let arrivals;
         if (offlineTesting) arrivals = this.sampleArrivalsResponse();
@@ -96,6 +104,17 @@ export class ArrivalsComponent implements OnInit {
       +dateTime[1].slice(0, 2), // Hour
       +dateTime[1].slice(3, 5) // Minutes
     );
+  }
+
+  addToFavorite(): void {
+    this.favoriteStop.subscribe((stop: Favorite) => {
+      this.favoritesService.addToFavorites(stop).subscribe((wasAdded: boolean) => {
+        this.favorited = wasAdded;
+        setTimeout(() => {
+          this.isFavorite = wasAdded;
+        }, 300);
+      }).unsubscribe();
+    });
   }
 
   sampleArrivalsResponse(): Observable<BustimeResponse> {
