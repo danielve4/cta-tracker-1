@@ -20,7 +20,6 @@ export class ArrivalsComponent implements OnInit {
   @Input() vehicles$: Observable<Prd[]>;
   error$: Observable<Error[]>;
   refreshInterval: number;
-  loading: boolean;
   timerRef: Subscription;
   isFavorite: boolean;
   favoriteStop: Observable<Favorite>;
@@ -32,7 +31,6 @@ export class ArrivalsComponent implements OnInit {
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService, private favoritesService: FavoritesService) {
     this.refreshInterval = 30 * 1000; // In seconds
-    this.loading = true;
     this.isFavorite = true;
     this.favorited = false;
     this.canRefresh = false;
@@ -67,17 +65,19 @@ export class ArrivalsComponent implements OnInit {
   }
 
   getArrivals(): void {
-    this.refreshing = true;
-    let arrivalsSub;
-    if (!this.offlineTesting)
-      arrivalsSub = this.busService.arrivals(this.forStopId);
-    else
-      arrivalsSub = this.sampleArrivalsResponse();
+    if (!this.refreshing) {
+      this.refreshing = true;
+      let arrivalsSub;
+      if (!this.offlineTesting)
+        arrivalsSub = this.busService.arrivals(this.forStopId);
+      else
+        arrivalsSub = this.sampleArrivalsResponse();
 
-    arrivalsSub.subscribe((response: BustimeResponse) => {
-      this.handleArrivalsResponse(response);
-      setTimeout(() => this.refreshing = false, 500);
-    });
+      arrivalsSub.subscribe((response: BustimeResponse) => {
+        this.handleArrivalsResponse(response);
+        setTimeout(() => this.refreshing = false, 500);
+      });
+    }
   }
 
   handleArrivalsResponse(response: BustimeResponse): void {
@@ -91,9 +91,7 @@ export class ArrivalsComponent implements OnInit {
             response.prd[i].prdtm);
         }
       }
-      this.loading = true;
       this.vehicles$ = of(response.prd);
-      setTimeout(() => this.loading = false, 1000);
     }
   }
 
