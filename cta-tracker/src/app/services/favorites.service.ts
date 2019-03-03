@@ -30,7 +30,7 @@ export class FavoritesService {
 
   addToFavorites(stop: Favorite): Observable<boolean> {
     const cachedFavorites = this.getFavorites();
-    return this.search(cachedFavorites, stop).pipe(
+    return this.search(stop).pipe(
       map((index: number) => {
         if (index < 0) {
           cachedFavorites.subscribe((favorites: Array<Favorite>) => {
@@ -46,7 +46,7 @@ export class FavoritesService {
 
   removeFromFavorites(stop: Favorite): Observable<boolean> {
     const cachedFavorites = this.getFavorites();
-    return this.search(cachedFavorites, stop).pipe(
+    return this.search(stop).pipe(
       map((index: number) => {
         if (index >= 0) {
           cachedFavorites.subscribe((favorites: Array<Favorite>) => {
@@ -65,14 +65,15 @@ export class FavoritesService {
     this.favorites = of(favorites);
   }
 
-  search(currentFavorites: Observable<Array<Favorite>>, stop: Favorite): Observable<number> {
-    return currentFavorites.pipe(
+  search(stop: Favorite): Observable<number> {
+    return this.getFavorites().pipe(
       map((favorites: Array<Favorite>) => {
         for (let i = 0; i < favorites.length; i++) {
           if (favorites[i].stopId === stop.stopId)
             return i;
         }
         return -1;
-      }));
+      })
+    );
   }
 }
