@@ -21,3 +21,6 @@
 <button *ngIf="!isFavorite" class="fab button-favorite" [class.favorited]="favorited==true" (click)="addToFavorite()">
   <img src="../../assets/icons/ic_favorite_black_24px.svg" class="icon"> 
 </button>
+<button *ngIf="canRefresh" class="fab button-refresh" [class.refreshing]="refreshing == true" (click)="getArrivals()">
+  <img src="../../assets/icons/ic_refresh_black_24px.svg" class="icon"> 
+</button>

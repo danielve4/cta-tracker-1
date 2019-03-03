@@ -25,6 +25,9 @@ export class ArrivalsComponent implements OnInit {
   isFavorite: boolean;
   favoriteStop: Observable<Favorite>;
   favorited: boolean;
+  canRefresh: boolean;
+  refreshing: boolean;
+  offlineTesting: boolean = !false;
 
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService, private favoritesService: FavoritesService) {
@@ -32,11 +35,13 @@ export class ArrivalsComponent implements OnInit {
     this.loading = true;
     this.isFavorite = true;
     this.favorited = false;
+    this.canRefresh = false;
+    this.refreshing = false;
   }
 
   ngOnInit() {
-    const offlineTesting = !false;
     this.activatedRoute.params.subscribe(params => {
+      this.canRefresh = true;
       this.forRoute = params.route;
       this.forDirection = params.direction;
       this.forStopId = +params.stopId;
@@ -52,13 +57,7 @@ export class ArrivalsComponent implements OnInit {
       });
       this.favoriteStop = of(tempFavoriteStop);
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        let arrivals;
-        if (offlineTesting) arrivals = this.sampleArrivalsResponse();
-        else arrivals = this.busService.arrivals(this.forStopId);
-
-        arrivals.subscribe((response: BustimeResponse) => {
-          this.handleArrivalsResponse(response);
-        });
+        this.getArrivals();
       });
     });
   }
@@ -67,11 +66,24 @@ export class ArrivalsComponent implements OnInit {
     this.timerRef.unsubscribe();
   }
 
+  getArrivals(): void {
+    this.refreshing = true;
+    let arrivalsSub;
+    if (!this.offlineTesting)
+      arrivalsSub = this.busService.arrivals(this.forStopId);
+    else
+      arrivalsSub = this.sampleArrivalsResponse();
+
+    arrivalsSub.subscribe((response: BustimeResponse) => {
+      this.handleArrivalsResponse(response);
+      setTimeout(() => this.refreshing = false, 500);
+    });
+  }
+
   handleArrivalsResponse(response: BustimeResponse): void {
     if (response.error) {
       this.error$ = of(response.error);
     } else {
-
       for (let i = 0; i < response.prd.length; i++) {
         if (response.prd[i].dly) {
           response.prd[i].prdctdn = this.getMinutesDifference(
@@ -84,7 +96,6 @@ export class ArrivalsComponent implements OnInit {
       setTimeout(() => this.loading = false, 1000);
     }
   }
-
 
   getMinutesDifference(now: string, future: string): string {
     try {
