@@ -162,3 +162,50 @@ h2 {
   transform: scale(0.75) translateY(-50%) translateX(10px);
   color: #2196F3;
 }
+
+.fab {
+  width: 56px;
+  height: 56px;
+  padding: 16px;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 50%;
+  outline: none;
+  z-index: 1;
+  transform: scale(1);
+}
+
+/* .fab:active {
+  transform: scale(1.5);
+} */
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+
+.button-favorite {
+  position: fixed;
+  right: 16px;
+  bottom: calc(56px + 16px);
+  background-color: var(--cta-grey);
+}
+
+.favorited {
+  animation: favorited 0.3s linear 0s 1;
+}
+
+@keyframes favorited {
+  0% {
+    transform: scale(1);
+  }
+  25%{
+    transform: scale(1.5);
+  }
+  90% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
