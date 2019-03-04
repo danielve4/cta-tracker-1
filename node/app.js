@@ -3,7 +3,8 @@ const train = require('./train');
 const bus = require('./bus');
 const app = express();
 
-app.use(express.static('public'));
+app.use(express.static(__dirname + '/public'));
+app.set('public', __dirname + '/public');
 
 app.set('trust proxy', true);
 app.set('port', (process.env.PORT || 8080));
@@ -28,6 +29,10 @@ app.get('/busfollow', bus.follow);
 app.get('/trainstoparrivals', train.stopArrivals);
 
 app.get('/trainfollow', train.follow);
+
+app.get('/*', (request, response) => {
+  response.sendFile(__dirname+'/public/index.html');
+})
 
 app.listen(app.get('port'), '0.0.0.0',() => {
   console.log('Node app is running on port', app.get('port'));
