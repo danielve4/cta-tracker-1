@@ -1,0 +1,43 @@
+.favorite-list {
+  display: grid;
+  grid-auto-rows: 72px
+}
+
+.favorite-stop,
+.favorite-stop-touch {
+  height: 100%;
+  width: 100%;
+  display: block;
+  text-decoration: none;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.favorite-stop-touch {
+  display: grid;
+  /* grid-template-areas: "route name direction"; */
+  grid-template-columns: 50px auto 20px;
+}
+
+.favorite-stop-route {
+  /* grid-area: route; */
+  /* width: 50px; */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.favorite-stop-name {
+  /* grid-area: name; */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.favorite-stop-direction {
+  /* grid-area: direction; */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
