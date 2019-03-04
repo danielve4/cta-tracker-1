@@ -34,7 +34,7 @@ export class FavoritesService {
       map((index: number) => {
         if (index < 0) {
           cachedFavorites.subscribe((favorites: Array<Favorite>) => {
-            favorites.push(stop);
+            favorites[favorites.length] = stop;
             this.storeFavorites(favorites);
           });
           return true;
