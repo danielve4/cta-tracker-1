@@ -26,7 +26,7 @@ export class ArrivalsComponent implements OnInit {
   favorited: boolean;
   canRefresh: boolean;
   refreshing: boolean;
-  offlineTesting: boolean = !false;
+  offlineTesting: boolean = false;
 
   constructor(private activatedRoute: ActivatedRoute,
     private busService: BusService, private favoritesService: FavoritesService) {
