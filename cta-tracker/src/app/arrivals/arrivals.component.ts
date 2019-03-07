@@ -66,7 +66,6 @@ export class ArrivalsComponent implements OnInit {
 
   getArrivals(): void {
     if (!this.refreshing) {
-      this.refreshing = true;
       let arrivalsSub;
       if (!this.offlineTesting)
         arrivalsSub = this.busService.arrivals(this.forStopId);
@@ -75,12 +74,12 @@ export class ArrivalsComponent implements OnInit {
 
       arrivalsSub.subscribe((response: BustimeResponse) => {
         this.handleArrivalsResponse(response);
-        setTimeout(() => this.refreshing = false, 500);
       });
     }
   }
 
   handleArrivalsResponse(response: BustimeResponse): void {
+    this.refreshing = true;
     if (response.error) {
       this.error$ = of(response.error);
     } else {
@@ -93,6 +92,7 @@ export class ArrivalsComponent implements OnInit {
       }
       this.vehicles$ = of(response.prd);
     }
+    setTimeout(() => this.refreshing = false, 500);
   }
 
   getMinutesDifference(now: string, future: string): string {
