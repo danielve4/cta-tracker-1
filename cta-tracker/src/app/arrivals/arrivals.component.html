@@ -1,7 +1,7 @@
 <h2 class="cols-4">{{forStopName}} {{forDirection}}</h2>
 <ul class="cols-4 arrivals-list">
   <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [class.loading]="refreshing==true">
+  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [ngClass]="{'loading':refreshing}">
     <ul class="grid-4 arrivals-area">
       <li class="destination">
         <span *ngIf="vehicle.dly" class="delayed">DELAYED</span>To {{vehicle.des}}
