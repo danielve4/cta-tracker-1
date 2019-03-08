@@ -7,7 +7,7 @@
 <ul class="cols-4">
   <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
   <li *ngFor="let stop of stops$ | async" class="bus-stop">
-    <a routerLink="/arrivals/{{forRoute}}/{{forDirection}}/{{stop.stpid}}/{{stop.stpnm}}">
+    <a routerLink="/arrivals/{{forRoute}}/{{forDirection}}/{{stop.stpid}}/{{stop.stpnm.replace('/', '-')}}">
       {{stop.stpnm}}
     </a>
   </li>
