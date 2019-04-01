@@ -93,6 +93,7 @@ export class ArrivalsComponent implements OnInit {
       this.vehicles$ = of(response.prd);
     }
     setTimeout(() => this.refreshing = false, 500);
+    if (typeof (window.navigator.vibrate) !== "undefined") window.navigator.vibrate(5);
   }
 
   getMinutesDifference(now: string, future: string): string {
