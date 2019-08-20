@@ -1,7 +1,7 @@
 <h2 class="cols-4">{{forStopName}} {{forDirection}}</h2>
 <ul class="cols-4 arrivals-list">
   <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [class.loading]="loading==true">
+  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [ngClass]="{'loading':refreshing}">
     <ul class="grid-4 arrivals-area">
       <li class="destination">
         <span *ngIf="vehicle.dly" class="delayed">DELAYED</span>To {{vehicle.des}}
@@ -18,3 +18,9 @@
     </ul>
   </li>
 </ul>
+<button *ngIf="!isFavorite" class="fab button-favorite" [class.favorited]="favorited==true" (click)="addToFavorite()">
+  <img src="../../assets/icons/ic_favorite_black_24px.svg" class="icon"> 
+</button>
+<button *ngIf="canRefresh" class="fab button-refresh"  (click)="getArrivals()">
+  <img src="../../assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing == true"> 
+</button>

@@ -162,3 +162,25 @@ h2 {
   transform: scale(0.75) translateY(-50%) translateX(10px);
   color: #2196F3;
 }
+
+.fab {
+  width: 56px;
+  height: 56px;
+  padding: 16px;
+  position: fixed;
+  right: 16px;
+  bottom: calc(56px + 16px);
+  -webkit-appearance: none;
+  border: none;
+  border-radius: 50%;
+  outline: none;
+  z-index: 1;
+  transform: scale(1);
+  box-shadow: 0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12);
+}
+
+.icon {
+  width: 24px;
+  height: 24px;
+}
+

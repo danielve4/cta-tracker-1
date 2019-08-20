@@ -4,6 +4,7 @@ import { BustimeResponse } from '../busResponse';
 import { Config } from '../config/Config';
 import { Observable, of } from 'rxjs';
 import { tap, map } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -16,13 +17,14 @@ export class BusService {
   routeStopsPath: string;
   arrivalsURL: string;
   followURL: string;
+  baseURL:string = environment.baseURL;
   constructor(private http: HttpClient) {
     this.routesPath = 'busroutes';
-    this.routesURL = `${Config.baseURL}/${this.routesPath}`;
+    this.routesURL = `${this.baseURL}/${this.routesPath}`;
     this.routeDirectionsPath = 'busroutedirections';
     this.routeStopsPath = 'busroutestops';
-    this.arrivalsURL = `${Config.baseURL}/busstoparrivals`;
-    this.followURL = `${Config.baseURL}/busfollow`;
+    this.arrivalsURL = `${this.baseURL}/busstoparrivals`;
+    this.followURL = `${this.baseURL}/busfollow`;
   }
 
   routes(getCached: boolean = true): Observable<BustimeResponse> {
@@ -39,7 +41,7 @@ export class BusService {
     console.log("About to call directions!");
     const path = `${this.routeDirectionsPath}?route=${route}`;
     return (getCached && this.getCached(path)) ||
-      this.http.get<BustimeResponse>(`${Config.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
+      this.http.get<BustimeResponse>(`${this.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
         if (!response.error) {
           localStorage.setItem(path, JSON.stringify(response));
         }
@@ -50,7 +52,7 @@ export class BusService {
     console.log("About to call stops!");
     const path = `${this.routeStopsPath}?route=${route}&direction=${direction}`;
     return (getCached && this.getCached(path)) ||
-      this.http.get<BustimeResponse>(`${Config.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
+      this.http.get<BustimeResponse>(`${this.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
         if (!response.error) {
           localStorage.setItem(path, JSON.stringify(response));
         }

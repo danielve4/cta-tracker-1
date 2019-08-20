@@ -11,6 +11,8 @@ import { DirectionsComponent } from './directions/directions.component';
 import { FollowVehicleComponent } from './follow-vehicle/follow-vehicle.component';
 import { AppRoutingModule } from './/app-routing.module';
 import { TimeuntilPipe } from './timeuntil.pipe';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -26,7 +28,8 @@ import { TimeuntilPipe } from './timeuntil.pipe';
   imports: [
     BrowserModule,
     HttpClientModule,
-    AppRoutingModule
+    AppRoutingModule,
+    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production })
   ],
   providers: [],
   bootstrap: [AppComponent]
