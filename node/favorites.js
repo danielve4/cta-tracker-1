@@ -41,7 +41,7 @@ exports.save = (req, res) => {
         res.sendStatus(202);
       }, (error) => {
         console.log(error);
-        res.send(500).send(unableToSaveText);
+        res.status(500).send(unableToSaveText);
       });
     } else {
       res.status(400).send(badRequestText);
