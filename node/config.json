@@ -9,5 +9,8 @@
     "baseURL": "http://lapi.transitchicago.com/api/1.0",
     "stopArrivalsSample": "http://lapi.transitchicago.com/api/1.0/ttarrivals.aspx?key=+ctaTrainKey+&mapid=+mapId+&outputType=JSON",
     "followSample": "http://lapi.transitchicago.com/api/1.0/ttfollow.aspx?key='+ctaTrainKey+'&runnumber='+runNumber+'&outputType=JSON"
+  },
+  "favorites": {
+    "datastoreKey": "Favorites"
   }
 }
