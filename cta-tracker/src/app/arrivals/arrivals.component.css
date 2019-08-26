@@ -13,12 +13,6 @@
   z-index: 1;
 }
 
-.grid-4 {
-  display: grid;
-  grid-column-gap: 16px;
-  grid-template-columns: repeat(4, 1fr);
-}
-
 .arrivals-area {
   grid-template-areas: "destination destination destination destination"
                        "minutes minutes minutes minutes"

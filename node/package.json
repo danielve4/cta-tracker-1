@@ -11,6 +11,7 @@
   "author": "Ruben Estrada & Daniel Vega",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/datastore": "^4.2.0",
     "express": "^4.16.4",
     "request": "^2.88.0"
   }

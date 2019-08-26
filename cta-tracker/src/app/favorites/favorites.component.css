@@ -41,3 +41,18 @@
   align-items: center;
   justify-content: flex-end;
 }
+
+.favorite-settings {
+  background-color: var(--gray4);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.favorite-settings ul li {
+  position: relative;
+}
+
+.favorite-settings button {
+  background-color: var(--gray6);
+  border-radius: 8px;
+}

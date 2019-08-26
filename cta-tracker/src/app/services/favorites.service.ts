@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { Favorite } from './Favorite';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +14,14 @@ export class FavoritesService {
 
   favorites: Observable<Array<Favorite>>;
 
-  constructor() { }
+  baseURL: string = environment.baseURL;
+  saveFavoritesURL: string;
+  syncFavoritesURL: string;
+
+  constructor(private http: HttpClient) {
+    this.saveFavoritesURL = `${this.baseURL}/savefavorites`;
+    this.syncFavoritesURL = `${this.baseURL}/myfavorites`;
+  }
 
   getFavorites(): Observable<Array<Favorite>> {
     if (this.favorites) return this.favorites;
@@ -75,5 +84,30 @@ export class FavoritesService {
         return -1;
       })
     );
+  }
+
+  saveFavorites(phone: string, favorites: object): Observable<HttpResponse<string>> {
+    const payload: object = {
+      'id': phone,
+      'favorites': favorites
+    };
+    return this.http.post(this.saveFavoritesURL, payload, { headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'text', observe: 'response' });
+  }
+
+  syncFavorites(phone: string): Observable<HttpResponse<string>> {
+    const payload: object = {
+      'id': phone
+    };
+    return this.http.post(this.syncFavoritesURL, payload, { headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'text', observe: 'response' }).pipe(tap((response: HttpResponse<string>) => {
+      if(response.body) {
+        try {
+          const favoritesObject = JSON.parse(response.body);
+          this.favorites = of(<Array<Favorite>>favoritesObject);
+          this.storeFavorites(favoritesObject);
+        } catch (e) {
+          console.log("Unable to cast favorites");
+        }
+      }
+    }));
   }
 }
