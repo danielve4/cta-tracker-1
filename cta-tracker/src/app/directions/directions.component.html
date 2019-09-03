@@ -1,7 +1,11 @@
-<h1 class="cols-4">Route {{forRoute}}</h1>
-<ul class="cols-4">
-  <li *ngFor="let anError of error$ | async">{{anError.msg}} route {{anError.rt}}</li>
-  <li *ngFor="let direction of directions$ | async" class="bus-direction">
-    <a routerLink="/stops/{{forRoute}}/{{direction.dir}}">{{direction.dir}}</a>
-  </li>
-</ul>
+<article>
+  <h1 class="cols-4">Route {{forRoute}}</h1>
+  <section class="cols-4">
+    <ul class="cols-4">
+      <li *ngFor="let anError of error$ | async">{{anError.msg}} route {{anError.rt}}</li>
+      <li *ngFor="let direction of directions$ | async" class="bus-direction">
+        <a routerLink="/stops/{{forRoute}}/{{direction.dir}}">{{direction.dir}}</a>
+      </li>
+    </ul>
+  </section>
+</article>

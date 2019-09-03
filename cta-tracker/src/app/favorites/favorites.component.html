@@ -1,33 +1,37 @@
-<h1 class="cols-3">Favorites</h1>
-<span class="cols-reverse-1" (click)="openFavoriteSettings = !openFavoriteSettings">
-  *
-</span>
-<article *ngIf="openFavoriteSettings" class="cols-4 grid-4 favorite-settings">
-  <ul class="grid-4 cols-4">
-    <li class="cols-4">
-      <span class="label-placeholder"></span>
-      <input type="number" id="phone" name="phone" #phone required="">
-      <label for="phone">Phone</label>
-    </li>
-    <li class="cols-2">
-      <button (click)="saveFavorites(phone.value)">
-        SAVE
-      </button>
-    </li>
-    <li class="cols-reverse-2">
-      <button (click)="syncFavorites(phone.value)">
-        SYNC
-      </button>
-    </li>
-  </ul>
+<article>
+  <h1 class="cols-3">Favorites</h1>
+  <span class="cols-reverse-1" (click)="openFavoriteSettings = !openFavoriteSettings">
+    *
+  </span>
+  <section *ngIf="openFavoriteSettings" class="cols-4 grid-4 favorite-settings">
+    <ul class="grid-4 cols-4">
+      <li class="cols-4">
+        <span class="label-placeholder"></span>
+        <input type="number" id="phone" name="phone" #phone required="">
+        <label for="phone">Phone</label>
+      </li>
+      <li class="cols-2">
+        <button (click)="saveFavorites(phone.value)">
+          SAVE
+        </button>
+      </li>
+      <li class="cols-reverse-2">
+        <button (click)="syncFavorites(phone.value)">
+          SYNC
+        </button>
+      </li>
+    </ul>
+  </section>
+  <section>
+    <ul class="cols-4 favorite-list">
+      <li *ngFor="let favorite of favorites$ | async" class="favorite-stop">
+        <a routerLink="/arrivals/{{favorite.route}}/{{favorite.direction}}/{{favorite.stopId}}/{{favorite.stopName}}"
+          class="favorite-stop-touch">
+          <span class="favorite-stop-route">{{favorite.route}}</span>
+          <span class="favorite-stop-name">{{favorite.stopName}}</span>
+          <span class="favorite-stop-direction">{{favorite.direction | slice:0:1}}</span>
+        </a>
+      </li>
+    </ul>
+  </section>
 </article>
-<ul class="cols-4 favorite-list">
-  <li *ngFor="let favorite of favorites$ | async" class="favorite-stop">
-    <a routerLink="/arrivals/{{favorite.route}}/{{favorite.direction}}/{{favorite.stopId}}/{{favorite.stopName}}"
-      class="favorite-stop-touch">
-      <span class="favorite-stop-route">{{favorite.route}}</span>
-      <span class="favorite-stop-name">{{favorite.stopName}}</span>
-      <span class="favorite-stop-direction">{{favorite.direction | slice:0:1}}</span>
-    </a>
-  </li>
-</ul>

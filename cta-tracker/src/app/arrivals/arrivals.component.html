@@ -1,26 +1,33 @@
-<h2 class="cols-4">{{forStopName}} {{forDirection}}</h2>
-<ul class="cols-4 arrivals-list">
-  <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [ngClass]="{'loading':refreshing}">
-    <ul class="grid-4 arrivals-area">
-      <li class="destination">
-        <span *ngIf="vehicle.dly" class="delayed">DELAYED</span>To {{vehicle.des}}
-      </li>
-      <li class="route">
-        <span class="route-number">RT {{vehicle.rt}}</span>
-      </li>
-      <li class="minutes-left">
-        {{vehicle.prdctdn}}{{vehicle.prdctdn | timeuntil:'minutes'}}
-      </li>
-      <li class="time-left">
-        {{vehicle.prdctdn |  timeuntil:'time'}}
+<article>
+  <h2 class="cols-4">{{forStopName}} {{forDirection}}</h2>
+  <section class="cols-4">
+    <ul class="cols-4 arrivals-list">
+      <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
+      <li *ngFor="let vehicle of vehicles$ | async" class="an-arrival" [ngClass]="{'loading':refreshing}">
+        <ul class="grid-4 arrivals-area">
+          <li class="destination">
+            <span *ngIf="vehicle.dly" class="delayed">DELAYED</span>To {{vehicle.des}}
+          </li>
+          <li class="route">
+            <span class="route-number">RT {{vehicle.rt}}</span>
+          </li>
+          <li class="minutes-left">
+            {{vehicle.prdctdn}}{{vehicle.prdctdn | timeuntil:'minutes'}}
+          </li>
+          <li class="time-left">
+            {{vehicle.prdctdn |  timeuntil:'time'}}
+          </li>
+        </ul>
       </li>
     </ul>
-  </li>
-</ul>
-<button *ngIf="!isFavorite" class="fab button-favorite" [class.favorited]="favorited==true" (click)="addToFavorite()">
-  <img src="../../assets/icons/ic_favorite_black_24px.svg" class="icon"> 
-</button>
-<button *ngIf="canRefresh" class="fab button-refresh"  (click)="getArrivals()">
-  <img src="../../assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing == true"> 
-</button>
+  </section>
+  <section>
+    <button *ngIf="!isFavorite" class="fab button-favorite" [class.favorited]="favorited==true"
+      (click)="addToFavorite()">
+      <img src="../../assets/icons/ic_favorite_black_24px.svg" class="icon">
+    </button>
+    <button *ngIf="canRefresh" class="fab button-refresh" (click)="getArrivals()">
+      <img src="../../assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing == true">
+    </button>
+  </section>
+</article>

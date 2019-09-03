@@ -1,16 +1,19 @@
-<h1 class="cols-4">Routes</h1>
-<section class="cols-4 search-form">
-  <input class="search-input" id="search-routes" #criteria (input)="search(criteria.value)" autocomplete="off" required/>
-  <label class="search-label" for="search-routes">Search Routes</label>
-</section>
-<ul class="cols-4">
-  <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let route of routes$ | async" class="bus-route">
-    <a routerLink="/directions/{{route.rt}}">
-      <span class="bus-route-number-container">
-        <span class="bus-route-number">{{route.rt}}</span>
-      </span>
-      <span class="bus-route-name">{{route.rtnm}}</span>
-    </a>
-  </li>
-</ul>
+<article>
+  <h1 class="cols-4">Routes</h1>
+  <section class="cols-4 grid-4 search-form">
+    <input class="cols-4 search-input" id="search-routes" #criteria (input)="search(criteria.value)" autocomplete="off"
+      required />
+    <label class="cols-4 search-label" for="search-routes">Search Routes</label>
+  </section>
+  <section class="cols-4">
+    <ul class="cols-4 grid-4">
+      <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
+      <li *ngFor="let route of routes$ | async" class="cols-4 bus-route">
+        <a routerLink="/directions/{{route.rt}}" class="grid-4">
+          <span class="cols-1 bus-route-number">{{route.rt}}</span>
+          <span class="cols-reverse-3 bus-route-name">{{route.rtnm}}</span>
+        </a>
+      </li>
+    </ul>
+  </section>
+</article>
