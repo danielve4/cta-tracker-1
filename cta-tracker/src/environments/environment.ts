@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  baseURL: 'http://192.168.86.123:8080'
+  baseURL: 'https://cta.danielvega.dev'
 };
 
 /*
