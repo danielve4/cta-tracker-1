@@ -1,7 +1,21 @@
-.bus-route-number {
+.bus-route-number, .bus-route-name {
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-weight: 700;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bus-route-name { 
+  justify-content: start;
+  font-weight: 300;
+}
+
+.cols-1.bus-route-number {
+  background-color: var(--gray6);
+  border-radius: 9px;
+  font-size: var(--text-level2);
 }
