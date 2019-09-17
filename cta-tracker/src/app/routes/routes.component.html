@@ -3,12 +3,15 @@
   <section class="cols-4 grid-4 search-form">
     <input class="cols-4 search-input" id="search-routes" #criteria (input)="search(criteria.value)" autocomplete="off"
       required />
-    <label class="cols-4 search-label" for="search-routes">Search Routes</label>
+    <label class="cols-4 search-label" for="search-routes">
+      <img src="../../assets/icons/search.svg">
+      Search Routes
+    </label>
   </section>
   <section class="cols-4">
     <ul class="cols-4 grid-4">
       <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-      <li *ngFor="let route of routes$ | async" class="cols-4 bus-route">
+      <li *ngFor="let route of routes$ | async" class="cols-4 bus-route list-element">
         <a routerLink="/directions/{{route.rt}}" class="grid-4">
           <span class="cols-1 bus-route-number">{{route.rt}}</span>
           <span class="cols-reverse-3 bus-route-name">{{route.rtnm}}</span>
