@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=Product+Sans:400,400i,700,700i');
+@import url('https://fonts.googleapis.com/css?family=Product+Sans:300,300i,400,400i,700,700i,900,900i');
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)
@@ -59,6 +59,12 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --gray4: rgb(58,58,60);
   --gray5: rgb(44,44,46);
   --gray6: rgb(28,28,30);
+
+  --base-text: 1em; /* 22px */
+  --text-level2: 1.25em; /* 27.5px */
+  --text-level3: 1.563em; /* 34.375px */
+  --text-level4: 1.953em; /* 42.969px */
+  --text-line-height: 1.25em; /* 125% */
 }
 
 * {
@@ -71,7 +77,7 @@ html {
   font-family: -apple-system, ".SFNSText-Regular", 'Product Sans', Helvetica, Arial, sans-serif;
   font-weight: 400;
   font-size: 1.375em; /* 22 / 16 = 1.375em */
-  line-height: 1.25em; /* 22 * 125% = 1.25em */
+  line-height: var(--text-line-height); /* 22 * 125% = 1.25em */
   padding: 0.727272em; /* 16 / 22 = 0.727272em */
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
@@ -79,14 +85,15 @@ html {
 
 h1 {
   font-weight: 700;
-  font-size: 1.953em; /* 42.969 / 22 = 1.953em */
-  line-height: 1.25em; /* 42.969 * 125% = 1.25em */
+  font-size: var(--text-level4); /* 42.969 / 22 = 1.953em */
+  line-height: var(--text-line-height); /* 42.969 * 125% = 1.25em */
   /* margin-bottom: 0.256em;  11 / 42.969 = 0.256em */
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  height: 100%;
 }
 
 cite,em,i {
@@ -167,8 +174,18 @@ input {
   left: 0.727272em; /* 16 / 22 = 0.727272em */
   height: 2em; /* 44 / 22 = 2em */
   line-height: 2em; /* 44 / 22 = 2em */
+  display: flex;
+}
+
+.search-label img {
+  padding-right: 0.363636em; /* 8 / 22 = 0.363636em */
+  height: 100%;
 }
 
 .search-input:focus ~ .search-label, .search-input:valid ~ .search-label {
   visibility: hidden;
+}
+
+.list-element {
+  height: 2em; /* 44 / 22 = 2em*/
 }
