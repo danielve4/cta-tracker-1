@@ -38,6 +38,13 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --cta-grey: rgb(86,90,92);
   --cta-grey-opacity: rgba(86,90,92,0.17);
 
+  --cta-grey-1: hsl(200,3%,8.75%);
+  --cta-grey-2: hsl(200,3%,17.5%);
+  --cta-grey-3: hsl(200,3%,35%);
+  --cta-grey-4: hsl(200,3%,52.5%);
+  --cta-grey-5: hsl(200,3%,70%);
+  --cta-grey-6: hsl(200,3%,87.5%);
+
   --aqua: rgb(0,245,234);
   --aqua-opacity: rgba(0,245,234,0.15);
   --blue: rgb(32,148,250);
@@ -163,10 +170,10 @@ input {
 
 .search-input {
   color: var(--text-color);
-  padding: 0 0.727272em; /* 16 / 22 = 0.727272em */
+  padding: 0 1.818181em; /* 40 / 22 = 1.818181em */
   height: 2em; /* 44 / 22 = 2em */
   border-radius: 0.2272727em; /* 5 / 22 = 0.2272727em */
-  background-color: var(--gray4);
+  background-color: var(--cta-grey-2);
 }
 
 .search-input + .search-label {
@@ -182,7 +189,7 @@ input {
   height: 100%;
 }
 
-.search-input:focus ~ .search-label, .search-input:valid ~ .search-label {
+.search-input:focus ~ .search-label span, .search-input:valid ~ .search-label span {
   visibility: hidden;
 }
 
