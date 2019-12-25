@@ -14,7 +14,7 @@
   font-weight: 300;
 }
 
-.cols-1.bus-route-number {
+.bus-route-number {
   background-color: var(--cta-grey-1);
   border-radius: 0.181818em; /* 5 / 27.5 = 0.181818em */
   font-size: var(--text-level2);
