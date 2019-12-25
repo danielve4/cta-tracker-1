@@ -1,16 +1,19 @@
 <article>
   <h2 class="cols-4">Route {{forRoute}} {{forDirection}}</h2>
-  <section class="cols-4 search-form">
-    <input class="search-input" id="search-stops" #criteria (input)="search(criteria.value)" autocomplete="off"
+  <section class="cols-4 grid-4 search-form">
+    <input class="cols-4 search-input" id="search-stops" #criteria (input)="search(criteria.value)" autocomplete="off"
       required />
-    <label class="search-label" for="search-stops">Search Stops</label>
+    <label class="cols-4 search-label" for="search-routes">
+      <img src="../../assets/icons/search.svg">
+      <span>Search Stops</span>
+    </label>
   </section>
 
   <section class="cols-4">
-    <ul class="cols-4">
+    <ul class="cols-4 grid-4">
       <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-      <li *ngFor="let stop of stops$ | async" class="bus-stop">
-        <a routerLink="/arrivals/{{forRoute}}/{{forDirection}}/{{stop.stpid}}/{{stop.stpnm.replace('/', '-')}}">
+      <li *ngFor="let stop of stops$ | async" class="cols-4 list-element">
+        <a routerLink="/arrivals/{{forRoute}}/{{forDirection}}/{{stop.stpid}}/{{stop.stpnm.replace('/', '-')}}" class="bus-stop">
           {{stop.stpnm}}
         </a>
       </li>

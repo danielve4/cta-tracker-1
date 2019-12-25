@@ -1,0 +1,12 @@
+.bus-stop {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  justify-content: left;
+  font-weight: 300;
+  border-radius: 0.2272727em; /* 5 / 22 = 0.2272727em */
+}
