@@ -1,0 +1,13 @@
+.bus-direction {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  justify-content: center;
+  font-weight: 300;
+  background-color: var(--cta-grey-1);
+  border-radius: 0.2272727em; /* 5 / 22 = 0.2272727em */
+}
