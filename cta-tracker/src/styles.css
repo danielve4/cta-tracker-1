@@ -94,7 +94,12 @@ h1 {
   font-weight: 700;
   font-size: var(--text-level4); /* 42.969 / 22 = 1.953em */
   line-height: var(--text-line-height); /* 42.969 * 125% = 1.25em */
-  /* margin-bottom: 0.256em;  11 / 42.969 = 0.256em */
+}
+
+h2 {
+  font-weight: 700;
+  font-size: var(--text-level3); /* 42.969 / 22 = 1.953em */
+  line-height: var(--text-line-height); /* 42.969 * 125% = 1.25em */
 }
 
 a {
@@ -174,6 +179,7 @@ input {
   height: 2em; /* 44 / 22 = 2em */
   border-radius: 0.2272727em; /* 5 / 22 = 0.2272727em */
   background-color: var(--cta-grey-2);
+  max-width: 100%;
 }
 
 .search-input + .search-label {
