@@ -3,7 +3,6 @@
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  font-weight: 900;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -18,4 +17,5 @@
   background-color: var(--cta-grey-1);
   border-radius: 0.181818em; /* 5 / 27.5 = 0.181818em */
   font-size: var(--text-level2);
+  font-weight: 900;
 }
