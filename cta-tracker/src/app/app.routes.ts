@@ -1,5 +1,4 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 
 import { ArrivalsComponent } from './arrivals/arrivals.component';
 import { DirectionsComponent } from './directions/directions.component';
@@ -8,8 +7,7 @@ import { FollowVehicleComponent } from './follow-vehicle/follow-vehicle.componen
 import { RoutesComponent } from './routes/routes.component';
 import { StopsComponent } from './stops/stops.component';
 
-
-const routes: Routes = [
+export const routes: Routes = [
   { path: '', redirectTo: '/routes', pathMatch: 'full' },
   { path: 'routes', component: RoutesComponent },
   { path: 'directions/:route', component: DirectionsComponent },
@@ -19,9 +17,3 @@ const routes: Routes = [
   { path: 'favorites', component: FavoritesComponent },
   { path: '**', redirectTo: '/routes' }
 ];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }

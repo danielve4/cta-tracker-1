@@ -1,34 +1,25 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { BustimeResponse } from '../busResponse';
-import { Config } from '../config/Config';
 import { Observable, of } from 'rxjs';
-import { tap, map } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BusService {
+  private readonly baseURL = environment.baseURL;
+  private readonly routesPath = 'busroutes';
+  private readonly routesURL = `${this.baseURL}/${this.routesPath}`;
+  private readonly routeDirectionsPath = 'busroutedirections';
+  private readonly routeStopsPath = 'busroutestops';
+  private readonly arrivalsURL = `${this.baseURL}/busstoparrivals`;
+  private readonly followURL = `${this.baseURL}/busfollow`;
 
-  routesURL: string;
-  routesPath: string;
-  routeDirectionsPath: string;
-  routeStopsPath: string;
-  arrivalsURL: string;
-  followURL: string;
-  baseURL:string = environment.baseURL;
-  constructor(private http: HttpClient) {
-    this.routesPath = 'busroutes';
-    this.routesURL = `${this.baseURL}/${this.routesPath}`;
-    this.routeDirectionsPath = 'busroutedirections';
-    this.routeStopsPath = 'busroutestops';
-    this.arrivalsURL = `${this.baseURL}/busstoparrivals`;
-    this.followURL = `${this.baseURL}/busfollow`;
-  }
+  constructor(private http: HttpClient) {}
 
-  routes(getCached: boolean = true): Observable<BustimeResponse> {
-    console.log("About to call routes!");
+  routes(getCached = true): Observable<BustimeResponse> {
     return (getCached && this.getCached(this.routesPath)) ||
       this.http.get<BustimeResponse>(this.routesURL).pipe(tap((response: BustimeResponse) => {
         if (!response.error) {
@@ -37,8 +28,7 @@ export class BusService {
       }));
   }
 
-  directions(route: string, getCached: boolean = true): Observable<BustimeResponse> {
-    console.log("About to call directions!");
+  directions(route: string, getCached = true): Observable<BustimeResponse> {
     const path = `${this.routeDirectionsPath}?route=${route}`;
     return (getCached && this.getCached(path)) ||
       this.http.get<BustimeResponse>(`${this.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
@@ -48,8 +38,7 @@ export class BusService {
       }));
   }
 
-  stops(route: string, direction: string, getCached: boolean = true): Observable<BustimeResponse> {
-    console.log("About to call stops!");
+  stops(route: string, direction: string, getCached = true): Observable<BustimeResponse> {
     const path = `${this.routeStopsPath}?route=${route}&direction=${direction}`;
     return (getCached && this.getCached(path)) ||
       this.http.get<BustimeResponse>(`${this.baseURL}/${path}`).pipe(tap((response: BustimeResponse) => {
@@ -60,22 +49,20 @@ export class BusService {
   }
 
   arrivals(stopId: number): Observable<BustimeResponse> {
-    console.log("About to call arrivals!");
     return this.http.get<BustimeResponse>(`${this.arrivalsURL}?stopId=${stopId}`);
   }
 
   follow(vehicleId: number): Observable<BustimeResponse> {
-    console.log("About to call follow!");
     return this.http.get<BustimeResponse>(`${this.followURL}?vehicleId=${vehicleId}`);
   }
 
-  getCached(item: string): Observable<BustimeResponse> {
+  private getCached(item: string): Observable<BustimeResponse> | null {
     const cachedResult = localStorage.getItem(item);
     if (cachedResult) {
       try {
-        return of(<BustimeResponse>JSON.parse(cachedResult));
-      } catch (e) {
-        console.log("Unable to cast and return cached " + item);
+        return of(JSON.parse(cachedResult) as BustimeResponse);
+      } catch {
+        console.log('Unable to cast and return cached ' + item);
       }
     }
     return null;

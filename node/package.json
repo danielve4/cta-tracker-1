@@ -1,7 +1,7 @@
 {
-  "name": "node",
+  "name": "cta-tracker-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "CTA Tracker API server - proxies Chicago Transit Authority bus and train APIs",
   "main": "app.js",
   "scripts": {
     "deploy": "gcloud app deploy",
@@ -10,9 +10,11 @@
   },
   "author": "Ruben Estrada & Daniel Vega",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
-    "@google-cloud/datastore": "^4.2.0",
-    "express": "^4.16.4",
-    "request": "^2.88.0"
+    "@google-cloud/datastore": "^9.0.0",
+    "express": "^5.1.0"
   }
 }
