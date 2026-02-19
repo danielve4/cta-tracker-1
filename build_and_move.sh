@@ -1,6 +1,6 @@
 #!/bin/bash     
 angular_path="./cta-tracker/"
-ng_build_cmd="ng build --prod"
+ng_build_cmd="npx ng build --prod"
 ng_build_path="./cta-tracker/dist/cta-tracker/"
 node_public_path="node/public/"
 

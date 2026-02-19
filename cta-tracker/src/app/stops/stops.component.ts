@@ -41,4 +41,8 @@ export class StopsComponent implements OnInit {
     criteria = (criteria ? criteria.trim() : '').toLowerCase();
     this.stops$ = of(this.STOPS.filter(stop => stop.stpnm.toLowerCase().includes(criteria)));
   }
+
+  replaceSlashes(str: string): string {
+    return str.replace(/\//g, '-');
+  }
 }

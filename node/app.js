@@ -19,6 +19,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use((error, req, res, next) => {
+  console.log('request received', req.method, req.url);
   if (error instanceof SyntaxError) {
     console.log('Malformed request', err);
     res.status(err.status).send(`${err.type}\n"${err.body}"`);
