@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Direction, Error } from '../busResponse';
 import { of, Observable } from 'rxjs';
@@ -8,28 +9,30 @@ import { switchMap } from 'rxjs/operators';
 @Component({
   selector: 'app-directions',
   templateUrl: './directions.component.html',
-  styleUrls: ['./directions.component.css']
+  styleUrls: ['./directions.component.css'],
+  imports: [RouterLink, AsyncPipe]
 })
 export class DirectionsComponent implements OnInit {
+  forRoute = '';
+  directions$: Observable<Direction[]> | undefined;
+  error$: Observable<Error[]> | undefined;
 
-  forRoute: string;
-  directions$: Observable<Direction[]>;
-  error$: Observable<Error[]>;
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private router: Router,
+    private busService: BusService
+  ) {}
 
-  constructor(private activatedRoute: ActivatedRoute, private router: Router,
-    private busService: BusService) { }
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.activatedRoute.paramMap.pipe(switchMap(params => {
-      this.forRoute = params.get('route');
+      this.forRoute = params.get('route') ?? '';
       return this.busService.directions(this.forRoute);
     })).subscribe((response: BustimeResponse) => {
       if (response.error) {
         this.error$ = of(response.error);
-      } else {
+      } else if (response.directions) {
         this.directions$ = of(response.directions);
       }
     });
   }
-
 }

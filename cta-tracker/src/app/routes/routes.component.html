@@ -4,13 +4,21 @@
   <label class="search-label" for="search-routes">Search Routes</label>
 </section>
 <ul class="cols-4">
-  <li *ngFor="let anError of error$ | async">{{anError.msg}}</li>
-  <li *ngFor="let route of routes$ | async" class="bus-route">
-    <a routerLink="/directions/{{route.rt}}">
-      <span class="bus-route-number-container">
-        <span class="bus-route-number">{{route.rt}}</span>
-      </span>
-      <span class="bus-route-name">{{route.rtnm}}</span>
-    </a>
-  </li>
+  @if (error$ | async; as errors) {
+    @for (anError of errors; track anError.msg) {
+      <li>{{ anError.msg }}</li>
+    }
+  }
+  @if (routes$ | async; as routes) {
+    @for (route of routes; track route.rt) {
+      <li class="bus-route">
+        <a routerLink="/directions/{{ route.rt }}">
+          <span class="bus-route-number-container">
+            <span class="bus-route-number">{{ route.rt }}</span>
+          </span>
+          <span class="bus-route-name">{{ route.rtnm }}</span>
+        </a>
+      </li>
+    }
+  }
 </ul>

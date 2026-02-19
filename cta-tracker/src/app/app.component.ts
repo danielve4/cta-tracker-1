@@ -1,27 +1,26 @@
 import { Component } from '@angular/core';
-import { Router, Event, NavigationEnd } from '@angular/router';
-import { first } from 'rxjs/operators';
+import { Router, Event, NavigationEnd, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive]
 })
 export class AppComponent {
-  LS_SAVED_ROUTE: string = 'LS_SAVED_ROUTE';
-  firstLoad: boolean = true;
+  private readonly LS_SAVED_ROUTE = 'LS_SAVED_ROUTE';
+
   constructor(private router: Router) {
-    const savedCurrentRoute: string = localStorage.getItem(this.LS_SAVED_ROUTE);
+    const savedCurrentRoute = localStorage.getItem(this.LS_SAVED_ROUTE);
 
-    if (this.firstLoad && savedCurrentRoute)
+    if (savedCurrentRoute) {
       this.router.navigateByUrl(savedCurrentRoute);
-
-    this.firstLoad = false;
+    }
 
     router.events.subscribe((event: Event) => {
-      if (event instanceof NavigationEnd)
+      if (event instanceof NavigationEnd) {
         localStorage.setItem(this.LS_SAVED_ROUTE, event.url);
-
+      }
     });
   }
 }
