@@ -22,7 +22,7 @@
   border-radius: 8px;
   z-index: 2;
   /* background-color: hsla(202, 52%, 11%, 0.6); */
-  background-color: #191919;
+  background-color: #FFFFFF;
   /* backdrop-filter: saturate(180%) blur(20px);  */
 }
 
@@ -51,7 +51,7 @@
   font-size: 40px;
   line-height: 40px;
   border-radius: 4px;
-  background-color: #333333;
+  background-color: #FFFFFF;
 }
 
 .time-left {
@@ -66,13 +66,13 @@
   border-radius: 4px;
   padding: 0 4px;
   background: #FFFFFF;
-  color: #000000;
+  color: #FFFFFF;
 }
 
 .delayed {
   border-radius: 4px;
-  background-color: var(--pink-opacity);
-  color: var(--pink);
+  background-color: #FFFFFF;
+  color: #FFFFFF;
   padding: 0 12px;
   margin-right: 8px;
 }
@@ -97,11 +97,11 @@
 
 .button-favorite {
   bottom: calc(56px + 16px + 56px + 16px);
-  background-color: var(--cta-grey);
+  background-color: #FFFFFF;
 }
 
 .button-refresh {
-  background-color: var(--cta-grey);
+  background-color: #FFFFFF;
 }
 
 .refreshing {
