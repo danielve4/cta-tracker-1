@@ -45,6 +45,6 @@ export class StopsComponent implements OnInit {
   }
 
   replaceSlash(value: string): string {
-    return value.replace('/', '-');
+    return value.replace(/\//g, '-');
   }
 }
