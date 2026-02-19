@@ -5,6 +5,7 @@ import { of, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-routes',
+  standalone: false,
   templateUrl: './routes.component.html',
   styleUrls: ['./routes.component.css']
 })

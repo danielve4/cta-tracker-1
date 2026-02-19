@@ -6,6 +6,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-favorites',
+  standalone: false,
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css']
 })

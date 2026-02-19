@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-follow-vehicle',
+  standalone: false,
   templateUrl: './follow-vehicle.component.html',
   styleUrls: ['./follow-vehicle.component.css']
 })

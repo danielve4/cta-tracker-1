@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-directions',
+  standalone: false,
   templateUrl: './directions.component.html',
   styleUrls: ['./directions.component.css']
 })

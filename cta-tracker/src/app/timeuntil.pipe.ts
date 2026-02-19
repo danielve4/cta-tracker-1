@@ -1,8 +1,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { QueryValueType } from '@angular/core/src/view';
 
 @Pipe({
-  name: 'timeuntil'
+  name: 'timeuntil',
+  standalone: false
 })
 export class TimeuntilPipe implements PipeTransform {
 

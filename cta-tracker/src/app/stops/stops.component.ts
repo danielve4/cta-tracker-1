@@ -7,6 +7,7 @@ import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-stops',
+  standalone: false,
   templateUrl: './stops.component.html',
   styleUrls: ['./stops.component.css']
 })

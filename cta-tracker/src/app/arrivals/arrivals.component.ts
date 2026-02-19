@@ -8,6 +8,7 @@ import { Favorite } from '../services/Favorite';
 
 @Component({
   selector: 'app-arrivals',
+  standalone: false,
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css']
 })
