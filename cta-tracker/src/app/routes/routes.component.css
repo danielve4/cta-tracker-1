@@ -3,7 +3,7 @@
 }
 
 a {
-  color: white;
+  color: var(--text-primary);
   text-decoration: none;
   height: 100%;
   width: 100%;
@@ -33,7 +33,7 @@ a {
   font-size: 22px;
   /* border-bottom: 1px solid #1DE7DB; */
   /* box-shadow: 0 0 5px #1463F4; */
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .bus-route-name {

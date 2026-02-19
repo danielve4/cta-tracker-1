@@ -22,7 +22,7 @@
   border-radius: 8px;
   z-index: 2;
   /* background-color: hsla(202, 52%, 11%, 0.6); */
-  background-color: #191919;
+  background-color: var(--surface-card);
   /* backdrop-filter: saturate(180%) blur(20px);  */
 }
 
@@ -51,7 +51,7 @@
   font-size: 40px;
   line-height: 40px;
   border-radius: 4px;
-  background-color: #333333;
+  background-color: var(--surface-elevated);
 }
 
 .time-left {
@@ -65,8 +65,8 @@
 .route-number {
   border-radius: 4px;
   padding: 0 4px;
-  background: #FFFFFF;
-  color: #000000;
+  background: var(--route-badge-bg);
+  color: var(--route-badge-text);
 }
 
 .delayed {

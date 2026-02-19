@@ -3,7 +3,7 @@
 }
 
 a {
-  color: white;
+  color: var(--text-primary);
   text-decoration: none;
   height: 100%;
   width: 100%;

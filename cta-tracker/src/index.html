@@ -16,6 +16,18 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#000000">
+  <script>
+    (function() {
+      var t = localStorage.getItem('theme-preference');
+      if (!t || t === 'system') {
+        t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+      if (t === 'light') {
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f5f7');
+      }
+    })();
+  </script>
 </head>
 
 <body>
