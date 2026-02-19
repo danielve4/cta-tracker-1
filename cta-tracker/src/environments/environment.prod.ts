@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  baseURL: ''
+  baseURL: 'https://cta.danielvega.dev'
 };
