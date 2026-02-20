@@ -1,3 +1,38 @@
-<p>
-  follow-vehicle works!
-</p>
+<h2 class="cols-4">
+  <span class="route-number">RT {{ routeNumber }}</span>
+  Bus #{{ vehicleId }} {{ direction }}
+</h2>
+<p class="cols-4 subheader">To {{ destination }}</p>
+<ul class="cols-4 predictions-list">
+  @if (error$ | async; as errors) {
+    @for (anError of errors; track anError.msg) {
+      <li>{{ anError.msg }}</li>
+    }
+  }
+  @if (predictions$ | async; as predictions) {
+    @for (prediction of predictions; track prediction.stpid) {
+      <li class="a-prediction" [class.loading]="refreshing" [class.from-stop]="prediction.stpid === fromStopId">
+        <div class="prediction-row">
+          <div class="prediction-left">
+            <span class="stop-name">{{ prediction.stpnm }}</span>
+            <span class="stop-id">
+              Stop #{{ prediction.stpid }}
+              @if (prediction.dly) {
+                <span class="delayed">DELAYED</span>
+              }
+            </span>
+          </div>
+          <div class="prediction-right">
+            <span class="minutes">{{ prediction.prdctdn }}{{ prediction.prdctdn | timeuntil:'minutes' }}</span>
+            <span class="time">{{ prediction.prdctdn | timeuntil:'time' }}</span>
+          </div>
+        </div>
+      </li>
+    }
+  }
+</ul>
+@if (canRefresh) {
+  <button class="fab button-refresh" (click)="getFollowData()">
+    <img src="assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing">
+  </button>
+}

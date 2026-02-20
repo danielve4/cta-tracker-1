@@ -8,23 +8,25 @@
   @if (vehicles$ | async; as vehicles) {
     @for (vehicle of vehicles; track vehicle.vid) {
       <li class="an-arrival" [class.loading]="refreshing">
-        <ul class="grid-4 arrivals-area">
-          <li class="destination">
-            @if (vehicle.dly) {
-              <span class="delayed">DELAYED</span>
-            }
-            To {{ vehicle.des }}
-          </li>
-          <li class="route">
-            <span class="route-number">RT {{ vehicle.rt }}</span>
-          </li>
-          <li class="minutes-left">
-            {{ vehicle.prdctdn }}{{ vehicle.prdctdn | timeuntil:'minutes' }}
-          </li>
-          <li class="time-left">
-            {{ vehicle.prdctdn | timeuntil:'time' }}
-          </li>
-        </ul>
+        <a [routerLink]="['/follow', vehicle.vid]" [queryParams]="{from: forStopId}" class="follow-link">
+          <ul class="grid-4 arrivals-area">
+            <li class="destination">
+              @if (vehicle.dly) {
+                <span class="delayed">DELAYED</span>
+              }
+              To {{ vehicle.des }}
+            </li>
+            <li class="route">
+              <span class="route-number">RT {{ vehicle.rt }}</span>
+            </li>
+            <li class="minutes-left">
+              {{ vehicle.prdctdn }}{{ vehicle.prdctdn | timeuntil:'minutes' }}
+            </li>
+            <li class="time-left">
+              {{ vehicle.prdctdn | timeuntil:'time' }}
+            </li>
+          </ul>
+        </a>
       </li>
     }
   }
