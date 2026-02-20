@@ -1,0 +1,1906 @@
+openapi: 3.0.3
+info:
+  title: CTA Bus Tracker API
+  description: >
+    The Bus Tracker API allows for querying data from the CTA Bus Tracker service.
+    The system can provide estimated arrival times for buses as they approach bus stops,
+    as well as data on routes, stops, patterns, detours, cancelations and more.
+    Information about buses and their estimated arrivals is updated about once every 30 seconds.
+
+    **Authentication:** All requests require a valid 25-digit API key passed via the `key` query parameter.
+
+    **Response Format:** XML is the default. Pass `format=json` to receive JSON responses.
+    This spec documents the JSON format only.
+
+    **Rate Limiting:** By default, one API key can make a maximum of 100,000 requests per day.
+
+    **Versioning:** This document covers Version 3 only. The version is embedded in the URL path as `/v3/`.
+
+    **Legal:** By using this API, you agree to the CTA Developer Terms of Use.
+    This service is provided on an as-is basis without guarantees as to availability or accuracy.
+  version: "3.0"
+  contact:
+    name: Chicago Transit Authority
+    url: https://www.transitchicago.com
+  license:
+    name: CTA Developer Terms of Use
+    url: https://www.transitchicago.com/developers/terms
+
+servers:
+  - url: https://www.ctabustracker.com/bustime/api/v3
+    description: CTA Bus Tracker API v3 (port 80)
+
+tags:
+  - name: System
+    description: System-level operations such as retrieving the current time.
+  - name: Vehicles
+    description: Real-time vehicle location data.
+  - name: Routes
+    description: Route listings and direction information.
+  - name: Stops
+    description: Stop listings for routes and directions.
+  - name: Patterns
+    description: Geo-positional patterns (route variations) for vehicles.
+  - name: Predictions
+    description: Estimated arrival and departure predictions for stops and vehicles.
+  - name: Locales
+    description: Available languages/locales for localized API responses.
+  - name: Detours
+    description: Active detour metadata and pattern changes.
+  - name: Enhanced Detours
+    description: Detailed detour data for GTFS-RT systems, including polyline and trip-level info.
+
+paths:
+
+  # ─────────────────────────────────────────────
+  # GET TIME
+  # ─────────────────────────────────────────────
+  /gettime:
+    get:
+      operationId: getTime
+      summary: Get current system time
+      description: >
+        Retrieve the current BusTime system date and time. Since BusTime is a time-dependent system,
+        it is important to synchronize your application with BusTime's system date and time.
+        Time given is local time unless `unixTime=true` is specified.
+      tags:
+        - System
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: unixTime
+          in: query
+          required: false
+          description: >
+            If true, returns the number of milliseconds that have elapsed since
+            00:00:00 Coordinated Universal Time (UTC), Thursday, 1 January 1970.
+          schema:
+            type: boolean
+            example: true
+      responses:
+        '200':
+          description: Successful response containing the current system time.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTimeResponse'
+              examples:
+                localTime:
+                  summary: Local time response
+                  value:
+                    bustime-response:
+                      tm: "20160308 14:11:54"
+                unixTime:
+                  summary: Unix epoch time response
+                  value:
+                    bustime-response:
+                      tm: "1531860021189"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET VEHICLES
+  # ─────────────────────────────────────────────
+  /getvehicles:
+    get:
+      operationId: getVehicles
+      summary: Get vehicle locations
+      description: >
+        Retrieve vehicle information (i.e., locations) of all or a subset of vehicles
+        currently being tracked by BusTime.
+
+        Use `vid` to retrieve information for one or more specific vehicles.
+        Use `rt` to retrieve information for all vehicles on one or more routes.
+
+        **Note:** `vid` and `rt` cannot be combined. If both are specified, only the first
+        parameter encountered will be processed. A maximum of 10 identifiers can be specified
+        for either parameter.
+      tags:
+        - Vehicles
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: vid
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of vehicle IDs whose location should be returned.
+            Example: `509,392,201,4367`. Maximum of 10 identifiers. Cannot be combined with `rt`.
+          schema:
+            type: string
+            example: "509,392"
+        - name: rt
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of route designators for which matching vehicles should be returned.
+            Example: `X3,4,20`. Maximum of 10 identifiers. Cannot be combined with `vid`.
+          schema:
+            type: string
+            example: "20,X20"
+        - name: tmres
+          in: query
+          required: false
+          description: >
+            Resolution of timestamps in the response.
+            - `s` — timestamp resolution to the second (format: `YYYYMMDD HH:MM:SS`)
+            - `m` — timestamp resolution to the minute (format: `YYYYMMDD HH:MM`, default)
+          schema:
+            type: string
+            enum: [s, m]
+            default: m
+            example: "s"
+      responses:
+        '200':
+          description: Successful response containing vehicle location data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVehiclesResponse'
+              examples:
+                byVehicleId:
+                  summary: Response for vehicles 1 and 2
+                  value:
+                    bustime-response:
+                      vehicle:
+                        - vid: "1"
+                          tmstmp: "20200307 13:14"
+                          lat: "37.54381"
+                          lon: "-77.43878166666667"
+                          hdg: "308"
+                          pid: 1689
+                          rt: "6"
+                          des: "BROAD WILLOW LAWN"
+                          pdist: 3481
+                          dly: false
+                          spd: 3
+                          tatripid: "12"
+                          tablockid: "6-05"
+                          origtatripno: "ME_ME403_V1_AA"
+                          zone: ""
+                          mode: 1
+                          psgld: "EMPTY"
+                          stst: 47520
+                          stsd: "2020-03-07"
+                        - vid: "2"
+                          tmstmp: "20200307 13:14"
+                          lat: "37.55896532837857"
+                          lon: "-77.48567781754004"
+                          hdg: "294"
+                          pid: 1559
+                          rt: "16"
+                          des: "GROVE BF"
+                          pdist: 20156
+                          dly: false
+                          spd: 5
+                          tatripid: "12"
+                          tablockid: "16-02"
+                          origtatripno: "ME_ME403_V1_AA"
+                          zone: ""
+                          mode: 1
+                          psgld: "FULL"
+                          stst: 46140
+                          stsd: "2020-03-07"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET ROUTES
+  # ─────────────────────────────────────────────
+  /getroutes:
+    get:
+      operationId: getRoutes
+      summary: Get all routes
+      description: >
+        Retrieve the set of routes serviced by the system.
+        Returns route designators, names, colors, and display designators.
+      tags:
+        - Routes
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+      responses:
+        '200':
+          description: Successful response containing all available routes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRoutesResponse'
+              examples:
+                routes:
+                  summary: Sample route list
+                  value:
+                    bustime-response:
+                      routes:
+                        - rt: "1"
+                          rtnm: "Pontiac – Dhu Varren"
+                          rtdd: "1"
+                          rtclr: "#ffffff"
+                        - rt: "2"
+                          rtnm: "Pontiac - University"
+                          rtdd: "1"
+                          rtclr: "#dc78af"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET DIRECTIONS
+  # ─────────────────────────────────────────────
+  /getdirections:
+    get:
+      operationId: getDirections
+      summary: Get directions for a route
+      description: >
+        Retrieve the set of directions serviced by the specified route.
+        The returned `id` field is what must be passed as the `dir` parameter in
+        subsequent calls such as `getstops`.
+
+        **Note:** In v3, the Route Directions call always returns locale-specific data
+        regardless of whether the system is single-feed or multi-feed.
+      tags:
+        - Routes
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: rt
+          in: query
+          required: true
+          description: Alphanumeric designator of a route (e.g. `"20"` or `"X20"`) for which directions are to be returned.
+          schema:
+            type: string
+            example: "20"
+      responses:
+        '200':
+          description: Successful response containing the available directions for the specified route.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDirectionsResponse'
+              examples:
+                route20Directions:
+                  summary: Directions for Route 20
+                  value:
+                    bustime-response:
+                      directions:
+                        - id: "Eastbound"
+                          name: "Eastbound"
+                        - id: "Westbound"
+                          name: "Westbound"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET STOPS
+  # ─────────────────────────────────────────────
+  /getstops:
+    get:
+      operationId: getStops
+      summary: Get stops for a route/direction or by stop IDs
+      description: >
+        Retrieve the set of stops for the specified route and direction,
+        or retrieve one or more specific stops by stop ID.
+
+        A request must provide either a `rt` + `dir` pair OR up to 10 `stpid`s — not both.
+
+        Stop lists are only available for a valid route/direction pair.
+        A list of all stops serving a particular route regardless of direction cannot be requested.
+
+        If a stop is affected by a detour, the detour's ID will appear in:
+        - `dtradd` — if the stop was temporarily added to the pattern
+        - `dtrrem` — if the stop has been detoured around (removed)
+
+        Use `getdetours` to retrieve metadata about a referenced detour ID.
+      tags:
+        - Stops
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: rt
+          in: query
+          required: false
+          description: >
+            Alphanumeric designator of the route (e.g. `"20"` or `"X20"`) for which stops are to be returned.
+            Required if `stpid` is not provided.
+          schema:
+            type: string
+            example: "20"
+        - name: dir
+          in: query
+          required: false
+          description: >
+            Direction of the route (e.g. `"Eastbound"`). Must match the direction `id`
+            from the `getdirections` call. Required if `stpid` is not provided.
+          schema:
+            type: string
+            example: "Eastbound"
+        - name: stpid
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of numeric stop IDs (e.g. `"305,1577,1564"`).
+            Up to 10 stop IDs can be specified. Required if `rt` and `dir` are not provided.
+          schema:
+            type: string
+            example: "1577,1564"
+      responses:
+        '200':
+          description: Successful response containing stop data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStopsResponse'
+              examples:
+                stopsByRouteDir:
+                  summary: Stops for Route 20 Eastbound
+                  value:
+                    bustime-response:
+                      stops:
+                        - stpid: "1577"
+                          stpnm: "1509 S Michigan"
+                          lat: 41.861706666665
+                          lon: -87.623969999999
+                        - stpid: "1564"
+                          stpnm: "3000 S Michigan"
+                          lat: 41.840606666667
+                          lon: -87.623206666667
+                          dtrrem:
+                            - "BFC46F62-990F-4AB4-A85C-3AF84574EC99"
+                            - "50C633C7-0891-4E5A-83A8-FF0C6214BF69"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET PATTERNS
+  # ─────────────────────────────────────────────
+  /getpatterns:
+    get:
+      operationId: getPatterns
+      summary: Get geo-positional patterns for a route or set of pattern IDs
+      description: >
+        Retrieve the set of geo-positional points and stops that, when connected, can be used
+        to construct the geo-positional layout of a pattern (i.e., route variation).
+
+        A pattern is a unique sequence of waypoints and stops that combine to form the path
+        that a transit vehicle will repetitively travel. A route often has more than one possible pattern.
+
+        Use `pid` to specify one or more specific pattern IDs (max 10).
+        Use `rt` to get all active patterns for a route. Active patterns include:
+        - One or more patterns marked as "default" for the route
+        - All patterns currently being executed by at least one vehicle on the route
+
+        **Note:** `pid` and `rt` cannot be combined. If both are specified, only the first
+        parameter encountered will be processed.
+
+        If a pattern was created by a detour, it will include a `dtrid` referencing the detour,
+        and a `dtrpt` array containing the original (pre-detour) pattern points — useful
+        for drawing dashed lines on a map.
+      tags:
+        - Patterns
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: pid
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of pattern IDs (e.g. `"56,436,1221"`).
+            Maximum of 10 identifiers. Cannot be combined with `rt`.
+          schema:
+            type: string
+            example: "954"
+        - name: rt
+          in: query
+          required: false
+          description: >
+            Route designator for which all active patterns should be returned.
+            Cannot be combined with `pid`.
+          schema:
+            type: string
+            example: "20"
+      responses:
+        '200':
+          description: Successful response containing pattern geo-positional data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPatternsResponse'
+              examples:
+                pattern954:
+                  summary: Pattern 954 (Westbound)
+                  value:
+                    bustime-response:
+                      ptr:
+                        - pid: 954
+                          ln: 41113.0
+                          rtdir: "Westbound"
+                          pt:
+                            - seq: 1
+                              lat: 41.882155
+                              lon: -87.625147000001
+                              typ: "W"
+                              pdist: 0.0
+                            - seq: 2
+                              lat: 41.88211
+                              lon: -87.62515
+                              typ: "W"
+                              pdist: 0.0
+                            - seq: 3
+                              lat: 41.88211
+                              lon: -87.62544
+                              typ: "W"
+                              pdist: 0.0
+                            - seq: 4
+                              lat: 41.8821
+                              lon: -87.62585
+                              typ: "W"
+                              pdist: 0.0
+                            - seq: 5
+                              lat: 41.882129000001
+                              lon: -87.625855
+                              typ: "S"
+                              stpid: "450"
+                              stpnm: "Madison & Wabash"
+                              pdist: 206.0
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET PREDICTIONS
+  # ─────────────────────────────────────────────
+  /getpredictions:
+    get:
+      operationId: getPredictions
+      summary: Get arrival/departure predictions for stops or vehicles
+      description: >
+        Retrieve arrival or departure predictions for one or more stops or one or more vehicles.
+        Predictions are always returned in ascending order by `prdtm`.
+
+        Use `stpid` to retrieve predictions for one or more stops (max 10).
+        Use `vid` to retrieve predictions for one or more vehicles (max 10).
+
+        **Note:** `stpid` and `vid` cannot be combined. If both are specified, only the first
+        parameter encountered will be processed. Calls without either parameter are not allowed.
+
+        The optional `rt` parameter can filter predictions by route(s) and is only available
+        when using `stpid`.
+
+        Use `top` to limit the number of predictions returned.
+
+        Predictions for canceled stops will not be returned unless they are configured
+        to be displayed publicly. Same applies to expressed stops.
+
+        The `dyn` field indicates if a prediction has been affected by Disruption Management.
+        Refer to the Dynamic Action Types section for interpretation.
+      tags:
+        - Predictions
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: stpid
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of stop IDs (e.g. `"5029,1392,2019,4367"`).
+            Maximum of 10 identifiers. Cannot be combined with `vid`.
+          schema:
+            type: string
+            example: "456"
+        - name: vid
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of vehicle IDs (e.g. `"509,392,201,4367"`).
+            Maximum of 10 identifiers. Cannot be combined with `stpid`.
+          schema:
+            type: string
+            example: "8184,8140"
+        - name: rt
+          in: query
+          required: false
+          description: >
+            Comma-delimited list of route designators to filter predictions.
+            Only available when used with `stpid`.
+          schema:
+            type: string
+            example: "20"
+        - name: top
+          in: query
+          required: false
+          description: Maximum number of predictions to return.
+          schema:
+            type: integer
+            example: 5
+        - name: tmres
+          in: query
+          required: false
+          description: >
+            Resolution of timestamps in the response.
+            - `s` — resolution to the second (format: `YYYYMMDD HH:MM:SS`)
+            - `m` — resolution to the minute (format: `YYYYMMDD HH:MM`, default)
+          schema:
+            type: string
+            enum: [s, m]
+            default: m
+        - name: unixTime
+          in: query
+          required: false
+          description: >
+            If true, `tmstmp` and `prdtm` timestamps are returned as Unix epoch
+            milliseconds instead of formatted date strings.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successful response containing prediction data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPredictionsResponse'
+              examples:
+                predictionsForStop:
+                  summary: Predictions for stop 456 on route 20
+                  value:
+                    bustime-response:
+                      prd:
+                        - tmstmp: "20250421 16:04"
+                          typ: "A"
+                          stpnm: "Madison & Jefferson"
+                          stpid: "456"
+                          vid: "8184"
+                          dstp: 686
+                          rt: "20"
+                          rtdd: "20"
+                          rtdir: "Westbound"
+                          des: "Austin"
+                          prdtm: "20250421 16:06"
+                          tablockid: "20 -803"
+                          tatripid: "1040713"
+                          origtatripno: "262522629"
+                          dly: false
+                          dyn: 0
+                          prdctdn: "DUE"
+                          zone: ""
+                          psgld: ""
+                          stst: 57120
+                          stsd: "2025-04-21"
+                          flagstop: 0
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET LOCALES
+  # ─────────────────────────────────────────────
+  /getlocalelist:
+    get:
+      operationId: getLocaleList
+      summary: Get available locales/languages
+      description: >
+        Retrieve a list of supported locales (languages) that can be passed as the `locale`
+        parameter in all other API calls.
+
+        Call this endpoint first to get valid locale strings, then optionally call it again
+        with a `locale` parameter to see language names in that language.
+
+        If `inLocaleLanguage=true` is passed, each locale's display name is returned in its
+        own native language and takes precedence over the `locale` parameter.
+
+        **Note:** The `locale` parameter in all requests supports the Java Locale inheritance model.
+        If the given language is not supported, the TA's default language is used without indication.
+        It is best to use a value from this list.
+      tags:
+        - Locales
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: inLocaleLanguage
+          in: query
+          required: false
+          description: >
+            If true, each locale's display name is returned in its own native language.
+            Takes precedence over the `locale` parameter when true.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Successful response containing available locales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetLocaleListResponse'
+              examples:
+                defaultLocales:
+                  summary: Default locale list (English)
+                  value:
+                    bustime-response:
+                      locale:
+                        - localestring: "en"
+                          displayname: "English"
+                        - localestring: "es"
+                          displayname: "Spanish"
+                localesInSpanish:
+                  summary: Locale list with locale=es
+                  value:
+                    bustime-response:
+                      locale:
+                        - localestring: "en"
+                          displayname: "inglés"
+                        - localestring: "es"
+                          displayname: "español"
+                localesInNativeLanguage:
+                  summary: Locale list with inLocaleLanguage=true
+                  value:
+                    bustime-response:
+                      locale:
+                        - localestring: "en"
+                          displayname: "English"
+                        - localestring: "es"
+                          displayname: "español"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET DETOURS
+  # ─────────────────────────────────────────────
+  /getdetours:
+    get:
+      operationId: getDetours
+      summary: Get active detours
+      description: >
+        Retrieve a list of detours in the system. Detours are considered "active" if they
+        are currently affecting the current service day, even if the start time has not yet
+        been reached or the end time has already passed.
+
+        The response only contains metadata about the detour. The actual pattern data for the
+        detour can be retrieved via `getpatterns` when an end user selects a route affected
+        by the detour.
+
+        Canceled or expired detours still appear in results — this handles cases where a
+        vehicle is still running a canceled/expired detour and the developer wants to alert users.
+
+        **Recommendation:** If supporting detours, request this endpoint frequently. When a
+        new detour or version is added or a detour is canceled, also re-request stop and pattern
+        data for the affected route/direction combinations.
+      tags:
+        - Detours
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+        - name: rt
+          in: query
+          required: false
+          description: >
+            Alphanumeric designator of the route (e.g. `"20"` or `"X20"`) for which
+            detours should be returned. If omitted, all detours are returned.
+          schema:
+            type: string
+            example: "20"
+        - name: rtdir
+          in: query
+          required: false
+          description: >
+            Direction of travel of the route specified in `rt`. Must match the direction `id`
+            from `getdirections`. The `rt` parameter is required when using `rtdir`.
+          schema:
+            type: string
+            example: "Eastbound"
+      responses:
+        '200':
+          description: Successful response containing detour metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDetoursResponse'
+              examples:
+                allDetours:
+                  summary: All detours in system
+                  value:
+                    bustime-response:
+                      dtrs:
+                        - id: "84A97FD3-0741-4004-884D-0ABB22DAFA28"
+                          ver: 2
+                          st: 0
+                          desc: "IVD MultiRoute detour 47"
+                          rtdirs:
+                            - rt: "72"
+                              dir: "NORTHBOUND"
+                          startdt: "20180404 08:45"
+                          enddt: "20180430 03:00"
+                        - id: "329E1F2D-A848-43E9-8F90-4FB00E643786"
+                          ver: 1
+                          st: 1
+                          desc: "IVD Multiroute Detour S47/62"
+                          rtdirs:
+                            - rt: "800"
+                              dir: "EASTBOUND"
+                            - rt: "72M"
+                              dir: "NORTHBOUND"
+                          startdt: "20180404 09:06"
+                          enddt: "20180430 03:00"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+  # ─────────────────────────────────────────────
+  # GET ENHANCED DETOURS
+  # ─────────────────────────────────────────────
+  /getenhanceddetours:
+    get:
+      operationId: getEnhancedDetours
+      summary: Get enhanced detour data (GTFS-RT)
+      description: >
+        Retrieve enhanced detour data including all detours that are currently active
+        or will be active in the future. This endpoint is implemented for use by
+        GTFS-RT systems and only returns data when detour support is enabled in BusTime.
+
+        Unlike `getdetours`, this endpoint includes:
+        - Google Encoded Polyline (`encpl`) for rendering detour paths on a map
+        - Trip-level detail including affected trip IDs and active dates
+        - Detour start and end stops within the pattern
+        - Stops replaced by the detour (`repstops`)
+        - Delay time introduced by the detour
+        - Last modified timestamp (`moddt`)
+        - Service bulletin name (`sbnm`)
+
+        All datetime fields (`startdt`, `enddt`, `moddt`) are in Unix epoch milliseconds format.
+      tags:
+        - Enhanced Detours
+      parameters:
+        - $ref: '#/components/parameters/key'
+        - $ref: '#/components/parameters/format'
+        - $ref: '#/components/parameters/locale'
+      responses:
+        '200':
+          description: Successful response containing enhanced detour data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEnhancedDetoursResponse'
+              examples:
+                enhancedDetour:
+                  summary: Enhanced detour with pattern, trips, and replaced stops
+                  value:
+                    bustime-response:
+                      dtrs:
+                        - id: "766CFD24-111D-40F0-9216-6E67576E603F"
+                          ver: 2
+                          st: 1
+                          desc: "Detour with stops added and removed in multiple segments"
+                          rtdirs:
+                            - rt: "7"
+                              dir: "WEST"
+                          startdt: 1725595200000
+                          enddt: 1727409600000
+                          moddt: 1725631728000
+                          ptrs:
+                            - origpid: 2
+                              dtrpid: 500117
+                              encpl: "}fjmErnypU???Ot@@?DBnAI..."
+                              trips:
+                                - tripid: 679020
+                                  tatripid: "274676"
+                                  origtatripno: "274676"
+                                  dates:
+                                    - "20240917"
+                                    - "20240918"
+                                  stst: 43680
+                                - tripid: 158020
+                                  tatripid: "274677"
+                                  origtatripno: "274677"
+                                  dates:
+                                    - "20240917"
+                                    - "20240918"
+                                  stst: 56280
+                              dtrstartstop:
+                                geoid: 0
+                                stpid: "235053"
+                                stpnm: "SEPULVEDA BL + DOLORES ST"
+                                seq: 3
+                              dtrendstop:
+                                geoid: 0
+                                stpid: "203001"
+                                stpnm: "REDONDO BEACH PIER"
+                                seq: 36
+                              delay: 0
+                              repstops:
+                                - geoid: 783
+                                  stpid: "734025"
+                                  stpnm: "Avalon Bl at Sepulveda Bl"
+                                  seq: 1
+                                  lat: 33.80863199999843
+                                  lon: -118.26425600000013
+                                  adhoc: false
+                                - geoid: 352
+                                  stpid: "215027"
+                                  stpnm: "CARSON ST + MADRONA AV"
+                                  seq: 20
+                                  lat: 33.83127499999939
+                                  lon: -118.34460600000085
+                                  adhoc: false
+                                  relpasstime: 185
+                          sbnm: "CWDetour-766cfd24-111d-40f0-9216-6e67576e603f"
+        '400':
+          $ref: '#/components/responses/ErrorResponse'
+
+# ═══════════════════════════════════════════════
+# COMPONENTS
+# ═══════════════════════════════════════════════
+components:
+
+  # ─────────────────────────────────────────────
+  # PARAMETERS (shared)
+  # ─────────────────────────────────────────────
+  parameters:
+    key:
+      name: key
+      in: query
+      required: true
+      description: 25-digit Bus Tracker API access key assigned to the developer.
+      schema:
+        type: string
+        example: "89dj2he89d8j3j3ksjhdue93j"
+
+    format:
+      name: format
+      in: query
+      required: false
+      description: >
+        Response format. XML is the default if not specified.
+        Pass `json` for JSON responses (documented in this spec).
+      schema:
+        type: string
+        enum: [xml, json]
+        default: xml
+        example: "json"
+
+    locale:
+      name: locale
+      in: query
+      required: false
+      description: >
+        The language that the response should be in. Must be a valid ISO 639 language code
+        (e.g. `"en"` for English, `"es"` for Spanish). Use `getlocalelist` to retrieve
+        supported values. If the specified locale is not supported, the TA's default language
+        is used without indication.
+      schema:
+        type: string
+        example: "en"
+
+  # ─────────────────────────────────────────────
+  # RESPONSES (shared)
+  # ─────────────────────────────────────────────
+  responses:
+    ErrorResponse:
+      description: >
+        Error response. Errors are returned inside the `bustime-response` object
+        with an `error` array containing one or more error messages.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            noServiceScheduled:
+              summary: No service scheduled error
+              value:
+                bustime-response:
+                  error:
+                    - msg: "No service scheduled"
+            invalidKey:
+              summary: Invalid API key error
+              value:
+                bustime-response:
+                  error:
+                    - msg: "Invalid API access key supplied"
+            transactionLimit:
+              summary: Daily transaction limit exceeded
+              value:
+                bustime-response:
+                  error:
+                    - msg: "Transaction limit for current day has been exceeded."
+            noParameter:
+              summary: Missing required parameter
+              value:
+                bustime-response:
+                  error:
+                    - msg: "No parameter provided"
+
+  # ─────────────────────────────────────────────
+  # SCHEMAS
+  # ─────────────────────────────────────────────
+  schemas:
+
+    # ── Error ──
+    ApiError:
+      type: object
+      description: An error message returned when request processing fails.
+      required:
+        - msg
+      properties:
+        msg:
+          type: string
+          description: Human-readable error message.
+          example: "No service scheduled"
+        rt:
+          type: string
+          description: The route designator related to the error, if applicable.
+          example: "20"
+        rtdir:
+          type: string
+          description: The route direction related to the error, if applicable.
+          example: "Eastbound"
+        stpid:
+          type: string
+          description: The stop ID related to the error, if applicable.
+          example: "456"
+        vid:
+          type: string
+          description: The vehicle ID related to the error, if applicable.
+          example: "509"
+        rtpidatafeed:
+          type: string
+          description: The RTPI data feed identifier related to the error, if applicable.
+
+    ErrorResponse:
+      type: object
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── GET TIME ──
+    GetTimeResponse:
+      type: object
+      description: Root response wrapper for gettime.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            tm:
+              type: string
+              description: >
+                Current system date and time (local), formatted as `YYYYMMDD HH:MM:SS`.
+                If `unixTime=true` was requested, returns milliseconds since Unix epoch as a string.
+              example: "20160308 14:11:54"
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── VEHICLE ──
+    Vehicle:
+      type: object
+      description: Real-time status and location of a single tracked vehicle.
+      required:
+        - vid
+        - tmstmp
+        - lat
+        - lon
+        - hdg
+        - pid
+        - rt
+        - des
+        - pdist
+        - tablockid
+        - tatripid
+        - origtatripno
+        - zone
+        - mode
+        - psgld
+      properties:
+        vid:
+          type: string
+          description: Alphanumeric vehicle ID (bus number).
+          example: "509"
+        tmstmp:
+          type: string
+          description: >
+            Date and local time of the last positional update.
+            Format: `YYYYMMDD HH:MM` (or `YYYYMMDD HH:MM:SS` if `tmres=s`).
+          example: "20200308 10:28"
+        lat:
+          type: string
+          description: Latitude position in decimal degrees (WGS 84).
+          example: "41.92124938964844"
+        lon:
+          type: string
+          description: Longitude position in decimal degrees (WGS 84).
+          example: "-87.64849853515625"
+        hdg:
+          type: string
+          description: Heading as a 360° value. 0°=North, 90°=East, 180°=South, 270°=West.
+          example: "358"
+        pid:
+          type: integer
+          description: Pattern ID of the trip currently being executed.
+          example: 3630
+        pdist:
+          type: integer
+          description: Linear distance in feet the vehicle has traveled into the current pattern.
+          example: 5678
+        rt:
+          type: string
+          description: Route currently being executed by the vehicle (e.g. `"20"`).
+          example: "8"
+        des:
+          type: string
+          description: Destination of the trip being executed (e.g. `"Austin"`).
+          example: "Waveland/Broadway"
+        dly:
+          type: boolean
+          description: True if the vehicle is delayed. Only present when the vehicle is delayed.
+          example: false
+        spd:
+          type: integer
+          description: Speed of the vehicle.
+          example: 27
+        tablockid:
+          type: string
+          description: TA's version of the scheduled block identifier for the current work being performed.
+          example: "2 -701"
+        tatripid:
+          type: string
+          description: TA's version of the scheduled trip identifier for the vehicle's current trip.
+          example: "108"
+        origtatripno:
+          type: string
+          description: Trip ID as defined by the TA scheduling system.
+          example: "ME_ME403_V1_AA"
+        zone:
+          type: string
+          description: Zone name if the vehicle has entered a defined zone, otherwise blank.
+          example: "Bay 1"
+        mode:
+          type: integer
+          description: >
+            Mode of transportation as a byte.
+            - `0` = None
+            - `1` = Bus
+            - `2` = Ferry
+            - `3` = Rail
+            - `4` = People_Mover
+          enum: [0, 1, 2, 3, 4]
+          example: 1
+        psgld:
+          type: string
+          description: >
+            Passenger load ratio. Values: `"FULL"`, `"HALF_EMPTY"`, `"EMPTY"`, `"N/A"`.
+            Ratios for FULL/HALF_EMPTY/EMPTY are determined by the transit agency.
+            `"N/A"` indicates passenger load is unknown.
+          enum: [FULL, HALF_EMPTY, EMPTY, "N/A"]
+          example: "EMPTY"
+        stst:
+          type: integer
+          description: Scheduled start time of the trip, in seconds past midnight.
+          example: 37560
+        stsd:
+          type: string
+          description: Scheduled start date of the trip, in `yyyy-mm-dd` format.
+          example: "2020-03-08"
+        rtpidatafeed:
+          type: string
+          description: RTPI data feed identifier (multi-feed systems only).
+
+    GetVehiclesResponse:
+      type: object
+      description: Root response wrapper for getvehicles.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            vehicle:
+              type: array
+              description: Array of vehicle status objects.
+              items:
+                $ref: '#/components/schemas/Vehicle'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── ROUTE ──
+    Route:
+      type: object
+      description: A single route serviced by the system.
+      required:
+        - rt
+        - rtnm
+        - rtclr
+        - rtdd
+      properties:
+        rt:
+          type: string
+          description: Alphanumeric route designator (e.g. `"20"` or `"X20"`).
+          example: "1"
+        rtnm:
+          type: string
+          description: Common name of the route (e.g. `"Madison"` for route 20).
+          example: "Indiana/Hyde Park"
+        rtclr:
+          type: string
+          description: Color of the route line used in map displays, as a hex color code.
+          example: "#dc78af"
+        rtdd:
+          type: string
+          description: Language-specific route designator intended for display.
+          example: "1"
+        rtpidatafeed:
+          type: string
+          description: RTPI data feed identifier (multi-feed systems only).
+
+    GetRoutesResponse:
+      type: object
+      description: Root response wrapper for getroutes.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            routes:
+              type: array
+              description: >
+                Array of route objects. Note: in JSON the key is `routes` (plural),
+                unlike the XML element name `route`.
+              items:
+                $ref: '#/components/schemas/Route'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── DIRECTION ──
+    Direction:
+      type: object
+      description: A direction of travel available for a specific route.
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: >
+            Direction designator to be used in other API requests such as `getstops`.
+            This is the value to pass as the `dir` parameter.
+          example: "Eastbound"
+        name:
+          type: string
+          description: Human-readable, locale-dependent name of the direction.
+          example: "Eastbound"
+
+    GetDirectionsResponse:
+      type: object
+      description: Root response wrapper for getdirections.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            directions:
+              type: array
+              description: >
+                Array of direction objects. Note: in JSON the key is `directions` (plural),
+                unlike the XML element name `dir`.
+              items:
+                $ref: '#/components/schemas/Direction'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── STOP ──
+    Stop:
+      type: object
+      description: A single bus stop.
+      required:
+        - stpid
+        - stpnm
+        - lat
+        - lon
+      properties:
+        stpid:
+          type: string
+          description: Unique identifier for this stop.
+          example: "1577"
+        stpnm:
+          type: string
+          description: Display name of this stop (e.g. `"Madison and Clark"`).
+          example: "1509 S Michigan"
+        lat:
+          type: number
+          format: double
+          description: Latitude position in decimal degrees (WGS 84).
+          example: 41.861706666665
+        lon:
+          type: number
+          format: double
+          description: Longitude position in decimal degrees (WGS 84).
+          example: -87.623969999999
+        dtradd:
+          type: array
+          description: >
+            List of detour IDs which temporarily add (service) this stop.
+            Use `getdetours` to retrieve metadata about these detour IDs.
+          items:
+            type: string
+          example: ["BFC46F62-990F-4AB4-A85C-3AF84574EC99"]
+        dtrrem:
+          type: array
+          description: >
+            List of detour IDs which remove (detour around) this stop.
+            Use `getdetours` to retrieve metadata about these detour IDs.
+          items:
+            type: string
+          example: ["50C633C7-0891-4E5A-83A8-FF0C6214BF69"]
+        ada:
+          type: boolean
+          description: True if the stop is ADA accessible. Only included if supplied by the TA.
+          example: true
+
+    GetStopsResponse:
+      type: object
+      description: Root response wrapper for getstops.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            stops:
+              type: array
+              description: >
+                Array of stop objects. Note: in JSON the key is `stops` (plural),
+                unlike the XML element name `stop`.
+              items:
+                $ref: '#/components/schemas/Stop'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── PATTERN POINT ──
+    PatternPoint:
+      type: object
+      description: A single geo-positional point in a pattern, either a stop or a waypoint.
+      required:
+        - seq
+        - typ
+        - lat
+        - lon
+      properties:
+        seq:
+          type: integer
+          description: Position of this point in the overall sequence of pattern points.
+          example: 5
+        typ:
+          type: string
+          description: >
+            Type of point.
+            - `"S"` = Stop (passengers can board/alight here)
+            - `"W"` = Waypoint (defines the travel path, not a stop)
+          enum: [S, W]
+          example: "S"
+        stpid:
+          type: string
+          description: Unique stop identifier. Only present when `typ` is `"S"`.
+          example: "450"
+        stpnm:
+          type: string
+          description: Display name of the stop. Only present when `typ` is `"S"`.
+          example: "Madison & Wabash"
+        pdist:
+          type: number
+          format: float
+          description: Linear distance of this point in feet into the pattern. Only present when `typ` is `"S"`.
+          example: 206.0
+        lat:
+          type: number
+          format: double
+          description: Latitude position in decimal degrees (WGS 84).
+          example: 41.882129000001
+        lon:
+          type: number
+          format: double
+          description: Longitude position in decimal degrees (WGS 84).
+          example: -87.625855
+
+    # ── PATTERN ──
+    Pattern:
+      type: object
+      description: >
+        A unique sequence of geo-positional points (waypoints and stops) forming
+        the path that a transit vehicle will travel. A route often has more than one pattern.
+      required:
+        - pid
+        - ln
+        - rtdir
+        - pt
+      properties:
+        pid:
+          type: integer
+          description: ID of this pattern.
+          example: 954
+        ln:
+          type: number
+          format: float
+          description: Length of the pattern in feet.
+          example: 41113.0
+        rtdir:
+          type: string
+          description: Direction of travel valid for the route. Matches the direction `id` from `getdirections`.
+          example: "Westbound"
+        pt:
+          type: array
+          description: Array of geo-positional points that define this pattern.
+          items:
+            $ref: '#/components/schemas/PatternPoint'
+        dtrid:
+          type: string
+          description: >
+            If this pattern was created by a detour, contains the ID of that detour.
+            Only present for detour-derived patterns.
+          example: "84A97FD3-0741-4004-884D-0ABB22DAFA28"
+        dtrpt:
+          type: array
+          description: >
+            If this pattern was created by a detour, this array contains the original
+            (pre-detour) pattern points. Useful for drawing dashed lines on a map to
+            indicate the route that is no longer in effect.
+          items:
+            $ref: '#/components/schemas/PatternPoint'
+
+    GetPatternsResponse:
+      type: object
+      description: Root response wrapper for getpatterns.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            ptr:
+              type: array
+              description: Array of pattern objects.
+              items:
+                $ref: '#/components/schemas/Pattern'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── PREDICTION ──
+    Prediction:
+      type: object
+      description: A predicted arrival or departure time for a stop or vehicle.
+      required:
+        - tmstmp
+        - typ
+        - stpid
+        - stpnm
+        - vid
+        - dstp
+        - rt
+        - rtdd
+        - rtdir
+        - des
+        - prdtm
+        - dyn
+        - tablockid
+        - tatripid
+        - origtatripno
+        - zone
+        - psgld
+        - flagstop
+      properties:
+        tmstmp:
+          type: string
+          description: >
+            Date and time (local) when this prediction was generated.
+            Format depends on `tmres`; Unix epoch ms if `unixTime=true`.
+          example: "20250421 16:04"
+        typ:
+          type: string
+          description: >
+            Type of prediction.
+            - `"A"` = Arrival (when vehicle will arrive at this stop)
+            - `"D"` = Departure (when vehicle will depart — used for first stops and layovers)
+          enum: [A, D]
+          example: "A"
+        stpid:
+          type: string
+          description: Unique identifier of the stop for which this prediction was generated.
+          example: "456"
+        stpnm:
+          type: string
+          description: Display name of the stop for which this prediction was generated.
+          example: "Madison & Jefferson"
+        vid:
+          type: string
+          description: Unique ID of the vehicle for which this prediction was generated.
+          example: "8184"
+        dstp:
+          type: integer
+          description: Linear distance in feet remaining for the vehicle to reach this stop.
+          example: 686
+        rt:
+          type: string
+          description: Alphanumeric designator of the route (e.g. `"20"` or `"X20"`).
+          example: "20"
+        rtdd:
+          type: string
+          description: Language-specific route designator intended for display.
+          example: "20"
+        rtdir:
+          type: string
+          description: Direction of travel of the route for this prediction (e.g. `"Eastbound"`).
+          example: "Westbound"
+        des:
+          type: string
+          description: Final destination of the vehicle associated with this prediction.
+          example: "Austin"
+        prdtm:
+          type: string
+          description: >
+            Predicted date and time (local) of the vehicle's arrival or departure.
+            Format depends on `tmres`; Unix epoch ms if `unixTime=true`.
+          example: "20250421 16:06"
+        dly:
+          type: boolean
+          description: True if the vehicle is delayed. Always present in v3.
+          example: false
+        dyn:
+          type: integer
+          description: >
+            Dynamic action type affecting this prediction. Possible values:
+            - `0`  = None (no change)
+            - `1`  = Canceled
+            - `2`  = Reassigned (moved to different vehicle/operator)
+            - `3`  = Shifted (time moved)
+            - `4`  = Expressed (drop-off only, will not pick up passengers)
+            - `6`  = Stops Affected (some stops affected, but not the trip itself)
+            - `8`  = New Trip (dynamically created, not in TA schedule)
+            - `9`  = Partial Trip (trip split or short-turned)
+            - `10` = Partial Trip New (split with new trip identifier)
+            - `12` = Delayed Cancel (canceled but not shown to the public)
+            - `13` = Added Stop (stop added, not originally scheduled)
+            - `14` = Unknown Delay
+            - `15` = Unknown Delay New (dynamic trip with delay)
+            - `16` = Invalidated Trip (do not show predictions to public)
+            - `17` = Invalidated Trip New (dynamic trip, invalidated)
+            - `18` = Cancelled Trip New (dynamic trip, canceled)
+            - `19` = Stops Affected New (dynamic trip, events affected)
+          enum: [0, 1, 2, 3, 4, 6, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 19]
+          example: 0
+        tablockid:
+          type: string
+          description: TA's version of the scheduled block identifier for the current work being performed.
+          example: "20 -803"
+        tatripid:
+          type: string
+          description: TA's version of the scheduled trip identifier for the vehicle's current trip.
+          example: "1040713"
+        origtatripno:
+          type: string
+          description: Trip ID as defined by the TA scheduling system.
+          example: "262522629"
+        prdctdn:
+          type: string
+          description: >
+            Time remaining in minutes until the bus arrives at this stop.
+            Returns `"DUE"` when the bus is imminent.
+          example: "DUE"
+        zone:
+          type: string
+          description: Zone name if the vehicle has entered a defined zone, otherwise blank.
+          example: ""
+        psgld:
+          type: string
+          description: >
+            Passenger load ratio. Values: `"FULL"`, `"HALF_EMPTY"`, `"EMPTY"`, `"N/A"`.
+          enum: [FULL, HALF_EMPTY, EMPTY, "N/A", ""]
+          example: ""
+        stst:
+          type: integer
+          description: Scheduled trip start time in seconds past midnight.
+          example: 57120
+        stsd:
+          type: string
+          description: Scheduled trip start date in `yyyy-mm-dd` format.
+          example: "2025-04-21"
+        flagstop:
+          type: integer
+          description: >
+            Flag stop information for this prediction.
+            - `-1` = UNDEFINED (no flag-stop information available)
+            - `0`  = NORMAL (normal stop)
+            - `1`  = PICKUP_AND_DISCHARGE (flag stop for both pickup and discharge)
+            - `2`  = ONLY_DISCHARGE (flag stop for discharge only)
+          enum: [-1, 0, 1, 2]
+          example: 0
+        nbus:
+          type: string
+          description: Additional bus information, if applicable.
+
+    GetPredictionsResponse:
+      type: object
+      description: Root response wrapper for getpredictions.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            prd:
+              type: array
+              description: Array of prediction objects, sorted in ascending order by predicted time.
+              items:
+                $ref: '#/components/schemas/Prediction'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── LOCALE ──
+    Locale:
+      type: object
+      description: A supported locale (language) for use with the API.
+      required:
+        - localestring
+        - displayname
+      properties:
+        localestring:
+          type: string
+          description: >
+            Unique locale identifier in ISO 639 format (e.g. `"en"`, `"es"`).
+            This is the value to pass as the `locale` parameter in all other API calls.
+          example: "es"
+        displayname:
+          type: string
+          description: >
+            Human-readable name of the language. Language of this name depends on
+            the `locale` or `inLocaleLanguage` parameters.
+          example: "Spanish"
+
+    GetLocaleListResponse:
+      type: object
+      description: Root response wrapper for getlocalelist.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            locale:
+              type: array
+              description: Array of available locale objects.
+              items:
+                $ref: '#/components/schemas/Locale'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── DETOUR RTDIR ──
+    DetourRouteDir:
+      type: object
+      description: A route and direction pair affected by a detour.
+      required:
+        - rt
+        - dir
+      properties:
+        rt:
+          type: string
+          description: Alphanumeric route designator (e.g. `"20"` or `"X20"`).
+          example: "72"
+        dir:
+          type: string
+          description: Direction affected by the detour.
+          example: "NORTHBOUND"
+
+    # ── DETOUR ──
+    Detour:
+      type: object
+      description: Metadata about a detour.
+      required:
+        - id
+        - ver
+        - st
+        - desc
+        - rtdirs
+        - startdt
+        - enddt
+      properties:
+        id:
+          type: string
+          description: >
+            Unique identifier of the detour. Referenced by other API calls
+            such as stops (`dtradd`, `dtrrem`) and patterns (`dtrid`).
+          example: "84A97FD3-0741-4004-884D-0ABB22DAFA28"
+        ver:
+          type: integer
+          description: >
+            Version of this detour. Only the newest version of each detour is returned.
+          example: 2
+        st:
+          type: integer
+          description: >
+            State of the detour.
+            - `1` = Active
+            - `0` = Canceled
+          enum: [0, 1]
+          example: 1
+        desc:
+          type: string
+          description: Description of the detour.
+          example: "IVD MultiRoute detour 47"
+        rtdirs:
+          type: array
+          description: Array of route/direction pairs affected by this detour.
+          items:
+            $ref: '#/components/schemas/DetourRouteDir'
+        startdt:
+          type: string
+          description: >
+            Start date and time of the detour (format: YYYYMMDD HH:MM).
+          example: "20180404 08:45"
+        enddt:
+          type: string
+          description: >
+            End date and time of the detour (format: YYYYMMDD HH:MM).
+          example: "20180430 03:00"
+        rtpidatafeed:
+          type: string
+          description: RTPI data feed identifier (multi-feed systems only).
+
+    GetDetoursResponse:
+      type: object
+      description: Root response wrapper for getdetours.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            dtrs:
+              type: array
+              description: >
+                Array of detour metadata objects. Note: in JSON the key is `dtrs` (plural),
+                unlike the XML element name `dtr`.
+              items:
+                $ref: '#/components/schemas/Detour'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'
+
+    # ── ENHANCED DETOUR STOP ──
+    EnhancedDetourStop:
+      type: object
+      description: A stop referenced within an enhanced detour pattern.
+      required:
+        - geoid
+        - stpid
+        - seq
+        - stpnm
+      properties:
+        geoid:
+          type: integer
+          description: Time point identifier for the stop.
+          example: 611
+        stpid:
+          type: string
+          description: Stop identifier.
+          example: "235053"
+        seq:
+          type: integer
+          description: Sequence of this stop in the trip.
+          example: 3
+        stpnm:
+          type: string
+          description: Display name of the stop (locale-dependent).
+          example: "SEPULVEDA BL + DOLORES ST"
+        lat:
+          type: number
+          format: double
+          description: Latitude of the stop location (only on `repstop` elements).
+          example: 33.80863199999843
+        lon:
+          type: number
+          format: double
+          description: Longitude of the stop location (only on `repstop` elements).
+          example: -118.26425600000013
+        adhoc:
+          type: boolean
+          description: True if the stop was added ad-hoc (only on `repstop` elements).
+          example: false
+        relpasstime:
+          type: integer
+          nullable: true
+          description: >
+            Time in seconds when this stop occurs in the pattern after the previous stop.
+            Only on `repstop` elements.
+          example: 185
+
+    # ── ENHANCED DETOUR TRIP ──
+    EnhancedDetourTrip:
+      type: object
+      description: A trip affected by an enhanced detour.
+      required:
+        - tripid
+        - tatripid
+        - origtatripno
+      properties:
+        tripid:
+          type: integer
+          description: Trip identifier.
+          example: 679020
+        tatripid:
+          type: string
+          description: TA's version of the scheduled trip identifier.
+          example: "274676"
+        origtatripno:
+          type: string
+          description: Trip ID as defined by the TA scheduling system.
+          example: "274676"
+        dates:
+          type: array
+          description: Dates on which the trip is active between the detour start and end dates, in `YYYYMMDD` format.
+          items:
+            type: string
+          example: ["20240917", "20240918"]
+        stst:
+          type: integer
+          description: Start time of the trip in seconds from midnight.
+          example: 43680
+
+    # ── ENHANCED DETOUR PATTERN ──
+    EnhancedDetourPattern:
+      type: object
+      description: Pattern-level details for an enhanced detour.
+      required:
+        - origpid
+        - dtrpid
+        - dtrstartstop
+      properties:
+        origpid:
+          type: integer
+          description: Original pattern ID that this detour affects.
+          example: 2
+        dtrpid:
+          type: integer
+          description: Detour pattern ID (the new pattern created by the detour).
+          example: 500117
+        encpl:
+          type: string
+          description: >
+            The detour's polyline information encoded using Google's Encoded Polyline Algorithm.
+            Decode this string to get a series of lat/lon coordinates representing the detour path.
+          example: "}fjmErnypU???Ot@@?DBnAI..."
+        trips:
+          type: array
+          description: Trips affected by this detour pattern.
+          items:
+            $ref: '#/components/schemas/EnhancedDetourTrip'
+        dtrstartstop:
+          $ref: '#/components/schemas/EnhancedDetourStop'
+          description: The stop in the pattern at which the detour begins.
+        dtrendstop:
+          $ref: '#/components/schemas/EnhancedDetourStop'
+          description: The stop in the pattern at which the detour ends.
+        delay:
+          type: integer
+          description: Delay time in seconds introduced by this detour compared to the original schedule.
+          example: 0
+        repstops:
+          type: array
+          description: Stops replaced in the detour pattern compared to the original pattern.
+          items:
+            $ref: '#/components/schemas/EnhancedDetourStop'
+
+    # ── ENHANCED DETOUR ──
+    EnhancedDetour:
+      type: object
+      description: >
+        Full enhanced detour data including pattern info, trip details, and polyline.
+        Used by GTFS-RT systems.
+      required:
+        - id
+        - ver
+        - st
+        - desc
+        - rtdirs
+        - startdt
+        - enddt
+        - moddt
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the detour.
+          example: "766CFD24-111D-40F0-9216-6E67576E603F"
+        ver:
+          type: integer
+          description: Version of this detour. Only the newest version of each detour is returned.
+          example: 2
+        st:
+          type: integer
+          description: >
+            State of the detour.
+            - `1` = Active
+            - `0` = Canceled
+          enum: [0, 1]
+          example: 1
+        desc:
+          type: string
+          description: Description of the detour.
+          example: "Detour with stops added and removed in multiple segments"
+        rtdirs:
+          type: array
+          description: Array of route/direction pairs affected by this detour.
+          items:
+            $ref: '#/components/schemas/DetourRouteDir'
+        startdt:
+          type: integer
+          format: int64
+          description: Start date and time of the detour as Unix epoch milliseconds.
+          example: 1725595200000
+        enddt:
+          type: integer
+          format: int64
+          description: End date and time of the detour as Unix epoch milliseconds.
+          example: 1727409600000
+        moddt:
+          type: integer
+          format: int64
+          description: Last modified date and time of this detour as Unix epoch milliseconds.
+          example: 1725631728000
+        ptrs:
+          type: array
+          description: Pattern details for all patterns affected by the detour.
+          items:
+            $ref: '#/components/schemas/EnhancedDetourPattern'
+        sbnm:
+          type: string
+          description: >
+            Unique name/identifier of the service bulletin, if present for this detour.
+          example: "CWDetour-766cfd24-111d-40f0-9216-6e67576e603f"
+        rtpidatafeed:
+          type: string
+          description: RTPI data feed identifier (multi-feed systems only).
+
+    GetEnhancedDetoursResponse:
+      type: object
+      description: Root response wrapper for getenhanceddetours.
+      properties:
+        bustime-response:
+          type: object
+          properties:
+            dtrs:
+              type: array
+              description: >
+                Array of enhanced detour objects. Note: in JSON the key is `dtrs` (plural),
+                unlike the XML element name `dtr`.
+              items:
+                $ref: '#/components/schemas/EnhancedDetour'
+            error:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApiError'

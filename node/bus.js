@@ -26,7 +26,7 @@ exports.stopArrivals = async (req, res) => {
 
 exports.follow = async (req, res) => {
   const vehicleId = req.query.vehicleId;
-  const url = `${config.bus.baseURL}/getpredictions?key=${config.bus.APIKey}&vid=${vehicleId}&format=json`;
+  const url = `${config.bus.baseURLv3}/getpredictions?key=${config.bus.APIKey}&vid=${vehicleId}&tmres=s&format=json`;
   await commonRequest(url, res);
 };
 

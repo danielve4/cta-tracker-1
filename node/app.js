@@ -31,7 +31,7 @@ app.get('/trainfollow', train.follow);
 app.post('/savefavorites', favorites.save);
 app.post('/myfavorites', favorites.retrieve);
 
-app.get('/*', (request, response) => {
+app.get('/*splat', (request, response) => {
   response.sendFile(__dirname + '/public/index.html');
 });
 
