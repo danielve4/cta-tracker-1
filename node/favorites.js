@@ -32,7 +32,7 @@ const getFavorites = hashedPhone => {
 };
 
 exports.save = (req, res) => {
-  if (!req.body) res.status(400).send(badRequestText);
+  if (!req.body) return res.status(400).send(badRequestText);
   try {
     const phone = (req.body.id + '').trim();
     if (validPhone(phone) && req.body.favorites) {
@@ -53,7 +53,7 @@ exports.save = (req, res) => {
 };
 
 exports.retrieve = async (req, res) => {
-  if (!req.body) res.status(400).send(badRequestText);
+  if (!req.body) return res.status(400).send(badRequestText);
   try {
     const phone = (req.body.id + '').trim();
     if (validPhone(phone)) {

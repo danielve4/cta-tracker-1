@@ -2,6 +2,7 @@
   "bus": {
     "APIKey": "uExBP8b6nVp874MZXZAzW3UsT",
     "baseURL": "http://www.ctabustracker.com/bustime/api/v2",
+    "baseURLv3": "https://www.ctabustracker.com/bustime/api/v3",
     "sample": "http://www.ctabustracker.com/bustime/api/v2/getroutes?key=+ctaBusKey+&format=json"
   },
   "train": {
