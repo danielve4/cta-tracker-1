@@ -74,6 +74,13 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --gray4: rgb(58,58,60);
   --gray5: rgb(44,44,46);
   --gray6: rgb(28,28,30);
+
+  /* Bus-specific colors (avoids all CTA train line colors) */
+  --bus-badge: #6B7B8D;
+  --bus-badge-text: #FFFFFF;
+  --bus-countdown-bg: rgba(107, 123, 141, 0.22);
+  --bus-due: rgb(4,222,113);
+  --bus-due-bg: rgba(4,222,113,0.18);
 }
 
 /* Light theme */
@@ -117,6 +124,13 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --cta-yellow-opacity: rgba(249,227,0,0.10);
   --cta-grey-opacity: rgba(86,90,92,0.12);
   --pink-opacity: rgba(250,17,79,0.12);
+
+  /* Bus-specific colors (light theme overrides) */
+  --bus-badge: #4A5568;
+  --bus-badge-text: #FFFFFF;
+  --bus-countdown-bg: rgba(74, 85, 104, 0.14);
+  --bus-due: rgb(0,155,80);
+  --bus-due-bg: rgba(0,155,80,0.14);
 }
 
 * {

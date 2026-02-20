@@ -1,107 +1,219 @@
+/* ===== Stop Header ===== */
+.stop-header {
+  margin-bottom: 4px;
+}
+
+.stop-header h2 {
+  margin-bottom: 2px;
+}
+
+.direction-label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 16px;
+}
+
+/* ===== Arrivals List ===== */
 .arrivals-list {
   display: grid;
-  row-gap: 16px;
+  row-gap: 10px;
   width: 100%;
   padding-bottom: calc(56px + 16px);
 }
 
-.an-arrival {
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.arrivals-area {
-  grid-template-areas: "destination destination destination destination"
-                       "minutes minutes minutes minutes"
-                       "route route time time";
-  row-gap: 8px;
-  padding: 16px;
-  border-radius: 8px;
-  z-index: 2;
-  /* background-color: hsla(202, 52%, 11%, 0.6); */
-  background-color: var(--surface-card);
-  /* backdrop-filter: saturate(180%) blur(20px);  */
-}
-
-.destination {
-  grid-area: destination;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-}
-
-.route {
-  grid-area: route;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  font-weight: 600;
-}
-
-.minutes-left {
-  grid-area: minutes;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 40px;
-  border-radius: 4px;
-  background-color: var(--surface-elevated);
-}
-
-.time-left {
-  grid-area: time;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  font-weight: 600;
-}
-
-.route-number {
-  border-radius: 4px;
-  padding: 0 4px;
-  background: var(--route-badge-bg);
-  color: var(--route-badge-text);
-}
-
-.delayed {
-  border-radius: 4px;
+.error-message {
+  padding: 14px 16px;
+  border-radius: 14px;
   background-color: var(--pink-opacity);
   color: var(--pink);
-  padding: 0 12px;
-  margin-right: 8px;
+  font-weight: 600;
+  font-size: 15px;
 }
 
+/* ===== Arrival Card ===== */
+.arrival-card {
+  border-radius: 16px;
+  background-color: var(--surface-card);
+  overflow: hidden;
+  transition: transform 0.15s ease;
+}
+
+.arrival-card:active {
+  transform: scale(0.98);
+}
+
+.arrival-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* ===== Delayed Banner ===== */
+.delayed-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  background-color: var(--pink-opacity);
+  color: var(--pink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.delayed-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--pink);
+  color: var(--surface-card);
+  font-size: 11px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.delayed-text {
+  text-transform: uppercase;
+}
+
+/* ===== Arrival Content (Main Row) ===== */
+.arrival-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+/* ===== Route Badge ===== */
+.arrival-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background-color: var(--bus-badge);
+  flex-shrink: 0;
+}
+
+.badge-number {
+  color: var(--bus-badge-text);
+  font-size: 18px;
+  font-weight: 900;
+  padding: 0 8px;
+}
+
+/* ===== Arrival Details (Center) ===== */
+.arrival-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.arrival-destination {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arrival-time {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ===== Countdown (Right Side) ===== */
+.arrival-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 62px;
+  height: 62px;
+  border-radius: 16px;
+  background-color: var(--bus-countdown-bg);
+  flex-shrink: 0;
+  padding: 4px 10px;
+}
+
+.countdown-value {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.countdown-unit {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* ===== DUE State ===== */
+.countdown-due {
+  background-color: var(--bus-due-bg);
+}
+
+.countdown-due .countdown-value {
+  color: var(--bus-due);
+  font-size: 20px;
+}
+
+.countdown-due .countdown-unit {
+  color: var(--bus-due);
+}
+
+/* ===== Delayed Countdown State ===== */
+.countdown-delayed {
+  background-color: var(--pink-opacity);
+}
+
+.countdown-delayed .countdown-value {
+  color: var(--pink);
+}
+
+.countdown-delayed .countdown-unit {
+  color: var(--pink);
+}
+
+/* ===== Loading Animation ===== */
 .loading {
-  animation: loading 0.5s linear 1;
+  animation: cardLoad 0.4s ease-out 1;
 }
 
-@keyframes loading {
+@keyframes cardLoad {
   0% {
-    transform: scale(1) translateY(0);
+    opacity: 0.6;
+    transform: translateY(6px);
   }
-
-  50% {
-    transform: scale(1.05) translateY(10px);
-  }
-
   100% {
-    transform: scale(1) translateY(0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+/* ===== FAB Buttons ===== */
 .button-favorite {
   bottom: calc(56px + 16px + 56px + 16px);
-  background-color: var(--cta-grey);
+  background-color: var(--bus-badge);
 }
 
 .button-refresh {
-  background-color: var(--cta-grey);
+  background-color: var(--bus-badge);
 }
 
 .refreshing {
@@ -114,34 +226,14 @@
 }
 
 @keyframes favorited {
-  0% {
-    transform: scale(1);
-  }
-  25%{
-    transform: scale(1.5);
-  }
-  90% {
-    transform: scale(0);
-  }
-  100% {
-    transform: scale(0);
-  }
-}
-
-.follow-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
+  0% { transform: scale(1); }
+  25% { transform: scale(1.5); }
+  90% { transform: scale(0); }
+  100% { transform: scale(0); }
 }
 
 @keyframes refresh {
-  from {
-    transform: rotate(0) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.3);
-  }
-  to {
-    transform: rotate(360deg) scale(1);
-  }
+  from { transform: rotate(0) scale(1); }
+  50% { transform: rotate(180deg) scale(1.3); }
+  to { transform: rotate(360deg) scale(1); }
 }
