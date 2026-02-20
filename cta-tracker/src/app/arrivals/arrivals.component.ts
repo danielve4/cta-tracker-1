@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
@@ -12,7 +12,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   selector: 'app-arrivals',
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css'],
-  imports: [AsyncPipe, TimeuntilPipe]
+  imports: [AsyncPipe, TimeuntilPipe, RouterLink]
 })
 export class ArrivalsComponent implements OnInit, OnDestroy {
   forRoute = '';

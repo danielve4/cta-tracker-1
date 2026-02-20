@@ -147,7 +147,8 @@ app-favorites,
 app-routes,
 app-directions,
 app-stops,
-app-arrivals {
+app-arrivals,
+app-follow-vehicle {
   padding: 16px;
   display: grid;
   grid-column-gap: 16px;
