@@ -1,6 +1,7 @@
-<h1 class="cols-3">Favorites</h1>
-<span class="cols-reverse-1" (click)="openFavoriteSettings = !openFavoriteSettings">
-  *
+<h1 class="cols-2">Favorites</h1>
+<span class="cols-reverse-1 header-actions">
+  <app-theme-toggle></app-theme-toggle>
+  <span class="settings-icon" (click)="openFavoriteSettings = !openFavoriteSettings">*</span>
 </span>
 @if (openFavoriteSettings) {
   <article class="cols-4 grid-4 favorite-settings">

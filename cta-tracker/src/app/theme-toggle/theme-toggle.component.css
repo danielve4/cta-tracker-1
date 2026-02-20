@@ -1,0 +1,55 @@
+.theme-toggle {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle-track {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  background-color: var(--gray4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 6px;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-track.light {
+  background-color: var(--gray3);
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+}
+
+.toggle-icon.sun {
+  color: rgb(255, 200, 50);
+}
+
+.toggle-icon.moon {
+  color: rgb(180, 190, 220);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--text-primary);
+  transition: transform 0.3s ease;
+}
+
+.toggle-thumb.light {
+  transform: translateX(24px);
+}

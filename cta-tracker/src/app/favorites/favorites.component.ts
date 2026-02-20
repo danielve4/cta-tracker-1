@@ -5,12 +5,13 @@ import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
 import { Observable } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 
 @Component({
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css'],
-  imports: [RouterLink, AsyncPipe, SlicePipe]
+  imports: [RouterLink, AsyncPipe, SlicePipe, ThemeToggleComponent]
 })
 export class FavoritesComponent implements OnInit {
   favorites$: Observable<Array<Favorite>> | undefined;
