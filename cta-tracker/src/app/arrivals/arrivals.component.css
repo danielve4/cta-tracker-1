@@ -1,147 +1,105 @@
-.arrivals-list {
-  display: grid;
-  row-gap: 16px;
-  width: 100%;
-  padding-bottom: calc(56px + 16px);
+/* Stop Header */
+.stop-header { margin-bottom: 8px; }
+.stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+.direction-label {
+  display: inline-flex;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+  padding: 4px 10px;
+  background: var(--bus-countdown-bg);
+  border-radius: 6px;
 }
 
-.an-arrival {
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
+/* Arrivals List */
+.arrivals-list { display: grid; row-gap: 12px; width: 100%; padding-bottom: calc(56px + 24px); }
+.error-message { padding: 16px; border-radius: 16px; background-color: var(--pink-opacity); color: var(--pink); font-weight: 600; font-size: 15px; }
 
-.arrivals-area {
-  grid-template-areas: "destination destination destination destination"
-                       "minutes minutes minutes minutes"
-                       "route route time time";
-  row-gap: 8px;
-  padding: 16px;
-  border-radius: 8px;
-  z-index: 2;
-  /* background-color: hsla(202, 52%, 11%, 0.6); */
+/* Card */
+.arrival-card {
+  border-radius: 20px;
   background-color: var(--surface-card);
-  /* backdrop-filter: saturate(180%) blur(20px);  */
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  transition: transform var(--duration-short) var(--ease-standard), background-color var(--duration-medium) var(--ease-standard);
+  animation: cardEnter var(--duration-long) var(--ease-decelerate) backwards;
 }
+.arrival-card:active { transform: scale(0.975); background-color: var(--surface-card-hover); }
+.arrival-card:nth-child(2) { animation-delay: 50ms; }
+.arrival-card:nth-child(3) { animation-delay: 100ms; }
+.arrival-card:nth-child(4) { animation-delay: 150ms; }
+.arrival-card:nth-child(5) { animation-delay: 200ms; }
+.arrival-card:nth-child(6) { animation-delay: 250ms; }
+.arrival-link { text-decoration: none; color: inherit; display: block; }
 
-.destination {
-  grid-area: destination;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
+/* Delayed Banner */
+.delayed-banner {
+  display: flex; align-items: center; gap: 8px; padding: 8px 20px;
+  background: linear-gradient(135deg, rgba(250,17,79,0.12), rgba(250,17,79,0.06));
+  color: var(--pink); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
 }
-
-.route {
-  grid-area: route;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  font-weight: 600;
+.delayed-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background-color: var(--pink); color: white; font-size: 11px; font-weight: 900; flex-shrink: 0;
 }
+.delayed-text { text-transform: uppercase; }
 
-.minutes-left {
-  grid-area: minutes;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 40px;
-  line-height: 40px;
-  border-radius: 4px;
-  background-color: var(--surface-elevated);
+/* Arrival Content */
+.arrival-content { display: flex; align-items: center; gap: 16px; padding: 16px 20px; position: relative; overflow: hidden; }
+
+/* Route Badge */
+.arrival-badge {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--bus-badge), color-mix(in srgb, var(--bus-badge) 80%, white));
+  flex-shrink: 0;
 }
+.badge-number { color: var(--bus-badge-text); font-size: 17px; font-weight: 900; padding: 0 6px; }
 
-.time-left {
-  grid-area: time;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  font-weight: 600;
+/* Details */
+.arrival-details { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.arrival-destination { font-weight: 700; font-size: 15px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arrival-time { color: var(--text-tertiary); font-size: 13px; font-weight: 500; }
+
+/* Countdown */
+.arrival-countdown {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 64px; height: 64px; border-radius: 18px;
+  background-color: var(--bus-countdown-bg); flex-shrink: 0; padding: 4px 12px;
 }
+.countdown-value { font-size: 24px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
+.countdown-unit { font-size: 10px; font-weight: 700; color: var(--text-tertiary); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
 
-.route-number {
-  border-radius: 4px;
-  padding: 0 4px;
-  background: var(--route-badge-bg);
-  color: var(--route-badge-text);
+/* DUE */
+.countdown-due { background-color: var(--bus-due-bg); box-shadow: 0 0 20px var(--bus-due-glow); animation: duePulse 2.5s ease infinite; }
+.countdown-due .countdown-value { color: var(--bus-due); font-size: 18px; }
+.countdown-due .countdown-unit { color: var(--bus-due); opacity: 0.8; }
+
+/* Delayed */
+.countdown-delayed { background-color: var(--pink-opacity); }
+.countdown-delayed .countdown-value { color: var(--pink); }
+.countdown-delayed .countdown-unit { color: var(--pink); opacity: 0.8; }
+
+/* Animations */
+@keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+.loading .arrival-content::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer-highlight) 50%, transparent);
+  animation: shimmer 0.8s ease 1; pointer-events: none;
 }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
-.delayed {
-  border-radius: 4px;
-  background-color: var(--pink-opacity);
-  color: var(--pink);
-  padding: 0 12px;
-  margin-right: 8px;
-}
-
-.loading {
-  animation: loading 0.5s linear 1;
-}
-
-@keyframes loading {
-  0% {
-    transform: scale(1) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.05) translateY(10px);
-  }
-
-  100% {
-    transform: scale(1) translateY(0);
-  }
-}
-
-.button-favorite {
-  bottom: calc(56px + 16px + 56px + 16px);
-  background-color: var(--cta-grey);
-}
-
-.button-refresh {
-  background-color: var(--cta-grey);
-}
-
-.refreshing {
-  animation: refresh 0.5s linear 0s 1;
-  animation-fill-mode: forwards;
-}
-
-.favorited {
-  animation: favorited 0.5s linear 0s 1;
-}
-
-@keyframes favorited {
-  0% {
-    transform: scale(1);
-  }
-  25%{
-    transform: scale(1.5);
-  }
-  90% {
-    transform: scale(0);
-  }
-  100% {
-    transform: scale(0);
-  }
-}
-
-.follow-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
-@keyframes refresh {
-  from {
-    transform: rotate(0) scale(1);
-  }
-  50% {
-    transform: rotate(180deg) scale(1.3);
-  }
-  to {
-    transform: rotate(360deg) scale(1);
-  }
-}
+/* FABs */
+.button-favorite { bottom: calc(56px + 16px + 64px + 12px); background-color: var(--bus-badge); }
+.button-refresh { background-color: var(--bus-badge); }
+.refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
+.favorited { animation: favorited 0.5s var(--ease-decelerate) 1; }
+@keyframes favorited { 0% { transform: scale(1); } 20% { transform: scale(1.4); } 85%,100% { transform: scale(0); } }
+@keyframes refreshSpin { from { transform: rotate(0deg); } 50% { transform: rotate(200deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }

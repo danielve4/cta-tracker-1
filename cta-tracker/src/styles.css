@@ -46,27 +46,29 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
 /* Dark theme (default) */
 :root,
 [data-theme="dark"] {
-  --background: #000000;
-  --text-primary: #FFFFFF;
-  --text-secondary: rgb(142,142,147);
-  --surface: #1e2225;
-  --surface-card: #191919;
-  --surface-elevated: #333333;
-  --nav-bg: hsla(0, 0%, 13%, 0.98);
-  --nav-bg-blur: hsla(0, 0%, 13%, 0.3);
+  --background: #0a0a0c;
+  --text-primary: #ECECF0;
+  --text-secondary: rgb(148,148,155);
+  --text-tertiary: rgb(108,108,115);
+  --surface: #1a1a1f;
+  --surface-card: #151518;
+  --surface-card-hover: #1c1c20;
+  --surface-elevated: #2a2a30;
+  --nav-bg: hsla(240, 8%, 8%, 0.98);
+  --nav-bg-blur: hsla(240, 8%, 8%, 0.4);
   --nav-link: rgb(86,90,92);
   --nav-link-active: #FFFFFF;
-  --input-border: rgba(255,255,255,0.2);
-  --focus-color: #2196F3;
+  --input-border: rgba(255,255,255,0.12);
+  --focus-color: #6B9FFF;
   --route-badge-bg: #FFFFFF;
   --route-badge-text: #000000;
-  --nav-border: transparent;
+  --nav-border: rgba(255,255,255,0.06);
 
-  --top-bottom-color: hsl(222, 100%, 5%);
-  --bottom-bar-color: hsla(222, 100%, 5%, 0.3);
-  --bottom-bar-color-reg: hsla(222, 100%, 5%, 0.7);
-  --top-bottom-color-light: hsla(222, 100%, 15%, 0.3);
-  --top-bottom-color-light-reg: hsla(222, 100%, 15%, 0.7);
+  --top-bottom-color: hsl(240, 10%, 5%);
+  --bottom-bar-color: hsla(240, 10%, 5%, 0.3);
+  --bottom-bar-color-reg: hsla(240, 10%, 5%, 0.7);
+  --top-bottom-color-light: hsla(240, 10%, 15%, 0.3);
+  --top-bottom-color-light-reg: hsla(240, 10%, 15%, 0.7);
 
   --gray: rgb(142,142,147);
   --gray2: rgb(99,99,102);
@@ -74,31 +76,54 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --gray4: rgb(58,58,60);
   --gray5: rgb(44,44,46);
   --gray6: rgb(28,28,30);
+
+  /* Card styling */
+  --card-border: rgba(255,255,255,0.06);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+
+  /* Bus-specific colors (avoids all CTA train line colors) */
+  --bus-badge: #5A6B7E;
+  --bus-badge-text: #FFFFFF;
+  --bus-countdown-bg: rgba(90, 107, 126, 0.18);
+  --bus-due: rgb(52,211,153);
+  --bus-due-bg: rgba(52,211,153,0.14);
+  --bus-due-glow: rgba(52,211,153,0.06);
+  --shimmer-highlight: rgba(255,255,255,0.04);
+
+  /* M3 Motion tokens */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --duration-short: 150ms;
+  --duration-medium: 300ms;
+  --duration-long: 450ms;
 }
 
 /* Light theme */
 [data-theme="light"] {
-  --background: #f5f5f7;
-  --text-primary: #1a1a1a;
-  --text-secondary: rgb(108,108,112);
+  --background: #f4f4f8;
+  --text-primary: #1a1a1e;
+  --text-secondary: rgb(100,100,108);
+  --text-tertiary: rgb(140,140,148);
   --surface: #ffffff;
   --surface-card: #ffffff;
+  --surface-card-hover: #f8f8fc;
   --surface-elevated: #e8e8ed;
-  --nav-bg: hsla(0, 0%, 97%, 0.98);
-  --nav-bg-blur: hsla(0, 0%, 97%, 0.3);
+  --nav-bg: hsla(240, 10%, 98%, 0.98);
+  --nav-bg-blur: hsla(240, 10%, 98%, 0.4);
   --nav-link: rgb(142,142,147);
-  --nav-link-active: #1a1a1a;
-  --input-border: rgba(0,0,0,0.15);
-  --focus-color: #1976D2;
-  --route-badge-bg: #1a1a1a;
+  --nav-link-active: #1a1a1e;
+  --input-border: rgba(0,0,0,0.1);
+  --focus-color: #4A7AFF;
+  --route-badge-bg: #1a1a1e;
   --route-badge-text: #FFFFFF;
-  --nav-border: rgba(0,0,0,0.1);
+  --nav-border: rgba(0,0,0,0.08);
 
-  --top-bottom-color: hsl(222, 20%, 95%);
-  --bottom-bar-color: hsla(222, 20%, 95%, 0.3);
-  --bottom-bar-color-reg: hsla(222, 20%, 95%, 0.7);
-  --top-bottom-color-light: hsla(222, 20%, 85%, 0.3);
-  --top-bottom-color-light-reg: hsla(222, 20%, 85%, 0.7);
+  --top-bottom-color: hsl(240, 15%, 96%);
+  --bottom-bar-color: hsla(240, 15%, 96%, 0.3);
+  --bottom-bar-color-reg: hsla(240, 15%, 96%, 0.7);
+  --top-bottom-color-light: hsla(240, 15%, 88%, 0.3);
+  --top-bottom-color-light-reg: hsla(240, 15%, 88%, 0.7);
 
   --gray: rgb(142,142,147);
   --gray2: rgb(174,174,178);
@@ -107,16 +132,29 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --gray5: rgb(229,229,234);
   --gray6: rgb(242,242,247);
 
-  --cta-blue-opacity: rgba(0,161,222,0.12);
-  --cta-red-opacity: rgba(198,12,48,0.12);
-  --cta-brown-opacity: rgba(98,54,27,0.12);
-  --cta-green-opacity: rgba(0,155,58,0.12);
-  --cta-orange-opacity: rgba(249,70,28,0.12);
-  --cta-purple-opacity: rgba(82,35,152,0.12);
-  --cta-pink-opacity: rgba(226,126,166,0.12);
-  --cta-yellow-opacity: rgba(249,227,0,0.10);
-  --cta-grey-opacity: rgba(86,90,92,0.12);
-  --pink-opacity: rgba(250,17,79,0.12);
+  /* Card styling */
+  --card-border: rgba(0,0,0,0.06);
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+
+  --cta-blue-opacity: rgba(0,161,222,0.10);
+  --cta-red-opacity: rgba(198,12,48,0.10);
+  --cta-brown-opacity: rgba(98,54,27,0.10);
+  --cta-green-opacity: rgba(0,155,58,0.10);
+  --cta-orange-opacity: rgba(249,70,28,0.10);
+  --cta-purple-opacity: rgba(82,35,152,0.10);
+  --cta-pink-opacity: rgba(226,126,166,0.10);
+  --cta-yellow-opacity: rgba(249,227,0,0.08);
+  --cta-grey-opacity: rgba(86,90,92,0.10);
+  --pink-opacity: rgba(250,17,79,0.10);
+
+  /* Bus-specific colors (light theme overrides) */
+  --bus-badge: #3D4E63;
+  --bus-badge-text: #FFFFFF;
+  --bus-countdown-bg: rgba(61, 78, 99, 0.08);
+  --bus-due: rgb(16,140,80);
+  --bus-due-bg: rgba(16,140,80,0.10);
+  --bus-due-glow: rgba(16,140,80,0.04);
+  --shimmer-highlight: rgba(0,0,0,0.06);
 }
 
 * {
@@ -126,13 +164,16 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
 html {
   color: var(--text-primary);
   background-color: var(--background);
-  font-family: -apple-system, ".SFNSText-Regular", Helvetica, sans-serif;
+  font-family: -apple-system, "SF Pro Display", "SF Pro Text", ".SFNSText-Regular", system-ui, Helvetica, sans-serif;
   font-size: 1.125em;
-  line-height: 1.2em;
+  line-height: 1.35em;
   min-height: 100%;
   height: 100%;
   touch-action: manipulation;
-  transition: color 0.3s ease, background-color 0.3s ease;
+  transition: color var(--duration-medium) var(--ease-standard),
+              background-color var(--duration-medium) var(--ease-standard);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -163,10 +204,11 @@ h1 {
 }
 
 h2 {
-  font-size: 25.92px;
-  line-height: 1.2em;
+  font-size: 26px;
+  line-height: 1.15em;
   font-weight: 900;
   margin-bottom: 16px;
+  letter-spacing: -0.03em;
 }
 
 .grid-4 {
@@ -263,11 +305,11 @@ input, button {
   bottom: calc(56px + 16px);
   -webkit-appearance: none;
   border: none;
-  border-radius: 50%;
+  border-radius: 16px;
   outline: none;
   z-index: 1;
   transform: scale(1);
-  box-shadow: 0 3px 5px -1px rgba(0,0,0,.2), 0 6px 10px 0 rgba(0,0,0,.14), 0 1px 18px 0 rgba(0,0,0,.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.12);
 }
 
 .icon {

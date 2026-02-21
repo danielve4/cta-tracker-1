@@ -84,7 +84,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
       }
       this.vehicles$ = of(response.prd);
     }
-    setTimeout(() => this.refreshing = false, 500);
+    setTimeout(() => this.refreshing = false, 800);
     if (typeof window.navigator.vibrate !== 'undefined') {
       window.navigator.vibrate(5);
     }
