@@ -8,12 +8,16 @@
   display: grid;
   row-gap: 2px;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding-bottom: calc(56px + 16px);
 }
 
 .a-prediction {
   background-color: var(--surface-card);
   border-left: 3px solid transparent;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .a-prediction:first-child {
@@ -34,16 +38,23 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .prediction-left {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
   min-width: 0;
 }
 
 .stop-name {
+  display: block;
+  width: 100%;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;

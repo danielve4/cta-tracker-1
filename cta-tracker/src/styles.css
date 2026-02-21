@@ -196,6 +196,12 @@ app-follow-vehicle {
   grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
+app-follow-vehicle {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 h1 {
   font-size: 37.325px;
   line-height: 1.2em;
@@ -354,4 +360,3 @@ input[type=number] + label {
   -moz-transition: 0.3s ease transform;
   -webkit-transition: 0.3s ease transform;
 }
-

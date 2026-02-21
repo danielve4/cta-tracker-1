@@ -43,9 +43,9 @@
   color: var(--pink); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
 }
 .delayed-icon {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: inline-grid; place-items: center;
   width: 18px; height: 18px; border-radius: 50%;
-  background-color: var(--pink); color: white; font-size: 11px; font-weight: 900; flex-shrink: 0;
+  background-color: var(--pink); color: white; font-size: 11px; font-weight: 900; line-height: 1; padding: 0; flex-shrink: 0;
 }
 .delayed-text { text-transform: uppercase; }
 
@@ -69,11 +69,12 @@
 /* Countdown */
 .arrival-countdown {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px;
   min-width: 64px; height: 64px; border-radius: 18px;
-  background-color: var(--bus-countdown-bg); flex-shrink: 0; padding: 4px 12px;
+  background-color: var(--bus-countdown-bg); flex-shrink: 0; padding: 6px 12px;
 }
 .countdown-value { font-size: 24px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
-.countdown-unit { font-size: 10px; font-weight: 700; color: var(--text-tertiary); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+.countdown-unit { font-size: 10px; font-weight: 700; color: var(--text-tertiary); line-height: 1; text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* DUE */
 .countdown-due { background-color: var(--bus-due-bg); box-shadow: 0 0 20px var(--bus-due-glow); animation: duePulse 2.5s ease infinite; }
