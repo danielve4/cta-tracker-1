@@ -88,6 +88,7 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --bus-due: rgb(52,211,153);
   --bus-due-bg: rgba(52,211,153,0.14);
   --bus-due-glow: rgba(52,211,153,0.06);
+  --shimmer-highlight: rgba(255,255,255,0.04);
 
   /* M3 Motion tokens */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -153,6 +154,7 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --bus-due: rgb(16,140,80);
   --bus-due-bg: rgba(16,140,80,0.10);
   --bus-due-glow: rgba(16,140,80,0.04);
+  --shimmer-highlight: rgba(0,0,0,0.06);
 }
 
 * {
