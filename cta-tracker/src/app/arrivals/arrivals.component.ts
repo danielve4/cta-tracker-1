@@ -15,6 +15,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   imports: [AsyncPipe, TimeuntilPipe, RouterLink]
 })
 export class ArrivalsComponent implements OnInit, OnDestroy {
+  readonly skeletonCards = [0, 1, 2];
   forRoute = '';
   forDirection = '';
   forStopId = 0;
@@ -28,6 +29,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   favorited = false;
   canRefresh = false;
   refreshing = false;
+  isInitialLoading = true;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -38,6 +40,9 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.activatedRoute.params.subscribe(params => {
       this.canRefresh = true;
+      this.isInitialLoading = true;
+      this.error$ = undefined;
+      this.vehicles$ = undefined;
       this.forRoute = params['route'];
       this.forDirection = params['direction'];
       this.forStopId = +params['stopId'];
@@ -71,9 +76,11 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   }
 
   handleArrivalsResponse(response: BustimeResponse): void {
+    this.isInitialLoading = false;
     this.refreshing = true;
     if (response.error) {
       this.error$ = of(response.error);
+      this.vehicles$ = undefined;
     } else if (response.prd) {
       for (let i = 0; i < response.prd.length; i++) {
         if (response.prd[i].dly) {
@@ -83,6 +90,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
         }
       }
       this.vehicles$ = of(response.prd);
+      this.error$ = undefined;
     }
     setTimeout(() => this.refreshing = false, 800);
     if (typeof window.navigator.vibrate !== 'undefined') {

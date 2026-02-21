@@ -3,38 +3,57 @@
   <span class="direction-label">{{ forDirection }}</span>
 </div>
 <ul class="cols-4 arrivals-list">
-  @if (error$ | async; as errors) {
-    @for (anError of errors; track anError.msg) {
-      <li class="error-message">{{ anError.msg }}</li>
+  @if (isInitialLoading) {
+    @for (card of skeletonCards; track card) {
+      <li class="arrival-card skeleton-card" aria-hidden="true">
+        <div class="arrival-content skeleton-content">
+          <div class="arrival-badge skeleton-badge skeleton-surface"></div>
+          <div class="arrival-details skeleton-details">
+            <span class="skeleton-line skeleton-line-title skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-time skeleton-surface"></span>
+          </div>
+          <div class="arrival-countdown skeleton-countdown skeleton-surface">
+            <span class="skeleton-line skeleton-line-count skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-unit skeleton-surface"></span>
+          </div>
+        </div>
+      </li>
     }
   }
-  @if (vehicles$ | async; as vehicles) {
-    @for (vehicle of vehicles; track vehicle.vid) {
-      <li class="arrival-card" [class.loading]="refreshing">
-        <a [routerLink]="['/follow', vehicle.vid]" [queryParams]="{from: forStopId}" class="arrival-link">
-          @if (vehicle.dly) {
-            <div class="delayed-banner">
-              <span class="delayed-icon">!</span>
-              <span class="delayed-text">Delayed</span>
+  @if (!isInitialLoading) {
+    @if (error$ | async; as errors) {
+      @for (anError of errors; track anError.msg) {
+        <li class="error-message">{{ anError.msg }}</li>
+      }
+    }
+    @if (vehicles$ | async; as vehicles) {
+      @for (vehicle of vehicles; track vehicle.vid) {
+        <li class="arrival-card" [class.loading]="refreshing">
+          <a [routerLink]="['/follow', vehicle.vid]" [queryParams]="{from: forStopId}" class="arrival-link">
+            @if (vehicle.dly) {
+              <div class="delayed-banner">
+                <span class="delayed-icon">!</span>
+                <span class="delayed-text">Delayed</span>
+              </div>
+            }
+            <div class="arrival-content">
+              <div class="arrival-badge">
+                <span class="badge-number">{{ vehicle.rt }}</span>
+              </div>
+              <div class="arrival-details">
+                <span class="arrival-destination">To {{ vehicle.des }}</span>
+                <span class="arrival-time">{{ vehicle.prdctdn | timeuntil:'time' }}</span>
+              </div>
+              <div class="arrival-countdown"
+                   [class.countdown-due]="vehicle.prdctdn === 'DUE'"
+                   [class.countdown-delayed]="vehicle.dly">
+                <span class="countdown-value">{{ vehicle.prdctdn }}</span>
+                <span class="countdown-unit">{{ vehicle.prdctdn | timeuntil:'minutes' }}</span>
+              </div>
             </div>
-          }
-          <div class="arrival-content">
-            <div class="arrival-badge">
-              <span class="badge-number">{{ vehicle.rt }}</span>
-            </div>
-            <div class="arrival-details">
-              <span class="arrival-destination">To {{ vehicle.des }}</span>
-              <span class="arrival-time">{{ vehicle.prdctdn | timeuntil:'time' }}</span>
-            </div>
-            <div class="arrival-countdown"
-                 [class.countdown-due]="vehicle.prdctdn === 'DUE'"
-                 [class.countdown-delayed]="vehicle.dly">
-              <span class="countdown-value">{{ vehicle.prdctdn }}</span>
-              <span class="countdown-unit">{{ vehicle.prdctdn | timeuntil:'minutes' }}</span>
-            </div>
-          </div>
-        </a>
-      </li>
+          </a>
+        </li>
+      }
     }
   }
 </ul>
