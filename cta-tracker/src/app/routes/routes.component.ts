@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
+import { TrainService } from '../services/train.service';
 import { BustimeResponse, Route, Error } from '../busResponse';
+import { CTALine } from '../trainResponse';
 import { of, Observable } from 'rxjs';
 
 @Component({
@@ -15,10 +17,20 @@ export class RoutesComponent implements OnInit {
   routes$: Observable<Route[]> | undefined;
   private allRoutes: Route[] = [];
   error$: Observable<Error[]> | undefined;
+  trainLines$: Observable<CTALine[]> | undefined;
 
-  constructor(private busService: BusService) {}
+  constructor(
+    private busService: BusService,
+    private trainService: TrainService
+  ) {}
 
   ngOnInit(): void {
+    this.trainService.getComprehensiveData().subscribe(data => {
+      if (data.lines) {
+        this.trainLines$ = of(data.lines);
+      }
+    });
+
     this.busService.routes().subscribe((response: BustimeResponse) => {
       if (response.error) {
         this.error$ = of(response.error);

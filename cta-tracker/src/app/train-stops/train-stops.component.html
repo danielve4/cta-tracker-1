@@ -1,0 +1,22 @@
+@if (line) {
+  <h2 class="cols-4" [style.color]="'#' + line.color">{{ line.name }}</h2>
+}
+<section class="cols-4 search-form">
+  <input class="search-input" id="search-stations" #criteria (input)="search(criteria.value)" autocomplete="off" required />
+  <label class="search-label" for="search-stations">Search Stations</label>
+</section>
+
+<ul class="cols-4">
+  @if (stops$ | async; as stops) {
+    @for (stop of stops; track stop.id) {
+      <li class="train-stop">
+        <a routerLink="/train-arrivals/{{ routeId }}/{{ stop.id }}/{{ replaceSlash(stop.name) }}">
+          @if (line) {
+            <span class="stop-dot" [style.backgroundColor]="'#' + line.color"></span>
+          }
+          <span class="stop-name">{{ stop.name }}</span>
+        </a>
+      </li>
+    }
+  }
+</ul>

@@ -1,4 +1,20 @@
 <h1 class="cols-4">Routes</h1>
+@if (trainLines$ | async; as trainLines) {
+  <h3 class="cols-4 section-label">Train Lines</h3>
+  <ul class="cols-4 train-lines-list">
+    @for (line of trainLines; track line.route_id) {
+      <li class="train-line">
+        <a routerLink="/train-stops/{{ line.route_id }}">
+          <span class="train-line-badge" [style.backgroundColor]="'#' + line.color">
+            <span class="train-line-badge-icon" [style.color]="'#' + line.text_color">T</span>
+          </span>
+          <span class="train-line-name">{{ line.name }}</span>
+        </a>
+      </li>
+    }
+  </ul>
+}
+<h3 class="cols-4 section-label">Bus Routes</h3>
 <section class="cols-4 search-form">
   <input class="search-input" id="search-routes" #criteria (input)="search(criteria.value)" autocomplete="off" required/>
   <label class="search-label" for="search-routes">Search Routes</label>

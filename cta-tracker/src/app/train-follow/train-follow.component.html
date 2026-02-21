@@ -1,0 +1,36 @@
+<h2 class="cols-4">
+  <span class="route-badge" [style.backgroundColor]="lineColor">{{ routeName }}</span>
+  Run #{{ runNumber }}
+</h2>
+<p class="cols-4 subheader">To {{ destination }}</p>
+<ul class="cols-4 predictions-list">
+  @if (errorMsg) {
+    <li class="error-message">{{ errorMsg }}</li>
+  }
+  @if (predictions$ | async; as predictions) {
+    @for (prediction of predictions; track prediction.stpId) {
+      <li class="a-prediction" [class.loading]="refreshing" [class.from-stop]="prediction.staId === fromStationId">
+        <div class="prediction-row">
+          <div class="prediction-left">
+            <span class="stop-name">{{ prediction.staNm }}</span>
+            <span class="stop-desc">
+              {{ prediction.stpDe }}
+              @if (prediction.isDly === '1') {
+                <span class="delayed">DELAYED</span>
+              }
+            </span>
+          </div>
+          <div class="prediction-right">
+            <span class="minutes">{{ prediction.countdown }}{{ prediction.countdown | timeuntil:'minutes' }}</span>
+            <span class="time">{{ prediction.countdown | timeuntil:'time' }}</span>
+          </div>
+        </div>
+      </li>
+    }
+  }
+</ul>
+@if (canRefresh) {
+  <button class="fab button-refresh" [style.backgroundColor]="lineColor || 'var(--cta-grey)'" (click)="getFollowData()">
+    <img src="assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing">
+  </button>
+}

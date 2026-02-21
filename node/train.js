@@ -2,13 +2,18 @@ const config = require('./config.json');
 
 exports.stopArrivals = async (req, res) => {
   const mapId = req.query.stopId;
-  const url = `${config.train.baseURL}/ttarrivals.aspx?key=${config.train.APIKey}&mapId=${mapId}&outputType=JSON`;
+  const url = `${config.train.baseURL}/ttarrivals.aspx?key=${config.train.APIKey}&mapid=${mapId}&outputType=JSON`;
   await commonRequest(url, res);
 };
 
 exports.follow = async (req, res) => {
   const runNumber = req.query.vehicleId;
   const url = `${config.train.baseURL}/ttfollow.aspx?key=${config.train.APIKey}&runnumber=${runNumber}&outputType=JSON`;
+  await commonRequest(url, res);
+};
+
+exports.comprehensiveData = async (req, res) => {
+  const url = 'https://getcomprehensivectadata-nzqfu6lp7a-uc.a.run.app/';
   await commonRequest(url, res);
 };
 

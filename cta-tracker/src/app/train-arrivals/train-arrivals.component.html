@@ -1,0 +1,73 @@
+<div class="stop-header cols-4">
+  <h2>{{ stationName }}</h2>
+</div>
+@if (isInitialLoading) {
+  <ul class="cols-4 arrivals-list">
+    @for (card of skeletonCards; track card) {
+      <li class="arrival-card skeleton-card" aria-hidden="true">
+        <div class="arrival-content skeleton-content">
+          <div class="arrival-badge skeleton-badge skeleton-surface"></div>
+          <div class="arrival-details skeleton-details">
+            <span class="skeleton-line skeleton-line-title skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-time skeleton-surface"></span>
+          </div>
+          <div class="arrival-countdown skeleton-countdown skeleton-surface">
+            <span class="skeleton-line skeleton-line-count skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-unit skeleton-surface"></span>
+          </div>
+        </div>
+      </li>
+    }
+  </ul>
+}
+@if (!isInitialLoading) {
+  @if (errorMsg) {
+    <p class="cols-4 error-message">{{ errorMsg }}</p>
+  }
+  @if (arrivalGroups$ | async; as groups) {
+    @for (group of groups; track group.directionLabel) {
+      <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
+      <ul class="cols-4 arrivals-list">
+        @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+          <li class="arrival-card" [class.loading]="refreshing">
+            <a [routerLink]="['/train-follow', arrival.rn]" [queryParams]="{from: stationId, rt: arrival.rt}" class="arrival-link">
+              @if (arrival.isDly === '1') {
+                <div class="delayed-banner">
+                  <span class="delayed-icon">!</span>
+                  <span class="delayed-text">Delayed</span>
+                </div>
+              }
+              @if (arrival.isSch === '1') {
+                <div class="scheduled-banner">
+                  <span class="scheduled-icon">S</span>
+                  <span class="scheduled-text">Scheduled</span>
+                </div>
+              }
+              <div class="arrival-content">
+                <div class="arrival-badge" [style.backgroundColor]="arrival.lineColor">
+                  <span class="badge-number">{{ arrival.rt }}</span>
+                </div>
+                <div class="arrival-details">
+                  <span class="arrival-destination">To {{ arrival.destNm }}</span>
+                  <span class="arrival-time">{{ arrival.countdown | timeuntil:'time' }}</span>
+                </div>
+                <div class="arrival-countdown"
+                     [class.countdown-due]="arrival.countdown === 'DUE'"
+                     [class.countdown-delayed]="arrival.isDly === '1'"
+                     [class.countdown-scheduled]="arrival.isSch === '1'">
+                  <span class="countdown-value">{{ arrival.countdown }}</span>
+                  <span class="countdown-unit">{{ arrival.countdown | timeuntil:'minutes' }}</span>
+                </div>
+              </div>
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  }
+}
+@if (canRefresh) {
+  <button class="fab button-refresh" [style.backgroundColor]="lineColor" (click)="getArrivals()">
+    <img src="assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing">
+  </button>
+}
