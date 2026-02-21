@@ -89,9 +89,6 @@
 @keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
 
-.loading { animation: cardRefresh var(--duration-medium) var(--ease-decelerate) 1; }
-@keyframes cardRefresh { 0% { opacity: 0.5; transform: scale(0.985); } 100% { opacity: 1; transform: scale(1); } }
-
 .loading .arrival-content::before {
   content: ''; position: absolute; inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 50%, transparent);
