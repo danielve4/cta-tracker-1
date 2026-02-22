@@ -146,6 +146,8 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --cta-yellow-opacity: rgba(249,227,0,0.08);
   --cta-grey-opacity: rgba(86,90,92,0.10);
   --pink-opacity: rgba(250,17,79,0.10);
+  --yellow: rgb(217, 119, 6); /* Darker amber/gold for light mode text contrast */
+  --yellow-opacity: rgba(217, 119, 6, 0.12); /* Soft highlight background */
 
   /* Bus-specific colors (light theme overrides) */
   --bus-badge: #3D4E63;

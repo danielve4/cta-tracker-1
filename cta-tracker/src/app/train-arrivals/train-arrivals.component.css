@@ -46,22 +46,20 @@
   color: var(--pink); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
 }
 .delayed-icon {
-  display: inline-grid; place-items: center;
-  width: 18px; height: 18px; border-radius: 50%;
-  background-color: var(--pink); color: white; font-size: 11px; font-weight: 900; line-height: 1; padding: 0; flex-shrink: 0;
+  width: 16px; height: 16px;
+  color: var(--pink); flex-shrink: 0;
 }
 .delayed-text { text-transform: uppercase; }
 
 /* Scheduled Banner */
 .scheduled-banner {
   display: flex; align-items: center; gap: 8px; padding: 8px 20px;
-  background: linear-gradient(135deg, rgba(255,230,32,0.12), rgba(255,230,32,0.06));
+  background: linear-gradient(135deg, var(--yellow-opacity), color-mix(in srgb, var(--yellow-opacity) 50%, transparent));
   color: var(--yellow); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
 }
 .scheduled-icon {
-  display: inline-grid; place-items: center;
-  width: 18px; height: 18px; border-radius: 50%;
-  background-color: var(--yellow); color: #000000; font-size: 11px; font-weight: 900; line-height: 1; padding: 0; flex-shrink: 0;
+  width: 16px; height: 16px;
+  color: var(--yellow); flex-shrink: 0;
 }
 .scheduled-text { text-transform: uppercase; }
 
