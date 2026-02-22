@@ -3,6 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
+import { FavoritesService } from '../services/favorites.service';
+import { Favorite } from '../services/Favorite';
 import { of, Observable, timer, Subscription } from 'rxjs';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
@@ -35,10 +37,14 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   refreshing = false;
   isInitialLoading = true;
   lineColor = '';
+  isFavorite = true;
+  favoriteStop: Favorite | undefined;
+  favorited = false;
 
   constructor(
     private activatedRoute: ActivatedRoute,
-    private trainService: TrainService
+    private trainService: TrainService,
+    private favoritesService: FavoritesService
   ) {}
 
   ngOnInit(): void {
@@ -55,6 +61,18 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
       if (cssVar) {
         this.lineColor = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
       }
+
+      const tempFavoriteStop: Favorite = {
+        route: this.routeId,
+        stopId: +this.stationId,
+        stopName: this.stationName,
+        direction: '',
+        type: 'train'
+      };
+      this.favoritesService.search(tempFavoriteStop).subscribe((index: number) => {
+        this.isFavorite = index >= 0;
+      });
+      this.favoriteStop = tempFavoriteStop;
 
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         this.getArrivals();
@@ -134,6 +152,17 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
       return minutes > 1 ? String(minutes) : 'DUE';
     } catch {
       return '--';
+    }
+  }
+
+  addToFavorite(): void {
+    if (this.favoriteStop) {
+      this.favoritesService.addToFavorites(this.favoriteStop).subscribe((wasAdded: boolean) => {
+        this.favorited = wasAdded;
+        setTimeout(() => {
+          this.isFavorite = wasAdded;
+        }, 300);
+      });
     }
   }
 }

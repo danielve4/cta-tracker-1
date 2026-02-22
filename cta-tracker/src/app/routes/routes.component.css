@@ -7,46 +7,36 @@
   margin-bottom: 8px;
 }
 
-.train-lines-list {
+.train-lines-grid {
   display: grid;
-  row-gap: 0;
-  margin-bottom: 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.train-line {
-  height: 72px;
+.train-line-card {
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-.train-line a {
-  color: var(--text-primary);
-  text-decoration: none;
-  height: 100%;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 56px 1fr;
-  grid-column-gap: 16px;
-  font-weight: 900;
-  align-items: center;
-}
-
-.train-line-badge {
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
+.train-line-link {
   display: flex;
-  justify-content: center;
   align-items: center;
-  justify-self: center;
+  justify-content: center;
+  text-decoration: none;
+  padding: 18px 8px;
+  border-radius: 14px;
+  transition: transform var(--duration-short) var(--ease-standard);
 }
 
-.train-line-badge-icon {
-  font-size: 16px;
-  font-weight: 900;
+.train-line-link:active {
+  transform: scale(0.96);
 }
 
 .train-line-name {
-  display: flex;
-  align-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .bus-route {

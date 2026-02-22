@@ -53,6 +53,13 @@
   justify-content: flex-end;
 }
 
+.train-line-dot {
+  display: block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+}
+
 .favorite-settings {
   background-color: var(--gray4);
   border-radius: 8px;
@@ -66,4 +73,75 @@
 .favorite-settings button {
   background-color: var(--gray6);
   border-radius: 8px;
+}
+
+.edit-button {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.favorite-list-edit {
+  margin-left: -16px;
+  margin-right: -16px;
+  width: calc(100% + 32px);
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  min-width: 0;
+}
+
+.edit-stop-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--pink);
+  font-size: 22px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.delete-btn:active {
+  background-color: var(--pink-opacity);
 }

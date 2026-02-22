@@ -1,14 +1,11 @@
 <h1 class="cols-4">Routes</h1>
 @if (trainLines$ | async; as trainLines) {
   <h3 class="cols-4 section-label">Train Lines</h3>
-  <ul class="cols-4 train-lines-list">
+  <ul class="cols-4 train-lines-grid">
     @for (line of trainLines; track line.route_id) {
-      <li class="train-line">
-        <a routerLink="/train-stops/{{ line.route_id }}">
-          <span class="train-line-badge" [style.backgroundColor]="'#' + line.color">
-            <span class="train-line-badge-icon" [style.color]="'#' + line.text_color">T</span>
-          </span>
-          <span class="train-line-name">{{ line.name }}</span>
+      <li class="train-line-card">
+        <a routerLink="/train-stops/{{ line.route_id }}" class="train-line-link" [style.backgroundColor]="'#' + line.color">
+          <span class="train-line-name" [style.color]="'#' + line.text_color">{{ line.name }}</span>
         </a>
       </li>
     }

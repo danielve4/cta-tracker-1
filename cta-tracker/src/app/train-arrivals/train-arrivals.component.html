@@ -73,6 +73,12 @@
     }
   }
 }
+@if (!isFavorite) {
+  <button class="fab button-favorite" [style.backgroundColor]="lineColor"
+          [class.favorited]="favorited" (click)="addToFavorite()">
+    <img src="assets/icons/ic_favorite_black_24px.svg" class="icon">
+  </button>
+}
 @if (canRefresh) {
   <button class="fab button-refresh" [style.backgroundColor]="lineColor" (click)="getArrivals()">
     <img src="assets/icons/ic_refresh_black_24px.svg" class="icon" [class.refreshing]="refreshing">
