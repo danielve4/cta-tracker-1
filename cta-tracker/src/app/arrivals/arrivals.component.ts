@@ -82,7 +82,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
       this.error$ = of(response.error);
       this.vehicles$ = undefined;
     } else if (response.prd) {
-      const valid = response.prd.filter(p => p.vid && parseInt(p.prdctdn, 10) >= 0);
+      const valid = response.prd.filter(p => p.vid);
       for (let i = 0; i < valid.length; i++) {
         if (valid[i].dly) {
           valid[i].prdctdn = this.getMinutesDifference(
