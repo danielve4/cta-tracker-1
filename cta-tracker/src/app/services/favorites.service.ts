@@ -73,14 +73,20 @@ export class FavoritesService {
   search(stop: Favorite): Observable<number> {
     return this.getFavorites().pipe(
       map((favorites: Array<Favorite>) => {
+        const stopType = stop.type || 'bus';
         for (let i = 0; i < favorites.length; i++) {
-          if (favorites[i].stopId === stop.stopId) {
+          const favType = favorites[i].type || 'bus';
+          if (favorites[i].stopId === stop.stopId && favType === stopType) {
             return i;
           }
         }
         return -1;
       })
     );
+  }
+
+  reorderFavorites(favorites: Array<Favorite>): void {
+    this.storeFavorites(favorites);
   }
 
   saveFavorites(phone: string, favorites: object): Observable<HttpResponse<string>> {

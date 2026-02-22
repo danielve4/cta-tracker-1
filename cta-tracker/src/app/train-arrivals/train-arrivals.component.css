@@ -1,21 +1,24 @@
 /* Stop Header */
 .stop-header { margin-bottom: 8px; }
 .stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+
+/* Direction Label */
 .direction-label {
-  display: inline-flex;
-  color: var(--text-tertiary);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 20px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
   padding: 4px 10px;
   background: var(--bus-countdown-bg);
   border-radius: 6px;
+  display: inline-flex;
 }
 
 /* Arrivals List */
-.arrivals-list { display: grid; row-gap: 12px; width: 100%; padding-bottom: calc(56px + 24px); }
+.arrivals-list { display: grid; row-gap: 12px; width: 100%; padding-bottom: 16px; }
+.arrivals-list:last-of-type { padding-bottom: calc(56px + 24px); }
 .error-message { padding: 16px; border-radius: 16px; background-color: var(--pink-opacity); color: var(--pink); font-weight: 600; font-size: 15px; }
 
 /* Card */
@@ -48,6 +51,18 @@
 }
 .delayed-text { text-transform: uppercase; }
 
+/* Scheduled Banner */
+.scheduled-banner {
+  display: flex; align-items: center; gap: 8px; padding: 8px 20px;
+  background: linear-gradient(135deg, var(--yellow-opacity), color-mix(in srgb, var(--yellow-opacity) 50%, transparent));
+  color: var(--yellow); font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+}
+.scheduled-icon {
+  width: 16px; height: 16px;
+  color: var(--yellow); flex-shrink: 0;
+}
+.scheduled-text { text-transform: uppercase; }
+
 /* Arrival Content */
 .arrival-content { display: flex; align-items: center; gap: 16px; padding: 16px 20px; position: relative; overflow: hidden; }
 
@@ -55,10 +70,9 @@
 .arrival-badge {
   display: flex; align-items: center; justify-content: center;
   min-width: 48px; height: 48px; border-radius: 14px;
-  background: linear-gradient(135deg, var(--bus-badge), color-mix(in srgb, var(--bus-badge) 80%, white));
   flex-shrink: 0;
 }
-.badge-number { color: var(--bus-badge-text); font-size: 17px; font-weight: 900; padding: 0 6px; }
+.badge-number { color: #FFFFFF; font-size: 17px; font-weight: 900; padding: 0 6px; }
 
 /* Details */
 .arrival-details { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
@@ -68,7 +82,7 @@
 /* Skeleton */
 .skeleton-card { pointer-events: none; }
 .skeleton-content { overflow: hidden; }
-.skeleton-badge { background: color-mix(in srgb, var(--bus-badge) 35%, var(--surface-card)); }
+.skeleton-badge { background: color-mix(in srgb, var(--text-tertiary) 20%, var(--surface-card)); }
 .skeleton-details { justify-content: center; gap: 8px; }
 .skeleton-line {
   display: block;
@@ -118,6 +132,11 @@
 .countdown-delayed .countdown-value { color: var(--pink); }
 .countdown-delayed .countdown-unit { color: var(--pink); opacity: 0.8; }
 
+/* Scheduled */
+.countdown-scheduled { background-color: var(--yellow-opacity); }
+.countdown-scheduled .countdown-value { color: var(--yellow); }
+.countdown-scheduled .countdown-unit { color: var(--yellow); opacity: 0.8; }
+
 /* Animations */
 @keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
@@ -130,10 +149,10 @@
 }
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
-/* FABs */
-.button-favorite { bottom: calc(56px + 16px + 64px + 12px); background-color: var(--bus-badge); }
-.button-refresh { background-color: var(--bus-badge); }
-.refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
+/* FAB */
+.button-favorite { bottom: calc(56px + 16px + 64px + 12px); }
 .favorited { animation: favorited 0.5s var(--ease-decelerate) 1; }
 @keyframes favorited { 0% { transform: scale(1); } 20% { transform: scale(1.4); } 85%,100% { transform: scale(0); } }
+.button-refresh { background-color: var(--cta-grey); }
+.refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
 @keyframes refreshSpin { from { transform: rotate(0deg); } 50% { transform: rotate(200deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }

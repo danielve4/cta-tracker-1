@@ -1,3 +1,44 @@
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+}
+
+.train-lines-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.train-line-card {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.train-line-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  padding: 18px 8px;
+  border-radius: 14px;
+  transition: transform var(--duration-short) var(--ease-standard);
+}
+
+.train-line-link:active {
+  transform: scale(0.96);
+}
+
+.train-line-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
 .bus-route {
   height: 72px;
 }
@@ -17,22 +58,16 @@ a {
   height: 100%;
   width: 100%;
   padding: 8px 0;
-  /* color: #1463F4; */
 }
 
 .bus-route-number {
   height: 100%;
   width: 100%;
-  /* background-color: var(--secondary); */
-  /* background-color: #0A0D53; */
-  /* background: linear-gradient(-40deg,#02112c,#010713); */
   display: flex;
   justify-content: center;
   align-items: center;
   border-radius: 5px;
   font-size: 22px;
-  /* border-bottom: 1px solid #1DE7DB; */
-  /* box-shadow: 0 0 5px #1463F4; */
   color: var(--text-primary);
 }
 

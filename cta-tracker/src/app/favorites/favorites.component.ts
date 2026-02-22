@@ -6,6 +6,7 @@ import { Favorite } from '../services/Favorite';
 import { Observable } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
+import { TRAIN_LINE_CSS_MAP } from '../trainResponse';
 
 @Component({
   selector: 'app-favorites',
@@ -16,6 +17,8 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 export class FavoritesComponent implements OnInit {
   favorites$: Observable<Array<Favorite>> | undefined;
   openFavoriteSettings = false;
+  editing = false;
+  editableFavorites: Favorite[] = [];
 
   constructor(private favoritesService: FavoritesService) {}
 
@@ -58,5 +61,37 @@ export class FavoritesComponent implements OnInit {
         }
       });
     }
+  }
+
+  toggleEdit(): void {
+    if (!this.editing) {
+      this.favoritesService.getFavorites().subscribe((favorites: Array<Favorite>) => {
+        this.editableFavorites = [...favorites];
+      });
+      this.editing = true;
+    } else {
+      this.favoritesService.reorderFavorites(this.editableFavorites);
+      this.favorites$ = this.favoritesService.getFavorites();
+      this.editing = false;
+    }
+  }
+
+  deleteFavorite(index: number): void {
+    this.editableFavorites.splice(index, 1);
+    this.favoritesService.reorderFavorites(this.editableFavorites);
+  }
+
+  getTrainLineColor(route: string): string {
+    const cssVar = TRAIN_LINE_CSS_MAP[route];
+    return cssVar ? `var(${cssVar})` : 'var(--text-tertiary)';
+  }
+
+  moveFavorite(index: number, direction: number): void {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= this.editableFavorites.length) return;
+    const temp = this.editableFavorites[index];
+    this.editableFavorites[index] = this.editableFavorites[newIndex];
+    this.editableFavorites[newIndex] = temp;
+    this.favoritesService.reorderFavorites(this.editableFavorites);
   }
 }

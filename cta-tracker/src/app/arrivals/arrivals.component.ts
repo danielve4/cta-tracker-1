@@ -82,14 +82,15 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
       this.error$ = of(response.error);
       this.vehicles$ = undefined;
     } else if (response.prd) {
-      for (let i = 0; i < response.prd.length; i++) {
-        if (response.prd[i].dly) {
-          response.prd[i].prdctdn = this.getMinutesDifference(
-            response.prd[i].tmstmp,
-            response.prd[i].prdtm);
+      const valid = response.prd.filter(p => p.vid && parseInt(p.prdctdn, 10) >= 0);
+      for (let i = 0; i < valid.length; i++) {
+        if (valid[i].dly) {
+          valid[i].prdctdn = this.getMinutesDifference(
+            valid[i].tmstmp,
+            valid[i].prdtm);
         }
       }
-      this.vehicles$ = of(response.prd);
+      this.vehicles$ = of(valid);
       this.error$ = undefined;
     }
     setTimeout(() => this.refreshing = false, 800);

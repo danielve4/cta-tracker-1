@@ -27,6 +27,7 @@ app.get('/busfollow', bus.follow);
 
 app.get('/trainstoparrivals', train.stopArrivals);
 app.get('/trainfollow', train.follow);
+app.get('/traindata', train.comprehensiveData);
 
 app.post('/savefavorites', favorites.save);
 app.post('/myfavorites', favorites.retrieve);

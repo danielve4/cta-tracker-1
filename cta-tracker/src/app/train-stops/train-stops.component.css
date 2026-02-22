@@ -1,0 +1,27 @@
+.train-stop {
+  height: 72px;
+}
+
+a {
+  color: var(--text-primary);
+  text-decoration: none;
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  grid-column-gap: 16px;
+  font-weight: 900;
+  align-items: center;
+}
+
+.stop-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  justify-self: center;
+}
+
+.stop-name {
+  display: flex;
+  align-items: center;
+}
