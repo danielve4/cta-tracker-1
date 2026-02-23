@@ -105,6 +105,28 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
     0 0 0 0.5px rgba(255,255,255,0.08) inset;
   --pill-nav-hover-bg: rgba(255,255,255,0.07);
 
+  /* Liquid Glass inputs (dark) */
+  --glass-input-bg: hsla(240, 6%, 14%, 0.85);
+  --glass-input-bg-blur: hsla(240, 6%, 14%, 0.50);
+  --glass-input-border: rgba(255,255,255,0.10);
+  --glass-input-shadow:
+    0 1px 4px rgba(0,0,0,0.25),
+    0 0 0 0.5px rgba(255,255,255,0.06) inset;
+  --glass-input-focus-border: rgba(107,159,255,0.50);
+  --glass-input-focus-shadow:
+    0 0 0 3px rgba(107,159,255,0.15),
+    0 1px 4px rgba(0,0,0,0.25),
+    0 0 0 0.5px rgba(255,255,255,0.08) inset;
+  --glass-input-placeholder: rgba(255,255,255,0.30);
+  --glass-input-icon: rgba(255,255,255,0.35);
+  --glass-btn-bg: hsla(240, 6%, 18%, 0.80);
+  --glass-btn-bg-blur: hsla(240, 6%, 18%, 0.45);
+  --glass-btn-border: rgba(255,255,255,0.10);
+  --glass-btn-shadow:
+    0 1px 3px rgba(0,0,0,0.20),
+    0 0 0 0.5px rgba(255,255,255,0.06) inset;
+  --glass-btn-active-bg: rgba(255,255,255,0.12);
+
   /* M3 Motion tokens */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);
@@ -178,6 +200,28 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
     0 1px 3px rgba(0,0,0,0.08),
     0 0 0 0.5px rgba(0,0,0,0.04) inset;
   --pill-nav-hover-bg: rgba(0,0,0,0.04);
+
+  /* Liquid Glass inputs (light) */
+  --glass-input-bg: hsla(240, 10%, 98%, 0.80);
+  --glass-input-bg-blur: hsla(240, 10%, 98%, 0.45);
+  --glass-input-border: rgba(0,0,0,0.08);
+  --glass-input-shadow:
+    0 1px 4px rgba(0,0,0,0.06),
+    0 0 0 0.5px rgba(255,255,255,0.50) inset;
+  --glass-input-focus-border: rgba(74,122,255,0.45);
+  --glass-input-focus-shadow:
+    0 0 0 3px rgba(74,122,255,0.12),
+    0 1px 4px rgba(0,0,0,0.06),
+    0 0 0 0.5px rgba(255,255,255,0.50) inset;
+  --glass-input-placeholder: rgba(0,0,0,0.28);
+  --glass-input-icon: rgba(0,0,0,0.30);
+  --glass-btn-bg: hsla(240, 10%, 96%, 0.75);
+  --glass-btn-bg-blur: hsla(240, 10%, 96%, 0.40);
+  --glass-btn-border: rgba(0,0,0,0.06);
+  --glass-btn-shadow:
+    0 1px 3px rgba(0,0,0,0.06),
+    0 0 0 0.5px rgba(255,255,255,0.50) inset;
+  --glass-btn-active-bg: rgba(0,0,0,0.06);
 
   /* Bus-specific colors (light theme overrides) */
   --bus-badge: #3D4E63;
@@ -293,9 +337,12 @@ h2 {
   grid-column: -4 / -1;
 }
 
+/* ── Liquid Glass search form ── */
+
 .search-form {
   width: 100%;
   position: relative;
+  margin-bottom: 4px;
 }
 
 input, button {
@@ -308,35 +355,91 @@ input, button {
   border-radius: 0;
   height: 56px;
   border: none;
-  border-bottom: 1px solid var(--input-border);
   background-color: var(--surface);
   width: 100%;
   font-weight: 900;
-  border: none;
 }
 
+/* Liquid Glass search input */
+.search-input {
+  height: 52px;
+  padding: 0 16px 0 44px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--glass-input-bg);
+  border: 1px solid var(--glass-input-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-input-shadow);
+  transition: border-color var(--duration-medium) var(--ease-standard),
+              box-shadow var(--duration-medium) var(--ease-standard),
+              background var(--duration-medium) var(--ease-standard);
+}
+
+@supports (backdrop-filter: blur(16px)) {
+  .search-input {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: var(--glass-input-bg-blur);
+  }
+}
+
+.search-input:focus {
+  border-color: var(--glass-input-focus-border);
+  box-shadow: var(--glass-input-focus-shadow);
+}
+
+.search-input::placeholder {
+  color: transparent;
+}
+
+/* Search icon (positioned via .search-form) */
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  color: var(--glass-input-icon);
+  pointer-events: none;
+  transition: color var(--duration-medium) var(--ease-standard);
+}
+
+.search-input:focus ~ .search-icon {
+  color: var(--focus-color);
+}
+
+/* Floating label */
 .search-label {
   position: absolute;
   display: flex;
   align-items: center;
-  padding: 12px 16px 14px;
-  height: 100%;
+  padding: 0;
+  height: 52px;
   top: 0;
-  left: 0;
-  color: var(--text-primary);
-  /* border-radius: 5px; */
-  /* background: hsla(220, 43%, 7%, 1); */
+  left: 44px;
+  color: var(--glass-input-placeholder);
   transform: scale(1);
-  transition: 0.3s ease transform;
+  transition: transform var(--duration-medium) var(--ease-standard),
+              color var(--duration-medium) var(--ease-standard),
+              opacity var(--duration-medium) var(--ease-standard);
   transform-origin: top left;
-  -moz-transition: 0.3s ease transform;
-  -webkit-transition: 0.3s ease transform;
+  font-size: 16px;
+  font-weight: 500;
+  pointer-events: none;
 }
 
-.search-input:focus ~ .search-label, .search-input:valid ~ .search-label {
-  transform-origin: top left;
-  transform: scale(0.75) translateY(-50%) translateX(10px);
+.search-input:focus ~ .search-label {
+  transform: scale(0.72) translateY(-38px) translateX(-30px);
   color: var(--focus-color);
+  opacity: 1;
+}
+
+.search-input:valid ~ .search-label {
+  transform: scale(0.72) translateY(-38px) translateX(-30px);
+  color: var(--text-tertiary);
+  opacity: 0.8;
 }
 
 .fab {
