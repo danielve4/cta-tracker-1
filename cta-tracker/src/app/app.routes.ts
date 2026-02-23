@@ -9,6 +9,7 @@ import { StopsComponent } from './stops/stops.component';
 import { TrainStopsComponent } from './train-stops/train-stops.component';
 import { TrainArrivalsComponent } from './train-arrivals/train-arrivals.component';
 import { TrainFollowComponent } from './train-follow/train-follow.component';
+import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/routes', pathMatch: 'full' },
@@ -21,5 +22,6 @@ export const routes: Routes = [
   { path: 'train-stops/:routeId', component: TrainStopsComponent },
   { path: 'train-arrivals/:routeId/:stationId/:stationName', component: TrainArrivalsComponent },
   { path: 'train-follow/:runNumber', component: TrainFollowComponent },
+  { path: 'settings', component: SettingsComponent },
   { path: '**', redirectTo: '/routes' }
 ];
