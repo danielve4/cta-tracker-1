@@ -1,0 +1,48 @@
+<h1 class="cols-4">Settings</h1>
+
+<!-- Appearance -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Appearance</h2>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Dark Mode</span>
+      <span class="settings-row-subtitle">{{ theme.isDark() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-theme-toggle></app-theme-toggle>
+  </div>
+</section>
+
+<!-- Sync Favorites -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Sync Favorites</h2>
+  <p class="section-description">Back up or restore your favorites using your phone number.</p>
+  <div class="sync-input-row">
+    <input
+      type="tel"
+      class="sync-input"
+      placeholder="10-digit phone number"
+      maxlength="10"
+      #phone>
+  </div>
+  <div class="sync-buttons">
+    <button class="settings-btn" (click)="saveFavorites(phone.value)">Save</button>
+    <button class="settings-btn" (click)="syncFavorites(phone.value)">Sync</button>
+  </div>
+  @if (syncStatus) {
+    <p class="sync-status">{{ syncStatus }}</p>
+  }
+</section>
+
+<!-- Cache -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Storage</h2>
+  <p class="section-description">Clear cached routes and stops data. Your favorites will be kept.</p>
+  <button class="settings-btn settings-btn-danger" (click)="clearCache()">
+    {{ cacheCleared ? 'Cache Cleared' : 'Clear Cache' }}
+  </button>
+</section>
+
+<!-- Version -->
+<footer class="cols-4 settings-footer">
+  <span class="version-text">CTA Tracker v{{ appVersion }}</span>
+</footer>

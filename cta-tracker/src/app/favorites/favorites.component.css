@@ -5,10 +5,6 @@
   gap: 16px;
 }
 
-.settings-icon {
-  cursor: pointer;
-}
-
 .favorite-list {
   display: grid;
   grid-auto-rows: 72px
@@ -58,21 +54,6 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-}
-
-.favorite-settings {
-  background-color: var(--gray4);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.favorite-settings ul li {
-  position: relative;
-}
-
-.favorite-settings button {
-  background-color: var(--gray6);
-  border-radius: 8px;
 }
 
 .edit-button {
