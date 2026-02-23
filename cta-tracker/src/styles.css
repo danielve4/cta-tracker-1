@@ -442,20 +442,53 @@ input, button {
   opacity: 0.8;
 }
 
+/* ── Liquid Glass FABs ── */
 .fab {
-  width: 56px;
-  height: 56px;
-  padding: 16px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
   position: fixed;
   right: 16px;
   bottom: calc(72px + 16px);
   -webkit-appearance: none;
-  border: none;
+  border: 1px solid var(--glass-btn-border);
   border-radius: 16px;
   outline: none;
   z-index: 1;
   transform: scale(1);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: var(--glass-btn-bg);
+  box-shadow:
+    var(--glass-btn-shadow),
+    0 4px 16px rgba(0,0,0,0.12);
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-medium) var(--ease-standard),
+              box-shadow var(--duration-medium) var(--ease-standard),
+              border-color var(--duration-medium) var(--ease-standard),
+              transform 80ms ease;
+}
+
+@supports (backdrop-filter: blur(16px)) {
+  .fab {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    background: var(--glass-btn-bg-blur);
+  }
+}
+
+.fab:active {
+  transform: scale(0.92);
+  background: var(--glass-btn-active-bg);
+}
+
+.fab-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
 }
 
 .icon {

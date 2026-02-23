@@ -131,8 +131,7 @@
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 /* FABs */
-.button-favorite { bottom: calc(56px + 16px + 64px + 12px); background-color: var(--bus-badge); }
-.button-refresh { background-color: var(--bus-badge); }
+.button-favorite { bottom: calc(72px + 16px + 52px + 12px); }
 .refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
 .favorited { animation: favorited 0.5s var(--ease-decelerate) 1; }
 @keyframes favorited { 0% { transform: scale(1); } 20% { transform: scale(1.4); } 85%,100% { transform: scale(0); } }

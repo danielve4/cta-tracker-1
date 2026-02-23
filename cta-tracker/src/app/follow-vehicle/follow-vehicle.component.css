@@ -124,10 +124,6 @@
   }
 }
 
-.button-refresh {
-  background-color: var(--cta-grey);
-}
-
 .refreshing {
   animation: refresh 0.5s linear 0s 1;
   animation-fill-mode: forwards;

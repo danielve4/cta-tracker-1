@@ -150,9 +150,8 @@
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 /* FAB */
-.button-favorite { bottom: calc(56px + 16px + 64px + 12px); }
+.button-favorite { bottom: calc(72px + 16px + 52px + 12px); }
 .favorited { animation: favorited 0.5s var(--ease-decelerate) 1; }
 @keyframes favorited { 0% { transform: scale(1); } 20% { transform: scale(1.4); } 85%,100% { transform: scale(0); } }
-.button-refresh { background-color: var(--cta-grey); }
 .refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
 @keyframes refreshSpin { from { transform: rotate(0deg); } 50% { transform: rotate(200deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }
