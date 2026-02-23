@@ -1,7 +1,5 @@
 .router-container {
-  padding-bottom: 56px;
-  /* backdrop-filter: saturate(180%) blur(20px); */
-  /* min-height: 100%; */
+  padding-bottom: 88px;
 }
 
 header {
@@ -13,65 +11,111 @@ header {
   background-color: var(--top-bottom-color);
 }
 
-nav {
-  height: 56px;
-  width: 100%;
+/* ── Pill-shaped Liquid Glass navigation bar ── */
+
+.pill-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  background-color: var(--nav-bg);
-  border-top: 1px solid var(--nav-border);
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 10;
-  transition: background-color var(--duration-medium) var(--ease-standard),
-              border-color var(--duration-medium) var(--ease-standard);
+  width: auto;
+  min-width: 220px;
+  max-width: calc(100% - 32px);
+
+  /* Liquid Glass: translucent tinted background */
+  background: var(--pill-nav-bg);
+  border: 1px solid var(--pill-nav-border);
+  border-radius: 100px;
+  box-shadow: var(--pill-nav-shadow);
+
+  transition: background var(--duration-medium) var(--ease-standard),
+              border-color var(--duration-medium) var(--ease-standard),
+              box-shadow var(--duration-medium) var(--ease-standard);
 }
 
-nav a:visited,
-nav a {
-  color: var(--nav-link);
-  text-decoration: none;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-  line-height: 56px;
-  display: block;
-  text-transform: uppercase;
-  font-weight: 700;
+/* Glass blur when supported */
+@supports (backdrop-filter: blur(20px)) {
+  .pill-nav {
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    background: var(--pill-nav-bg-blur);
+  }
 }
 
-nav ul {
-  height: 100%;
-  width: 100%;
+.pill-nav ul {
   display: flex;
   flex-direction: row;
-  justify-content: space-evenly;
   align-items: center;
-}
-
-nav ul li {
-  width: 100%;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px;
   height: 100%;
-  text-align: center;
-  /* background-color: var(--bottom-bar-color-reg); */
+  width: 100%;
 }
 
-nav ul li.active a {
-  color: var(--nav-link-active);
+.pill-nav ul li {
+  flex: 1;
+  min-width: 0;
 }
 
-@supports (backdrop-filter: blur(15px)) {
-  nav {
-    backdrop-filter: saturate(180%) blur(20px);
-    background-color: var(--nav-bg-blur);
-  }
-
-  /* nav ul li {
-    backdrop-filter: blur(30px) saturate(125%);
-    background-color: var(--bottom-bar-color);
-  }
-
-  nav ul li.active {
-    background-color: var(--top-bottom-color-light);
-  } */
+.pill-nav ul li a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 8px 24px;
+  border-radius: 100px;
+  color: var(--pill-nav-link);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  position: relative;
+  transition: color var(--duration-medium) var(--ease-standard),
+              background var(--duration-medium) var(--ease-standard),
+              box-shadow var(--duration-medium) var(--ease-standard);
 }
 
+.pill-nav ul li a:visited {
+  color: var(--pill-nav-link);
+}
+
+/* Icon styling */
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+
+/* ── Active tab: filled pill indicator ── */
+
+.pill-nav ul li.active a {
+  color: var(--pill-nav-link-active);
+  background: var(--pill-nav-active-bg);
+  box-shadow: var(--pill-nav-active-shadow);
+}
+
+.pill-nav ul li.active a:visited {
+  color: var(--pill-nav-link-active);
+}
+
+/* Subtle scale on the icon when active */
+.pill-nav ul li.active .nav-icon {
+  transform: scale(1.05);
+}
+
+/* ── Hover / press states ── */
+
+.pill-nav ul li:not(.active) a:hover {
+  background: var(--pill-nav-hover-bg);
+}
+
+.pill-nav ul li a:active {
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}

@@ -90,6 +90,21 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --bus-due-glow: rgba(52,211,153,0.06);
   --shimmer-highlight: rgba(255,255,255,0.04);
 
+  /* Pill nav – Liquid Glass (dark) */
+  --pill-nav-bg: hsla(240, 6%, 12%, 0.92);
+  --pill-nav-bg-blur: hsla(240, 6%, 12%, 0.55);
+  --pill-nav-border: rgba(255,255,255,0.10);
+  --pill-nav-shadow:
+    0 2px 12px rgba(0,0,0,0.35),
+    0 0 0 0.5px rgba(255,255,255,0.06) inset;
+  --pill-nav-link: rgba(255,255,255,0.45);
+  --pill-nav-link-active: #FFFFFF;
+  --pill-nav-active-bg: rgba(255,255,255,0.14);
+  --pill-nav-active-shadow:
+    0 1px 4px rgba(0,0,0,0.20),
+    0 0 0 0.5px rgba(255,255,255,0.08) inset;
+  --pill-nav-hover-bg: rgba(255,255,255,0.07);
+
   /* M3 Motion tokens */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1.0);
@@ -148,6 +163,21 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --pink-opacity: rgba(250,17,79,0.10);
   --yellow: rgb(217, 119, 6); /* Darker amber/gold for light mode text contrast */
   --yellow-opacity: rgba(217, 119, 6, 0.12); /* Soft highlight background */
+
+  /* Pill nav – Liquid Glass (light) */
+  --pill-nav-bg: hsla(240, 10%, 98%, 0.88);
+  --pill-nav-bg-blur: hsla(240, 10%, 98%, 0.50);
+  --pill-nav-border: rgba(0,0,0,0.08);
+  --pill-nav-shadow:
+    0 2px 16px rgba(0,0,0,0.10),
+    0 0 0 0.5px rgba(255,255,255,0.60) inset;
+  --pill-nav-link: rgba(0,0,0,0.38);
+  --pill-nav-link-active: #1a1a1e;
+  --pill-nav-active-bg: rgba(0,0,0,0.08);
+  --pill-nav-active-shadow:
+    0 1px 3px rgba(0,0,0,0.08),
+    0 0 0 0.5px rgba(0,0,0,0.04) inset;
+  --pill-nav-hover-bg: rgba(0,0,0,0.04);
 
   /* Bus-specific colors (light theme overrides) */
   --bus-badge: #3D4E63;
@@ -314,7 +344,7 @@ input, button {
   padding: 16px;
   position: fixed;
   right: 16px;
-  bottom: calc(56px + 16px);
+  bottom: calc(72px + 16px);
   -webkit-appearance: none;
   border: none;
   border-radius: 16px;
