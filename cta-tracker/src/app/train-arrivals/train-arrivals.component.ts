@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
@@ -22,7 +22,7 @@ interface ArrivalGroup {
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
-  imports: [AsyncPipe, TimeuntilPipe, RouterLink]
+  imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
 })
 export class TrainArrivalsComponent implements OnInit, OnDestroy {
   readonly skeletonCards = [0, 1, 2];
@@ -40,6 +40,7 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   isFavorite = true;
   favoriteStop: Favorite | undefined;
   favorited = false;
+  lastRefreshed: Date | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -95,6 +96,7 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   handleResponse(response: TrainApiResponse): void {
     this.isInitialLoading = false;
     this.refreshing = true;
+    this.lastRefreshed = new Date();
 
     if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
       this.errorMsg = response.ctatt.errNm;

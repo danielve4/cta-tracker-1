@@ -1,5 +1,8 @@
 <div class="stop-header cols-4">
   <h2>{{ stationName }}</h2>
+  @if (lastRefreshed) {
+    <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
+  }
 </div>
 @if (isInitialLoading) {
   <ul class="cols-4 arrivals-list">
