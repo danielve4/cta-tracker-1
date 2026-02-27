@@ -1,6 +1,9 @@
 <div class="stop-header cols-4">
   <h2>{{ forStopName }}</h2>
   <span class="direction-label">{{ forDirection }}</span>
+  @if (lastRefreshedAt) {
+    <span class="last-refreshed">Last refreshed {{ lastRefreshedAt }}</span>
+  }
 </div>
 <ul class="cols-4 arrivals-list">
   @if (isInitialLoading) {

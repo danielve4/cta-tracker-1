@@ -30,6 +30,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   canRefresh = false;
   refreshing = false;
   isInitialLoading = true;
+  lastRefreshedAt = '';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -78,6 +79,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   handleArrivalsResponse(response: BustimeResponse): void {
     this.isInitialLoading = false;
     this.refreshing = true;
+    this.updateLastRefreshedAt();
     if (response.error) {
       this.error$ = of(response.error);
       this.vehicles$ = undefined;
@@ -128,5 +130,13 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
         }, 300);
       });
     }
+  }
+
+  private updateLastRefreshedAt(): void {
+    this.lastRefreshedAt = new Date().toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   }
 }

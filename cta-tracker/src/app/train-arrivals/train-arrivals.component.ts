@@ -40,6 +40,7 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   isFavorite = true;
   favoriteStop: Favorite | undefined;
   favorited = false;
+  lastRefreshedAt = '';
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -95,6 +96,7 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   handleResponse(response: TrainApiResponse): void {
     this.isInitialLoading = false;
     this.refreshing = true;
+    this.updateLastRefreshedAt();
 
     if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
       this.errorMsg = response.ctatt.errNm;
@@ -153,6 +155,14 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
     } catch {
       return '--';
     }
+  }
+
+  private updateLastRefreshedAt(): void {
+    this.lastRefreshedAt = new Date().toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit'
+    });
   }
 
   addToFavorite(): void {

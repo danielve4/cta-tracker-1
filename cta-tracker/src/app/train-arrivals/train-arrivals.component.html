@@ -26,7 +26,12 @@
   }
   @if (arrivalGroups$ | async; as groups) {
     @for (group of groups; track group.directionLabel) {
-      <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
+      <div class="cols-4 direction-header">
+        <h3 class="direction-label">{{ group.directionLabel }}</h3>
+        @if (lastRefreshedAt) {
+          <p class="last-refreshed">Last refreshed {{ lastRefreshedAt }}</p>
+        }
+      </div>
       <ul class="cols-4 arrivals-list">
         @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
           <li class="arrival-card" [class.loading]="refreshing">

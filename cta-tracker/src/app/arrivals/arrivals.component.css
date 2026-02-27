@@ -1,17 +1,29 @@
 /* Stop Header */
-.stop-header { margin-bottom: 8px; }
-.stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+.stop-header {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stop-header h2 { margin: 0; letter-spacing: -0.02em; }
 .direction-label {
   display: inline-flex;
-  color: var(--text-tertiary);
+  width: fit-content;
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 20px;
   padding: 4px 10px;
   background: var(--bus-countdown-bg);
   border-radius: 6px;
+}
+
+.last-refreshed {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
 }
 
 /* Arrivals List */
