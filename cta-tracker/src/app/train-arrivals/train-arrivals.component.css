@@ -1,6 +1,13 @@
 /* Stop Header */
 .stop-header { margin-bottom: 8px; }
 .stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+.last-refreshed {
+  display: block;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
 
 /* Direction Label */
 .direction-label {

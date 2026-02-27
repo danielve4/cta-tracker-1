@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, DatePipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { of, Observable, timer, Subscription } from 'rxjs';
@@ -12,7 +12,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   selector: 'app-arrivals',
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css'],
-  imports: [AsyncPipe, TimeuntilPipe, RouterLink]
+  imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
 })
 export class ArrivalsComponent implements OnInit, OnDestroy {
   readonly skeletonCards = [0, 1, 2];
@@ -30,6 +30,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   canRefresh = false;
   refreshing = false;
   isInitialLoading = true;
+  lastRefreshed: Date | null = null;
 
   constructor(
     private activatedRoute: ActivatedRoute,
@@ -78,6 +79,7 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   handleArrivalsResponse(response: BustimeResponse): void {
     this.isInitialLoading = false;
     this.refreshing = true;
+    this.lastRefreshed = new Date();
     if (response.error) {
       this.error$ = of(response.error);
       this.vehicles$ = undefined;
