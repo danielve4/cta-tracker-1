@@ -133,7 +133,10 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
         groupMap.get(key)!.arrivals.push(arrival);
       }
 
-      this.arrivalGroups$ = of(Array.from(groupMap.values()));
+      const groups = Array.from(groupMap.values()).sort((a, b) =>
+        a.directionLabel.localeCompare(b.directionLabel)
+      );
+      this.arrivalGroups$ = of(groups);
       this.errorMsg = undefined;
     } else {
       this.errorMsg = 'No arrivals found';
