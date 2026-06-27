@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
@@ -14,6 +14,7 @@ interface TrainStopDisplay extends TrainEta {
   selector: 'app-train-follow',
   templateUrl: './train-follow.component.html',
   styleUrls: ['./train-follow.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [AsyncPipe, TimeuntilPipe]
 })
 export class TrainFollowComponent implements OnInit, OnDestroy {

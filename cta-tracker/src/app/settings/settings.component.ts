@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ThemeService } from '../services/theme.service';
 import { FavoritesService } from '../services/favorites.service';
@@ -9,6 +9,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ThemeToggleComponent]
 })
 export class SettingsComponent {

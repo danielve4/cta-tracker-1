@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
@@ -12,6 +12,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   selector: 'app-arrivals',
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
 })
 export class ArrivalsComponent implements OnInit, OnDestroy {

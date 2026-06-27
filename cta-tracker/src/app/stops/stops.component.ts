@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
@@ -10,6 +10,7 @@ import { switchMap } from 'rxjs/operators';
   selector: 'app-stops',
   templateUrl: './stops.component.html',
   styleUrls: ['./stops.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterLink, AsyncPipe]
 })
 export class StopsComponent implements OnInit {

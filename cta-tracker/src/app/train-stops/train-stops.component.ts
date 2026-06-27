@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
@@ -15,6 +15,7 @@ interface TrainStop {
   selector: 'app-train-stops',
   templateUrl: './train-stops.component.html',
   styleUrls: ['./train-stops.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterLink, AsyncPipe]
 })
 export class TrainStopsComponent implements OnInit {

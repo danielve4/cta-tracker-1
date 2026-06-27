@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
@@ -10,6 +10,7 @@ import { switchMap } from 'rxjs/operators';
   selector: 'app-directions',
   templateUrl: './directions.component.html',
   styleUrls: ['./directions.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterLink, AsyncPipe]
 })
 export class DirectionsComponent implements OnInit {

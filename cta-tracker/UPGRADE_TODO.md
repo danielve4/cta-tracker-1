@@ -31,19 +31,25 @@ all use `track` (`routes`, `stops`, `directions`, `favorites`, `arrivals`, `trai
 
 ---
 
-## [ ] TODO 1 — Upgrade to Angular 22 (and Node / TypeScript)
+## [x] TODO 1 — Upgrade to Angular 22 (and Node / TypeScript)
 
 **Story:** As a developer, I want the app running on Angular 22 with a green production build so
 every later optimization targets the new framework.
 
 **Acceptance criteria**
-- [ ] `ng update @angular/core@22 @angular/cli@22` (+ `@angular/service-worker`, rxjs/zone.js/typescript as `ng update` dictates) completes; all `@angular/*` at `^22`, TypeScript at the version Angular 22 mandates.
-- [ ] Both GitHub Actions workflows pin Node **22** via `actions/setup-node@v4` (`node-version: 22`) before `npm install`.
-- [ ] `npm run build` (production) succeeds; `npm start` serves; app boots and navigates with **no console errors** (still zone-based at this step).
-- [ ] App behavior unchanged; `firebase.json` public path still valid (`dist/cta-tracker/browser`).
+- [x] `ng update @angular/cli@22 @angular/core@22` completed; all `@angular/*` at `^22.0.4`, `@angular-devkit/build-angular`/`@angular/cli`/`@angular/compiler-cli` at `^22.0.4`, **TypeScript `~6.0.3`**, `rxjs ~7.8` and `zone.js ~0.15` unchanged (zone.js kept until TODO 4).
+- [x] Both GitHub Actions workflows pin Node **22** via `actions/setup-node@v4` (`node-version-file: cta-tracker/.nvmrc`) before `npm install`.
+- [x] `npm run build` (production) succeeds; `npm start` serves; app boots and navigates with **no console errors** (still zone-based at this step).
+- [x] App behavior unchanged; `firebase.json` public path still valid (build emits to `dist/cta-tracker/browser`).
 
-**Files:** `package.json`, `tsconfig*.json`, `.github/workflows/firebase-hosting-*.yml`
-**Risk:** OnPush-by-default may surface refresh bugs immediately — fixed properly in TODO 3; if needed, components can temporarily keep `changeDetection: Default` explicitly until then.
+**Files:** `package.json`, `package-lock.json`, `tsconfig.json`, `tsconfig.app.json`, the 12 `src/app/**/*.component.ts`, `src/app/app.config.ts`, `.github/workflows/firebase-hosting-*.yml`
+
+**Result (Angular 21.1 → 22.0.4):**
+- `ng update` migrations applied & kept: **`ChangeDetectionStrategy.Eager` added to all 12 components** (behavior-preserving; → `OnPush` in TODO 3); **`provideHttpClient(withXhr())`** added because Angular 22 now defaults HttpClient to **Fetch** — so TODO 2 becomes simply "drop `withXhr()`"; `tsconfig.app.json` extended-diagnostics suppression.
+- Manual fix: removed deprecated `downlevelIteration` from `tsconfig.json` (no-op at `target: ES2022`; TS 6 errors on it).
+- **Node:** Angular 22 needs `≥22.22.3`; dev container had `22.22.2`, so used `nvm` to run on **Node 22.23.1**. CI now pins Node via `.nvmrc`.
+- **Verified:** production build green — initial bundle **399 kB raw / 101 kB transfer** (polyfills/zone.js = 34.6 kB, removed in TODO 4); dev server compiles; Chromium smoke test on a 390×844 viewport boots the app, `/` → `/routes` redirect works, in-app router nav to `/settings` `/favorites` `/routes` renders correctly, **0 console errors / 0 page errors** (only the external `cta.danielvega.dev` API calls fail — sandbox network, not a regression).
+- Pre-existing component-CSS budget **warnings** (`train-arrivals.css` 5.73 kB, `arrivals.css` 5.24 kB; warn at 5 kB, error at 8 kB) — untouched here, deferred to TODO 10 budget review.
 
 ---
 

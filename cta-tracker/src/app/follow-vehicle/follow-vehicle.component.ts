@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
@@ -10,6 +10,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   selector: 'app-follow-vehicle',
   templateUrl: './follow-vehicle.component.html',
   styleUrls: ['./follow-vehicle.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [AsyncPipe, TimeuntilPipe]
 })
 export class FollowVehicleComponent implements OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AsyncPipe, SlicePipe } from '@angular/common';
 import { FavoritesService } from '../services/favorites.service';
@@ -10,6 +10,7 @@ import { TRAIN_LINE_CSS_MAP } from '../trainResponse';
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [RouterLink, AsyncPipe, SlicePipe]
 })
 export class FavoritesComponent implements OnInit {

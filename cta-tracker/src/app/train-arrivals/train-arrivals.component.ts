@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
@@ -22,6 +22,7 @@ interface ArrivalGroup {
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
 })
 export class TrainArrivalsComponent implements OnInit, OnDestroy {
