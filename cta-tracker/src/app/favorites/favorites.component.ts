@@ -1,45 +1,53 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { AsyncPipe, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
-import { Observable } from 'rxjs';
 import { TRAIN_LINE_CSS_MAP } from '../trainResponse';
 
 @Component({
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [RouterLink, AsyncPipe, SlicePipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, SlicePipe]
 })
 export class FavoritesComponent implements OnInit {
-  favorites$: Observable<Array<Favorite>> | undefined;
-  editing = false;
-  editableFavorites: Favorite[] = [];
+  private readonly favoritesService = inject(FavoritesService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  constructor(private favoritesService: FavoritesService) {}
+  favorites = signal<Favorite[] | null>(null);
+  editing = signal(false);
+  editableFavorites = signal<Favorite[]>([]);
 
   ngOnInit(): void {
-    this.favorites$ = this.favoritesService.getFavorites();
+    this.loadFavorites();
+  }
+
+  private loadFavorites(): void {
+    this.favoritesService.getFavorites()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((favorites: Array<Favorite>) => this.favorites.set(favorites));
   }
 
   toggleEdit(): void {
-    if (!this.editing) {
-      this.favoritesService.getFavorites().subscribe((favorites: Array<Favorite>) => {
-        this.editableFavorites = [...favorites];
-      });
-      this.editing = true;
+    if (!this.editing()) {
+      this.favoritesService.getFavorites()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((favorites: Array<Favorite>) => this.editableFavorites.set([...favorites]));
+      this.editing.set(true);
     } else {
-      this.favoritesService.reorderFavorites(this.editableFavorites);
-      this.favorites$ = this.favoritesService.getFavorites();
-      this.editing = false;
+      this.favoritesService.reorderFavorites(this.editableFavorites());
+      this.loadFavorites();
+      this.editing.set(false);
     }
   }
 
   deleteFavorite(index: number): void {
-    this.editableFavorites.splice(index, 1);
-    this.favoritesService.reorderFavorites(this.editableFavorites);
+    const next = this.editableFavorites().filter((_, i) => i !== index);
+    this.editableFavorites.set(next);
+    this.favoritesService.reorderFavorites(next);
   }
 
   getTrainLineColor(route: string): string {
@@ -49,10 +57,11 @@ export class FavoritesComponent implements OnInit {
 
   moveFavorite(index: number, direction: number): void {
     const newIndex = index + direction;
-    if (newIndex < 0 || newIndex >= this.editableFavorites.length) return;
-    const temp = this.editableFavorites[index];
-    this.editableFavorites[index] = this.editableFavorites[newIndex];
-    this.editableFavorites[newIndex] = temp;
-    this.favoritesService.reorderFavorites(this.editableFavorites);
+    const current = this.editableFavorites();
+    if (newIndex < 0 || newIndex >= current.length) return;
+    const next = [...current];
+    [next[index], next[newIndex]] = [next[newIndex], next[index]];
+    this.editableFavorites.set(next);
+    this.favoritesService.reorderFavorites(next);
   }
 }

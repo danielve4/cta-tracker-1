@@ -1,38 +1,38 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Direction, Error } from '../busResponse';
-import { of, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-directions',
   templateUrl: './directions.component.html',
   styleUrls: ['./directions.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [RouterLink, AsyncPipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink]
 })
 export class DirectionsComponent implements OnInit {
-  forRoute = '';
-  directions$: Observable<Direction[]> | undefined;
-  error$: Observable<Error[]> | undefined;
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly busService = inject(BusService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private busService: BusService
-  ) {}
+  forRoute = signal('');
+  directions = signal<Direction[] | null>(null);
+  error = signal<Error[] | null>(null);
 
   ngOnInit(): void {
-    this.activatedRoute.paramMap.pipe(switchMap(params => {
-      this.forRoute = params.get('route') ?? '';
-      return this.busService.directions(this.forRoute);
-    })).subscribe((response: BustimeResponse) => {
+    this.activatedRoute.paramMap.pipe(
+      switchMap(params => {
+        this.forRoute.set(params.get('route') ?? '');
+        return this.busService.directions(this.forRoute());
+      }),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((response: BustimeResponse) => {
       if (response.error) {
-        this.error$ = of(response.error);
+        this.error.set(response.error);
       } else if (response.directions) {
-        this.directions$ = of(response.directions);
+        this.directions.set(response.directions);
       }
     });
   }

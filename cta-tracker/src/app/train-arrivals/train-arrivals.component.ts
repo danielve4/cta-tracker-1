@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
-import { of, Observable, timer, Subscription } from 'rxjs';
+import { timer, Subscription } from 'rxjs';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainArrivalDisplay extends TrainEta {
@@ -22,58 +23,59 @@ interface ArrivalGroup {
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DatePipe, TimeuntilPipe, RouterLink]
 })
 export class TrainArrivalsComponent implements OnInit, OnDestroy {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly trainService = inject(TrainService);
+  private readonly favoritesService = inject(FavoritesService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly skeletonCards = [0, 1, 2];
-  routeId = '';
-  stationId = '';
-  stationName = '';
-  arrivalGroups$: Observable<ArrivalGroup[]> | undefined;
-  errorMsg: string | undefined;
+  routeId = signal('');
+  stationId = signal('');
+  stationName = signal('');
+  arrivalGroups = signal<ArrivalGroup[] | null>(null);
+  errorMsg = signal<string | undefined>(undefined);
   refreshInterval = 30 * 1000;
   timerRef: Subscription | undefined;
-  canRefresh = false;
-  refreshing = false;
-  isInitialLoading = true;
-  lineColor = '';
-  isFavorite = true;
+  canRefresh = signal(false);
+  refreshing = signal(false);
+  isInitialLoading = signal(true);
+  private lineColor = '';
+  isFavorite = signal(true);
   favoriteStop: Favorite | undefined;
-  favorited = false;
-  lastRefreshed: Date | null = null;
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private trainService: TrainService,
-    private favoritesService: FavoritesService
-  ) {}
+  favorited = signal(false);
+  lastRefreshed = signal<Date | null>(null);
 
   ngOnInit(): void {
-    this.activatedRoute.params.subscribe(params => {
-      this.canRefresh = true;
-      this.isInitialLoading = true;
-      this.errorMsg = undefined;
-      this.arrivalGroups$ = undefined;
-      this.routeId = params['routeId'];
-      this.stationId = params['stationId'];
-      this.stationName = params['stationName'];
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.canRefresh.set(true);
+      this.isInitialLoading.set(true);
+      this.errorMsg.set(undefined);
+      this.arrivalGroups.set(null);
+      this.routeId.set(params['routeId']);
+      this.stationId.set(params['stationId']);
+      this.stationName.set(params['stationName']);
 
-      const cssVar = TRAIN_LINE_CSS_MAP[this.routeId];
+      const cssVar = TRAIN_LINE_CSS_MAP[this.routeId()];
       if (cssVar) {
         this.lineColor = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
       }
 
       const tempFavoriteStop: Favorite = {
-        route: this.routeId,
-        stopId: +this.stationId,
-        stopName: this.stationName,
+        route: this.routeId(),
+        stopId: +this.stationId(),
+        stopName: this.stationName(),
         direction: '',
         type: 'train'
       };
-      this.favoritesService.search(tempFavoriteStop).subscribe((index: number) => {
-        this.isFavorite = index >= 0;
-      });
+      this.favoritesService.search(tempFavoriteStop)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((index: number) => {
+          this.isFavorite.set(index >= 0);
+        });
       this.favoriteStop = tempFavoriteStop;
 
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
@@ -87,27 +89,27 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   }
 
   getArrivals(): void {
-    if (!this.refreshing) {
-      this.trainService.arrivals(this.stationId).subscribe((response: TrainApiResponse) => {
+    if (!this.refreshing()) {
+      this.trainService.arrivals(this.stationId()).subscribe((response: TrainApiResponse) => {
         this.handleResponse(response);
       });
     }
   }
 
   handleResponse(response: TrainApiResponse): void {
-    this.isInitialLoading = false;
-    this.refreshing = true;
-    this.lastRefreshed = new Date();
+    this.isInitialLoading.set(false);
+    this.refreshing.set(true);
+    this.lastRefreshed.set(new Date());
 
     if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
-      this.errorMsg = response.ctatt.errNm;
-      this.arrivalGroups$ = undefined;
+      this.errorMsg.set(response.ctatt.errNm);
+      this.arrivalGroups.set(null);
     } else if (response.ctatt.eta && response.ctatt.eta.length > 0) {
-      const filtered = response.ctatt.eta.filter(eta => eta.rt === this.routeId);
+      const filtered = response.ctatt.eta.filter(eta => eta.rt === this.routeId());
       if (filtered.length === 0) {
-        this.errorMsg = 'No arrivals found';
-        this.arrivalGroups$ = undefined;
-        setTimeout(() => this.refreshing = false, 800);
+        this.errorMsg.set('No arrivals found');
+        this.arrivalGroups.set(null);
+        setTimeout(() => this.refreshing.set(false), 800);
         return;
       }
       const displays: TrainArrivalDisplay[] = filtered.map(eta => {
@@ -137,14 +139,14 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
       const groups = Array.from(groupMap.values()).sort((a, b) =>
         a.directionLabel.localeCompare(b.directionLabel)
       );
-      this.arrivalGroups$ = of(groups);
-      this.errorMsg = undefined;
+      this.arrivalGroups.set(groups);
+      this.errorMsg.set(undefined);
     } else {
-      this.errorMsg = 'No arrivals found';
-      this.arrivalGroups$ = undefined;
+      this.errorMsg.set('No arrivals found');
+      this.arrivalGroups.set(null);
     }
 
-    setTimeout(() => this.refreshing = false, 800);
+    setTimeout(() => this.refreshing.set(false), 800);
     if (typeof window.navigator.vibrate !== 'undefined') {
       window.navigator.vibrate(5);
     }
@@ -163,12 +165,14 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
 
   addToFavorite(): void {
     if (this.favoriteStop) {
-      this.favoritesService.addToFavorites(this.favoriteStop).subscribe((wasAdded: boolean) => {
-        this.favorited = wasAdded;
-        setTimeout(() => {
-          this.isFavorite = wasAdded;
-        }, 300);
-      });
+      this.favoritesService.addToFavorites(this.favoriteStop)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((wasAdded: boolean) => {
+          this.favorited.set(wasAdded);
+          setTimeout(() => {
+            this.isFavorite.set(wasAdded);
+          }, 300);
+        });
     }
   }
 }

@@ -1,4 +1,4 @@
-<h2 class="cols-4">Route {{ forRoute }} {{ forDirection }}</h2>
+<h2 class="cols-4">Route {{ forRoute() }} {{ forDirection() }}</h2>
 <section class="cols-4 search-form">
   <input class="search-input" id="search-stops" #criteria (input)="search(criteria.value)" autocomplete="off" required />
   <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -8,15 +8,15 @@
 </section>
 
 <ul class="cols-4">
-  @if (error$ | async; as errors) {
+  @if (error(); as errors) {
     @for (anError of errors; track anError.msg) {
       <li>{{ anError.msg }}</li>
     }
   }
-  @if (stops$ | async; as stops) {
+  @if (stops(); as stops) {
     @for (stop of stops; track stop.stpid) {
       <li class="bus-stop">
-        <a routerLink="/arrivals/{{ forRoute }}/{{ forDirection }}/{{ stop.stpid }}/{{ replaceSlash(stop.stpnm) }}">
+        <a routerLink="/arrivals/{{ forRoute() }}/{{ forDirection() }}/{{ stop.stpid }}/{{ replaceSlash(stop.stpnm) }}">
           {{ stop.stpnm }}
         </a>
       </li>

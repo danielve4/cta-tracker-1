@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { of, Observable, timer, Subscription } from 'rxjs';
+import { timer, Subscription } from 'rxjs';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
@@ -12,52 +13,53 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   selector: 'app-arrivals',
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DatePipe, TimeuntilPipe, RouterLink]
 })
 export class ArrivalsComponent implements OnInit, OnDestroy {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly busService = inject(BusService);
+  private readonly favoritesService = inject(FavoritesService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly skeletonCards = [0, 1, 2];
-  forRoute = '';
-  forDirection = '';
-  forStopId = 0;
-  forStopName = '';
-  vehicles$: Observable<Prd[]> | undefined;
-  error$: Observable<Error[]> | undefined;
+  forRoute = signal('');
+  forDirection = signal('');
+  forStopId = signal(0);
+  forStopName = signal('');
+  vehicles = signal<Prd[] | null>(null);
+  error = signal<Error[] | null>(null);
   refreshInterval = 30 * 1000;
   timerRef: Subscription | undefined;
-  isFavorite = true;
+  isFavorite = signal(true);
   favoriteStop: Favorite | undefined;
-  favorited = false;
-  canRefresh = false;
-  refreshing = false;
-  isInitialLoading = true;
-  lastRefreshed: Date | null = null;
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private busService: BusService,
-    private favoritesService: FavoritesService
-  ) {}
+  favorited = signal(false);
+  canRefresh = signal(false);
+  refreshing = signal(false);
+  isInitialLoading = signal(true);
+  lastRefreshed = signal<Date | null>(null);
 
   ngOnInit(): void {
-    this.activatedRoute.params.subscribe(params => {
-      this.canRefresh = true;
-      this.isInitialLoading = true;
-      this.error$ = undefined;
-      this.vehicles$ = undefined;
-      this.forRoute = params['route'];
-      this.forDirection = params['direction'];
-      this.forStopId = +params['stopId'];
-      this.forStopName = params['stopName'];
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.canRefresh.set(true);
+      this.isInitialLoading.set(true);
+      this.error.set(null);
+      this.vehicles.set(null);
+      this.forRoute.set(params['route']);
+      this.forDirection.set(params['direction']);
+      this.forStopId.set(+params['stopId']);
+      this.forStopName.set(params['stopName']);
       const tempFavoriteStop: Favorite = {
-        route: this.forRoute,
-        stopId: this.forStopId,
-        stopName: this.forStopName,
-        direction: this.forDirection
+        route: this.forRoute(),
+        stopId: this.forStopId(),
+        stopName: this.forStopName(),
+        direction: this.forDirection()
       };
-      this.favoritesService.search(tempFavoriteStop).subscribe((index: number) => {
-        this.isFavorite = index >= 0;
-      });
+      this.favoritesService.search(tempFavoriteStop)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((index: number) => {
+          this.isFavorite.set(index >= 0);
+        });
       this.favoriteStop = tempFavoriteStop;
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         this.getArrivals();
@@ -70,20 +72,20 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   }
 
   getArrivals(): void {
-    if (!this.refreshing) {
-      this.busService.arrivals(this.forStopId).subscribe((response: BustimeResponse) => {
+    if (!this.refreshing()) {
+      this.busService.arrivals(this.forStopId()).subscribe((response: BustimeResponse) => {
         this.handleArrivalsResponse(response);
       });
     }
   }
 
   handleArrivalsResponse(response: BustimeResponse): void {
-    this.isInitialLoading = false;
-    this.refreshing = true;
-    this.lastRefreshed = new Date();
+    this.isInitialLoading.set(false);
+    this.refreshing.set(true);
+    this.lastRefreshed.set(new Date());
     if (response.error) {
-      this.error$ = of(response.error);
-      this.vehicles$ = undefined;
+      this.error.set(response.error);
+      this.vehicles.set(null);
     } else if (response.prd) {
       const valid = response.prd.filter(p => p.vid);
       for (let i = 0; i < valid.length; i++) {
@@ -93,10 +95,10 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
             valid[i].prdtm);
         }
       }
-      this.vehicles$ = of(valid);
-      this.error$ = undefined;
+      this.vehicles.set(valid);
+      this.error.set(null);
     }
-    setTimeout(() => this.refreshing = false, 800);
+    setTimeout(() => this.refreshing.set(false), 800);
     if (typeof window.navigator.vibrate !== 'undefined') {
       window.navigator.vibrate(5);
     }
@@ -124,12 +126,14 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
 
   addToFavorite(): void {
     if (this.favoriteStop) {
-      this.favoritesService.addToFavorites(this.favoriteStop).subscribe((wasAdded: boolean) => {
-        this.favorited = wasAdded;
-        setTimeout(() => {
-          this.isFavorite = wasAdded;
-        }, 300);
-      });
+      this.favoritesService.addToFavorites(this.favoriteStop)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((wasAdded: boolean) => {
+          this.favorited.set(wasAdded);
+          setTimeout(() => {
+            this.isFavorite.set(wasAdded);
+          }, 300);
+        });
     }
   }
 }

@@ -1,43 +1,42 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { of, Observable, timer, Subscription } from 'rxjs';
+import { timer, Subscription } from 'rxjs';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 @Component({
   selector: 'app-follow-vehicle',
   templateUrl: './follow-vehicle.component.html',
   styleUrls: ['./follow-vehicle.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [AsyncPipe, TimeuntilPipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TimeuntilPipe]
 })
 export class FollowVehicleComponent implements OnInit, OnDestroy {
-  vehicleId = 0;
-  fromStopId = '';
-  routeNumber = '';
-  direction = '';
-  destination = '';
-  predictions$: Observable<Prd[]> | undefined;
-  error$: Observable<Error[]> | undefined;
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly busService = inject(BusService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  vehicleId = signal(0);
+  fromStopId = signal('');
+  routeNumber = signal('');
+  direction = signal('');
+  destination = signal('');
+  predictions = signal<Prd[] | null>(null);
+  error = signal<Error[] | null>(null);
   refreshInterval = 30 * 1000;
   timerRef: Subscription | undefined;
-  canRefresh = false;
-  refreshing = false;
-
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private busService: BusService
-  ) {}
+  canRefresh = signal(false);
+  refreshing = signal(false);
 
   ngOnInit(): void {
-    this.activatedRoute.queryParams.subscribe(qp => {
-      this.fromStopId = qp['from'] || '';
+    this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(qp => {
+      this.fromStopId.set(qp['from'] || '');
     });
-    this.activatedRoute.params.subscribe(params => {
-      this.canRefresh = true;
-      this.vehicleId = +params['vehicleId'];
+    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.canRefresh.set(true);
+      this.vehicleId.set(+params['vehicleId']);
       this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
         this.getFollowData();
       });
@@ -49,22 +48,22 @@ export class FollowVehicleComponent implements OnInit, OnDestroy {
   }
 
   getFollowData(): void {
-    if (!this.refreshing) {
-      this.busService.follow(this.vehicleId).subscribe((response: BustimeResponse) => {
+    if (!this.refreshing()) {
+      this.busService.follow(this.vehicleId()).subscribe((response: BustimeResponse) => {
         this.handleResponse(response);
       });
     }
   }
 
   handleResponse(response: BustimeResponse): void {
-    this.refreshing = true;
+    this.refreshing.set(true);
     if (response.error) {
-      this.error$ = of(response.error);
+      this.error.set(response.error);
     } else if (response.prd) {
       if (response.prd.length > 0) {
-        this.routeNumber = response.prd[0].rt;
-        this.direction = response.prd[0].rtdir;
-        this.destination = response.prd[0].des;
+        this.routeNumber.set(response.prd[0].rt);
+        this.direction.set(response.prd[0].rtdir);
+        this.destination.set(response.prd[0].des);
       }
       for (let i = 0; i < response.prd.length; i++) {
         if (response.prd[i].dly) {
@@ -73,9 +72,9 @@ export class FollowVehicleComponent implements OnInit, OnDestroy {
             response.prd[i].prdtm);
         }
       }
-      this.predictions$ = of(response.prd);
+      this.predictions.set(response.prd);
     }
-    setTimeout(() => this.refreshing = false, 500);
+    setTimeout(() => this.refreshing.set(false), 500);
     if (typeof window.navigator.vibrate !== 'undefined') {
       window.navigator.vibrate(5);
     }

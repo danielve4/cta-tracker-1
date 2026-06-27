@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ThemeService } from '../services/theme.service';
 import { FavoritesService } from '../services/favorites.service';
@@ -9,31 +9,31 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
   selector: 'app-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ThemeToggleComponent]
 })
 export class SettingsComponent {
   protected readonly theme = inject(ThemeService);
   private readonly favoritesService = inject(FavoritesService);
 
-  syncStatus: string = '';
-  cacheCleared: boolean = false;
+  syncStatus = signal('');
+  cacheCleared = signal(false);
 
   readonly appVersion = '1.0.0';
 
   saveFavorites(phone: string): void {
     if (!/^[0-9]{10}$/.test(phone.trim())) {
-      this.syncStatus = 'Enter a valid 10-digit phone number';
+      this.syncStatus.set('Enter a valid 10-digit phone number');
       return;
     }
-    this.syncStatus = 'Saving...';
+    this.syncStatus.set('Saving...');
     this.favoritesService.getFavorites().subscribe((favorites: Array<Favorite>) => {
       this.favoritesService.saveFavorites(phone.trim(), favorites).subscribe({
         next: (response: HttpResponse<string>) => {
-          this.syncStatus = response.status === 202 ? 'Favorites saved' : 'Error saving favorites';
+          this.syncStatus.set(response.status === 202 ? 'Favorites saved' : 'Error saving favorites');
         },
         error: (error: HttpErrorResponse) => {
-          this.syncStatus = 'Error: ' + (error.error || 'Could not save');
+          this.syncStatus.set('Error: ' + (error.error || 'Could not save'));
         }
       });
     });
@@ -41,16 +41,16 @@ export class SettingsComponent {
 
   syncFavorites(phone: string): void {
     if (!/^[0-9]{10}$/.test(phone.trim())) {
-      this.syncStatus = 'Enter a valid 10-digit phone number';
+      this.syncStatus.set('Enter a valid 10-digit phone number');
       return;
     }
-    this.syncStatus = 'Syncing...';
+    this.syncStatus.set('Syncing...');
     this.favoritesService.syncFavorites(phone.trim()).subscribe({
       next: (response: HttpResponse<string>) => {
-        this.syncStatus = response.status === 200 ? 'Favorites synced' : 'Error syncing favorites';
+        this.syncStatus.set(response.status === 200 ? 'Favorites synced' : 'Error syncing favorites');
       },
       error: (error: HttpErrorResponse) => {
-        this.syncStatus = 'Error: ' + (error.error || 'Could not sync');
+        this.syncStatus.set('Error: ' + (error.error || 'Could not sync'));
       }
     });
   }
@@ -65,7 +65,7 @@ export class SettingsComponent {
     if (themePreference) {
       localStorage.setItem('theme-preference', themePreference);
     }
-    this.cacheCleared = true;
-    setTimeout(() => this.cacheCleared = false, 3000);
+    this.cacheCleared.set(true);
+    setTimeout(() => this.cacheCleared.set(false), 3000);
   }
 }

@@ -31,7 +31,7 @@
     <button class="settings-btn" (click)="saveFavorites(phone.value)">Save</button>
     <button class="settings-btn" (click)="syncFavorites(phone.value)">Sync</button>
   </div>
-  @if (syncStatus) {
+  @if (syncStatus(); as syncStatus) {
     <p class="sync-status">{{ syncStatus }}</p>
   }
 </section>
@@ -41,7 +41,7 @@
   <h2 class="section-title">Storage</h2>
   <p class="section-description">Clear cached routes and stops data. Your favorites will be kept.</p>
   <button class="settings-btn settings-btn-danger" (click)="clearCache()">
-    {{ cacheCleared ? 'Cache Cleared' : 'Clear Cache' }}
+    {{ cacheCleared() ? 'Cache Cleared' : 'Clear Cache' }}
   </button>
 </section>
 

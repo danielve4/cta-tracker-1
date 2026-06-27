@@ -1,4 +1,4 @@
-@if (line) {
+@if (line(); as line) {
   <h2 class="cols-4" [style.color]="'#' + line.color">{{ line.name }}</h2>
 }
 <section class="cols-4 search-form">
@@ -10,11 +10,11 @@
 </section>
 
 <ul class="cols-4">
-  @if (stops$ | async; as stops) {
+  @if (stops(); as stops) {
     @for (stop of stops; track stop.id) {
       <li class="train-stop">
-        <a routerLink="/train-arrivals/{{ routeId }}/{{ stop.id }}/{{ replaceSlash(stop.name) }}">
-          @if (line) {
+        <a routerLink="/train-arrivals/{{ routeId() }}/{{ stop.id }}/{{ replaceSlash(stop.name) }}">
+          @if (line(); as line) {
             <span class="stop-dot" [style.backgroundColor]="'#' + line.color"></span>
           }
           <span class="stop-name">{{ stop.name }}</span>

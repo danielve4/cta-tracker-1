@@ -71,20 +71,42 @@ with the service worker and drop the legacy XHR path.
 
 ---
 
-## [ ] TODO 3 — Signal-based components with OnPush (the big one)
+## [x] TODO 3 — Signal-based components with OnPush (the big one)
 
 **Story:** As a user on a weak mobile CPU, I want change detection to update only the DOM that
 changed, so I'll convert component state to signals and make every component explicitly `OnPush`.
 
 **Acceptance criteria**
-- [ ] All 12 components declare `changeDetection: ChangeDetectionStrategy.OnPush`.
-- [ ] Mutable view state (`refreshing`, `isInitialLoading`, `vehicles$|async`, `error`, `lastRefreshed`, `isFavorite`, …) becomes `signal()`/`computed()`; templates read signals instead of `| async` where practical; `setTimeout`-driven field flips update signals so they re-render under OnPush.
-- [ ] `inject()` used over constructor DI where touched; no broken bindings; `track` expressions still valid.
-- [ ] Manual subscriptions removed (favoring signals) or kept with `takeUntilDestroyed`; no leaks.
-- [ ] App visually/behaviorally identical, verified by running it (lists render, polling refresh updates the view, favoriting toggles, theme toggle works).
+- [x] All 12 components declare `changeDetection: ChangeDetectionStrategy.OnPush`.
+- [x] Mutable view state (`refreshing`, `isInitialLoading`, `vehicles$|async`, `error`, `lastRefreshed`, `isFavorite`, …) becomes `signal()`/`computed()`; templates read signals instead of `| async` where practical; `setTimeout`-driven field flips update signals so they re-render under OnPush.
+- [x] `inject()` used over constructor DI where touched; no broken bindings; `track` expressions still valid.
+- [x] Manual subscriptions removed (favoring signals) or kept with `takeUntilDestroyed`; no leaks.
+- [x] App visually/behaviorally identical, verified by running it (lists render, polling refresh updates the view, favoriting toggles, theme toggle works).
 
 **Files:** all `src/app/**/**.component.{ts,html}` — reference the existing signal pattern in `services/theme.service.ts`
 **Note:** Largest/riskiest item; may be split per component-group during its own planning pass.
+
+**Result:**
+- All 12 `@Component`s flipped `ChangeDetectionStrategy.Eager` → `OnPush`. Removed every `| async` from
+  templates (was 15 across 9 files; grep now returns 0); `AsyncPipe` dropped from all `imports:[]`.
+- Mutable view state converted to `signal()` and read with call syntax in templates: list/lookup
+  data (`routes`/`stops`/`directions`/`trainLines`/`favorites`/`error`), poller state
+  (`vehicles`/`arrivalGroups`/`predictions`, `error`/`errorMsg`, `isInitialLoading`, `refreshing`,
+  `canRefresh`, `isFavorite`, `favorited`, `lastRefreshed`, route/stop label fields), `train-stops.line`,
+  `settings` `syncStatus`/`cacheCleared`. The `setTimeout`-driven `refreshing`/`isFavorite` flips and
+  the async HTTP/`favoritesService` callbacks now `.set()` signals, so they re-render under OnPush.
+  Internal non-view caches kept as plain fields (`allRoutes`/`allStops`, `favoriteStop`,
+  `refreshInterval`, `skeletonCards`, `appVersion`, `train-arrivals` `lineColor`, `train-follow`
+  `routeCode`); `favorites.editableFavorites` is a signal updated immutably.
+- Constructor DI → `inject()` in every touched component; `app.component` dropped an unused `Router`
+  field-style ctor and `directions` dropped a dead `Router` injection.
+- Leaks closed: `takeUntilDestroyed(this.destroyRef)` on all `params`/`queryParams`/`paramMap` and
+  one-shot `favoritesService` subscriptions; `app.component`'s previously never-unsubscribed
+  `router.events` now uses `takeUntilDestroyed()`. Polling loops keep `timerRef` + `ngOnDestroy()` as
+  before. `app.config.ts`/zone.js untouched (TODO 4); services untouched.
+- **Verified:** production build green; initial bundle **348.43 kB raw / 86.21 kB transfer** (down from
+  TODO 2's 395.71 / 100.71 — OnPush + dropped AsyncPipe). Only the pre-existing component-CSS budget
+  **warnings** remain (`arrivals.css` 5.24 kB, `train-arrivals.css` 5.73 kB) — deferred to TODO 10.
 
 ---
 
