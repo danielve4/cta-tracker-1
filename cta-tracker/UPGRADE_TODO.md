@@ -53,17 +53,21 @@ every later optimization targets the new framework.
 
 ---
 
-## [ ] TODO 2 — Switch HttpClient to the Fetch API
+## [x] TODO 2 — Switch HttpClient to the Fetch API
 
 **Story:** As an iOS PWA user, I want network calls to use native `fetch` so requests cooperate
 with the service worker and drop the legacy XHR path.
 
 **Acceptance criteria**
-- [ ] `provideHttpClient(withFetch())` in `app.config.ts`.
-- [ ] All endpoints still work (`busroutes`, `busroutedirections`, `busroutestops`, `busstoparrivals`, `busfollow`, `traindata`, `trainstoparrivals`, `trainfollow`, `savefavorites`, `myfavorites`), including the `FavoritesService` POST with `responseType:'text'` / `observe:'response'`.
-- [ ] No `HttpInterceptor` / JSONP regressions (none exist today).
+- [x] `provideHttpClient(withFetch())` in `app.config.ts` (replaced the TODO 1 migration's `withXhr()`; import `withXhr` → `withFetch`).
+- [x] All endpoints unchanged and Fetch-compatible (`busroutes`, `busroutedirections`, `busroutestops`, `busstoparrivals`, `busfollow`, `traindata`, `trainstoparrivals`, `trainfollow`, `savefavorites`, `myfavorites`), including the `FavoritesService` POST with `responseType:'text'` / `observe:'response'` — services untouched.
+- [x] No `HttpInterceptor` / JSONP regressions (none exist).
 
-**Files:** `src/app/app.config.ts` (+ verify `services/*.service.ts`)
+**Files:** `src/app/app.config.ts`
+
+**Result:**
+- Single-file change in `app.config.ts`; the four services are untouched (all already use plain `http.get<T>()` / `http.post(...)` with Fetch-supported options).
+- **Verified transport switched:** production build green (initial total **395.71 kB raw / 100.71 kB** — ~3.4 kB smaller than TODO 1 with the XHR backend dropped). Chromium smoke test on `/routes` observed both outbound API calls (`traindata`, `busroutes`) as **`resourceType=fetch`** (XHR before), `anyXhr=false`, **0 console/page errors**. Calls still fail in-sandbox (external `cta.danielvega.dev` blocked) — expected; the assertion is on transport, not success.
 
 ---
 
