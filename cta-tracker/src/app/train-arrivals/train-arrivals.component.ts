@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -6,7 +6,8 @@ import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
-import { timer, Subscription } from 'rxjs';
+import { timer } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainArrivalDisplay extends TrainEta {
@@ -26,7 +27,7 @@ interface ArrivalGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, TimeuntilPipe, RouterLink]
 })
-export class TrainArrivalsComponent implements OnInit, OnDestroy {
+export class TrainArrivalsComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
   private readonly favoritesService = inject(FavoritesService);
@@ -39,7 +40,6 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   arrivalGroups = signal<ArrivalGroup[] | null>(null);
   errorMsg = signal<string | undefined>(undefined);
   refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
   canRefresh = signal(false);
   refreshing = signal(false);
   isInitialLoading = signal(true);
@@ -50,42 +50,38 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
   lastRefreshed = signal<Date | null>(null);
 
   ngOnInit(): void {
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.canRefresh.set(true);
-      this.isInitialLoading.set(true);
-      this.errorMsg.set(undefined);
-      this.arrivalGroups.set(null);
-      this.routeId.set(params['routeId']);
-      this.stationId.set(params['stationId']);
-      this.stationName.set(params['stationName']);
+    this.activatedRoute.params.pipe(
+      tap(params => {
+        this.canRefresh.set(true);
+        this.isInitialLoading.set(true);
+        this.errorMsg.set(undefined);
+        this.arrivalGroups.set(null);
+        this.routeId.set(params['routeId']);
+        this.stationId.set(params['stationId']);
+        this.stationName.set(params['stationName']);
 
-      const cssVar = TRAIN_LINE_CSS_MAP[this.routeId()];
-      if (cssVar) {
-        this.lineColor = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
-      }
+        const cssVar = TRAIN_LINE_CSS_MAP[this.routeId()];
+        if (cssVar) {
+          this.lineColor = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
+        }
 
-      const tempFavoriteStop: Favorite = {
-        route: this.routeId(),
-        stopId: +this.stationId(),
-        stopName: this.stationName(),
-        direction: '',
-        type: 'train'
-      };
-      this.favoritesService.search(tempFavoriteStop)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((index: number) => {
-          this.isFavorite.set(index >= 0);
-        });
-      this.favoriteStop = tempFavoriteStop;
-
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getArrivals();
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
+        const tempFavoriteStop: Favorite = {
+          route: this.routeId(),
+          stopId: +this.stationId(),
+          stopName: this.stationName(),
+          direction: '',
+          type: 'train'
+        };
+        this.favoritesService.search(tempFavoriteStop)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((index: number) => {
+            this.isFavorite.set(index >= 0);
+          });
+        this.favoriteStop = tempFavoriteStop;
+      }),
+      switchMap(() => timer(0, this.refreshInterval)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.getArrivals());
   }
 
   getArrivals(): void {

@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { timer, Subscription } from 'rxjs';
+import { timer } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
@@ -16,7 +17,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [DatePipe, TimeuntilPipe, RouterLink]
 })
-export class ArrivalsComponent implements OnInit, OnDestroy {
+export class ArrivalsComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly busService = inject(BusService);
   private readonly favoritesService = inject(FavoritesService);
@@ -30,7 +31,6 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   vehicles = signal<Prd[] | null>(null);
   error = signal<Error[] | null>(null);
   refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
   isFavorite = signal(true);
   favoriteStop: Favorite | undefined;
   favorited = signal(false);
@@ -40,35 +40,32 @@ export class ArrivalsComponent implements OnInit, OnDestroy {
   lastRefreshed = signal<Date | null>(null);
 
   ngOnInit(): void {
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.canRefresh.set(true);
-      this.isInitialLoading.set(true);
-      this.error.set(null);
-      this.vehicles.set(null);
-      this.forRoute.set(params['route']);
-      this.forDirection.set(params['direction']);
-      this.forStopId.set(+params['stopId']);
-      this.forStopName.set(params['stopName']);
-      const tempFavoriteStop: Favorite = {
-        route: this.forRoute(),
-        stopId: this.forStopId(),
-        stopName: this.forStopName(),
-        direction: this.forDirection()
-      };
-      this.favoritesService.search(tempFavoriteStop)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((index: number) => {
-          this.isFavorite.set(index >= 0);
-        });
-      this.favoriteStop = tempFavoriteStop;
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getArrivals();
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
+    this.activatedRoute.params.pipe(
+      tap(params => {
+        this.canRefresh.set(true);
+        this.isInitialLoading.set(true);
+        this.error.set(null);
+        this.vehicles.set(null);
+        this.forRoute.set(params['route']);
+        this.forDirection.set(params['direction']);
+        this.forStopId.set(+params['stopId']);
+        this.forStopName.set(params['stopName']);
+        const tempFavoriteStop: Favorite = {
+          route: this.forRoute(),
+          stopId: this.forStopId(),
+          stopName: this.forStopName(),
+          direction: this.forDirection()
+        };
+        this.favoritesService.search(tempFavoriteStop)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe((index: number) => {
+            this.isFavorite.set(index >= 0);
+          });
+        this.favoriteStop = tempFavoriteStop;
+      }),
+      switchMap(() => timer(0, this.refreshInterval)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.getArrivals());
   }
 
   getArrivals(): void {

@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP } from '../trainResponse';
-import { timer, Subscription } from 'rxjs';
+import { timer } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainStopDisplay extends TrainEta {
@@ -17,7 +18,7 @@ interface TrainStopDisplay extends TrainEta {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TimeuntilPipe]
 })
-export class TrainFollowComponent implements OnInit, OnDestroy {
+export class TrainFollowComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
   private readonly destroyRef = inject(DestroyRef);
@@ -30,7 +31,6 @@ export class TrainFollowComponent implements OnInit, OnDestroy {
   predictions = signal<TrainStopDisplay[] | null>(null);
   errorMsg = signal<string | undefined>(undefined);
   refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
   canRefresh = signal(false);
   refreshing = signal(false);
   lineColor = signal('');
@@ -45,17 +45,14 @@ export class TrainFollowComponent implements OnInit, OnDestroy {
         this.lineColor.set(getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim());
       }
     });
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.canRefresh.set(true);
-      this.runNumber.set(params['runNumber']);
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getFollowData();
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
+    this.activatedRoute.params.pipe(
+      tap(params => {
+        this.canRefresh.set(true);
+        this.runNumber.set(params['runNumber']);
+      }),
+      switchMap(() => timer(0, this.refreshInterval)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.getFollowData());
   }
 
   getFollowData(): void {

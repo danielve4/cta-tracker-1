@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { timer, Subscription } from 'rxjs';
+import { timer } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 @Component({
@@ -13,7 +14,7 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TimeuntilPipe]
 })
-export class FollowVehicleComponent implements OnInit, OnDestroy {
+export class FollowVehicleComponent implements OnInit {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly busService = inject(BusService);
   private readonly destroyRef = inject(DestroyRef);
@@ -26,7 +27,6 @@ export class FollowVehicleComponent implements OnInit, OnDestroy {
   predictions = signal<Prd[] | null>(null);
   error = signal<Error[] | null>(null);
   refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
   canRefresh = signal(false);
   refreshing = signal(false);
 
@@ -34,17 +34,14 @@ export class FollowVehicleComponent implements OnInit, OnDestroy {
     this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(qp => {
       this.fromStopId.set(qp['from'] || '');
     });
-    this.activatedRoute.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
-      this.canRefresh.set(true);
-      this.vehicleId.set(+params['vehicleId']);
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getFollowData();
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
+    this.activatedRoute.params.pipe(
+      tap(params => {
+        this.canRefresh.set(true);
+        this.vehicleId.set(+params['vehicleId']);
+      }),
+      switchMap(() => timer(0, this.refreshInterval)),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => this.getFollowData());
   }
 
   getFollowData(): void {
