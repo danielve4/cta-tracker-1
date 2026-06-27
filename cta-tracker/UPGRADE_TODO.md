@@ -110,18 +110,36 @@ changed, so I'll convert component state to signals and make every component exp
 
 ---
 
-## [ ] TODO 4 — Zoneless change detection (remove zone.js)
+## [~] TODO 4 — Zoneless change detection (remove zone.js)
 
 **Story:** As a user, I want ~30KB of zone.js gone and no async-interception overhead, so the app
 runs fully zoneless.
 
 **Acceptance criteria**
-- [ ] `provideZonelessChangeDetection()` replaces `provideZoneChangeDetection(...)`; `"zone.js"` removed from `angular.json` `polyfills` and from `package.json`.
-- [ ] Production bundle no longer contains zone.js (verify in build stats); build + runtime show no `NG0908`/zoneless warnings.
-- [ ] Polling refresh, route changes, favoriting, and theme toggle all still update the UI (proves TODO 3 covered every CD path).
+- [x] `provideZonelessChangeDetection()` replaces `provideZoneChangeDetection(...)`; `"zone.js"` removed from `angular.json` `polyfills` and from `package.json`.
+- [x] Production bundle no longer contains zone.js (verify in build stats); build + runtime show no `NG0908`/zoneless warnings.
+- [x] Polling refresh, route changes, favoriting, and theme toggle all still update the UI (proves TODO 3 covered every CD path).
 
 **Files:** `src/app/app.config.ts`, `angular.json`, `package.json`
 **Depends on:** TODO 3
+
+**Result:**
+- `app.config.ts`: `provideZoneChangeDetection({ eventCoalescing: true })` → **`provideZonelessChangeDetection()`**
+  (stable API in Angular 22; the zone-only `eventCoalescing` option dropped — zoneless schedules natively).
+  `angular.json` polyfills `["zone.js"]` → `[]`; `"zone.js"` removed from `package.json`. `npm install`
+  pruned it from the root deps — it lingers only as `@angular/core`'s **optional peer** in the lockfile /
+  `node_modules`, which is expected and never bundled (so the real check is the build output, not `node_modules`).
+- **Bundle:** production build green; the **`polyfills` chunk is gone** and `dist` has **zero** zone.js
+  fingerprints (`ZoneAwarePromise`/`__zone_symbol__`/`zone.js`; only Angular's inert `NgZone` token remains).
+  Apples-to-apples initial total **395.00 → 357.44 kB raw (−37.6 kB) / 100.30 → 88.57 kB transfer (−11.7 kB)**.
+- **Runtime (Chrome, dev + served prod build):** no `NG0908`/zoneless warnings, 0 console errors. Exercised
+  every CD path under zoneless — theme toggle (signal→effect→DOM), in-app route nav, route-param loaders
+  (`directions`/`stops`), live search filter, **polling refresh** (timestamp + predictions updated), and
+  **favoriting** (signal flip re-rendered the list). Service worker still registers and caches on a served
+  production build, and fires **promptly** (zoneless reaches `isStable` without zone-tracked polling timers,
+  so it no longer waits the `registerWhenStable:30000` fallback).
+- **Node:** Angular 22's CLI requires `≥22.22.3`; local nvm only has 22.22.0, so built/served with **Homebrew
+  Node 26** (`PATH=/opt/homebrew/bin`). CI is unaffected (pins Node via `.nvmrc`).
 
 ---
 
