@@ -238,18 +238,47 @@ heavy services load on demand.
 
 ---
 
-## [ ] TODO 7 — Deferrable views (`@defer`) for below-the-fold sections
+## [~] TODO 7 — Deferrable views (`@defer`) for below-the-fold sections
 
 **Story:** As a user, I want below-the-fold/secondary UI to download and render only when needed,
 keeping the initial bundle microscopic.
 
 **Acceptance criteria**
-- [ ] Template sections wrapped in `@defer` with sensible triggers (`on viewport`, `on idle`, `on interaction`) plus `@placeholder`/`@loading`/`@error` (reuse existing skeleton-card markup as placeholders).
-- [ ] Candidate areas: long route/stop lists, the train-lines vs bus-routes split on `/routes`, follow/map-ish secondary panels.
-- [ ] Deferred chunks visible in build output; no layout-shift regressions; verified by running and scrolling/interacting.
+- [x] Template sections wrapped in `@defer` with sensible triggers (`on idle` for the four arrivals/follow content regions, `on viewport` for the long Bus Routes list) plus `@placeholder`/`@loading`/`@error` (reuse the existing skeleton-card markup in `arrivals`/`train-arrivals`; lightweight `.skeleton-row` placeholders elsewhere).
+- [x] Candidate areas covered: the train-lines vs bus-routes split on `/routes` (train lines eager, bus list deferred), the bus/train arrivals lists, and the follow/train-follow prediction panels.
+- [x] Deferred chunk visible in build output (`TimeuntilPipe` split into a shared `timeuntil-pipe` chunk); no layout-shift regressions; verified by running and navigating every screen.
 
 **Files:** the relevant `src/app/**/**.component.html`
 **Depends on:** TODO 1 (pairs with TODO 9 for hydrate triggers)
+
+**Result:**
+- **Focused scope (5 blocks, template-only + small placeholder CSS):** `@defer (on idle)` wraps the
+  list/content region of `arrivals`, `train-arrivals`, `follow-vehicle`, `train-follow`; `@defer (on
+  viewport)` wraps the ~130-item Bus Routes `<ul>` on the eager `/routes` landing (train-lines grid +
+  search stay eager). Each block has `@placeholder`/`@loading`/`@error`. `arrivals`/`train-arrivals`
+  reuse their existing skeleton-card markup as the placeholder; `follow-vehicle`/`train-follow`/`routes`
+  got a minimal `.skeleton-row` (height-reserving shimmer) + a `placeholderRows` field. `train-arrivals`
+  keeps the `@defer` at **top level** so the grouped `<h3>` + per-direction `<ul>` structure isn't
+  nested under one parent `<ul>`. `on viewport` needs a single-root placeholder, so on `/routes` the
+  `<ul>` moved **inside** the defer block (placeholder/loading/error are each a single `<ul>`).
+- **The only custom deferrable dependency is `TimeuntilPipe`** — `RouterLink`/`DatePipe` are shared/eager
+  and don't move. Since the four follow/arrivals components are already lazy route chunks (TODO 6), the
+  realistic win is **per-route deferral**, not a `main` drop; the eager `/routes` defer is render-only.
+- **Build (production, green):** `main` **308.79 → 309.40 kB raw** (≈ +0.6 kB defer-loader code — flat,
+  as predicted); initial total 321.63 kB raw / 86.77 kB transfer. `@defer` emitted a **shared
+  `timeuntil-pipe` lazy chunk (568 B)** plus a small shared defer chunk. **Verified by content, not
+  names/counts:** the pipe's unique `'--:--'` transform string is present **only** in the
+  `timeuntil-pipe` chunk and **absent from all four route chunks**, which reference it via dynamic
+  import — esbuild shares the one pipe chunk across them (exactly the predicted behavior). Pre-existing
+  component-CSS budget **warnings** unchanged (`train-arrivals.css` 5.73 kB, `arrivals.css` 5.24 kB; → TODO 10).
+- **Runtime (served prod build, Chrome):** exercised the full bus flow (`/routes` → directions → stops →
+  arrivals) and train flow (`/routes` → Red Line train-stops → train-arrivals → train-follow). `/routes`
+  painted train lines + search immediately while the bus list showed skeleton rows then resolved to live
+  data with **no layout shift** (72 px skeleton = 72 px `.bus-route`). Deferred arrivals/train-arrivals/
+  follow/train-follow all rendered live `timeuntil` countdowns (DUE/9 min/…) from the deferred pipe
+  chunk; `train-arrivals` grouping (SCHEDULED banners, direction `<h3>`s) and the train-follow from-stop
+  highlight rendered correctly; `lastRefreshed` (eager DatePipe) + FABs intact. **0 console errors / 0
+  warnings** throughout.
 
 ---
 

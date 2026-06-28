@@ -43,6 +43,28 @@
   height: 72px;
 }
 
+.skeleton-row {
+  height: 72px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--surface-card);
+}
+
+.skeleton-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-secondary) 12%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: skeletonRowShimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes skeletonRowShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 a {
   color: var(--text-primary);
   text-decoration: none;

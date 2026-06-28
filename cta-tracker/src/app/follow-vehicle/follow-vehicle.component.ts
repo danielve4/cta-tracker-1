@@ -19,6 +19,7 @@ export class FollowVehicleComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly refreshInterval = 30 * 1000;
+  readonly placeholderRows = [0, 1, 2, 3];
 
   private readonly routeParams = toSignal(this.activatedRoute.paramMap,
     { initialValue: this.activatedRoute.snapshot.paramMap });

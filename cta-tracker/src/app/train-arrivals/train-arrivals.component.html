@@ -4,7 +4,80 @@
     <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
   }
 </div>
-@if (isInitialLoading()) {
+@defer (on idle) {
+  @if (isInitialLoading()) {
+    <ul class="cols-4 arrivals-list">
+      @for (card of skeletonCards; track card) {
+        <li class="arrival-card skeleton-card" aria-hidden="true">
+          <div class="arrival-content skeleton-content">
+            <div class="arrival-badge skeleton-badge skeleton-surface"></div>
+            <div class="arrival-details skeleton-details">
+              <span class="skeleton-line skeleton-line-title skeleton-surface"></span>
+              <span class="skeleton-line skeleton-line-time skeleton-surface"></span>
+            </div>
+            <div class="arrival-countdown skeleton-countdown skeleton-surface">
+              <span class="skeleton-line skeleton-line-count skeleton-surface"></span>
+              <span class="skeleton-line skeleton-line-unit skeleton-surface"></span>
+            </div>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+  @if (!isInitialLoading()) {
+    @if (errorMsg(); as errorMsg) {
+      <p class="cols-4 error-message">{{ errorMsg }}</p>
+    }
+    @if (arrivalGroups(); as groups) {
+      @for (group of groups; track group.directionLabel) {
+        <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
+        <ul class="cols-4 arrivals-list">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li class="arrival-card" [class.loading]="refreshing()">
+              <a [routerLink]="['/train-follow', arrival.rn]" [queryParams]="{from: stationId(), rt: arrival.rt}" class="arrival-link">
+                @if (arrival.isDly === '1') {
+                  <div class="delayed-banner">
+                    <svg class="delayed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                      <line x1="12" y1="9" x2="12" y2="13"></line>
+                      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span class="delayed-text">Delayed</span>
+                  </div>
+                }
+                @if (arrival.isSch === '1') {
+                  <div class="scheduled-banner">
+                    <svg class="scheduled-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span class="scheduled-text">Scheduled</span>
+                  </div>
+                }
+                <div class="arrival-content">
+                  <div class="arrival-badge" [style.backgroundColor]="arrival.lineColor">
+                    <span class="badge-number">{{ arrival.rt }}</span>
+                  </div>
+                  <div class="arrival-details">
+                    <span class="arrival-destination">To {{ arrival.destNm }}</span>
+                    <span class="arrival-time">{{ arrival.countdown | timeuntil:'time' }}</span>
+                  </div>
+                  <div class="arrival-countdown"
+                       [class.countdown-due]="arrival.countdown === 'DUE'"
+                       [class.countdown-delayed]="arrival.isDly === '1'"
+                       [class.countdown-scheduled]="arrival.isSch === '1'">
+                    <span class="countdown-value">{{ arrival.countdown }}</span>
+                    <span class="countdown-unit">{{ arrival.countdown | timeuntil:'minutes' }}</span>
+                  </div>
+                </div>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+} @placeholder {
   <ul class="cols-4 arrivals-list">
     @for (card of skeletonCards; track card) {
       <li class="arrival-card skeleton-card" aria-hidden="true">
@@ -22,59 +95,26 @@
       </li>
     }
   </ul>
-}
-@if (!isInitialLoading()) {
-  @if (errorMsg(); as errorMsg) {
-    <p class="cols-4 error-message">{{ errorMsg }}</p>
-  }
-  @if (arrivalGroups(); as groups) {
-    @for (group of groups; track group.directionLabel) {
-      <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
-      <ul class="cols-4 arrivals-list">
-        @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
-          <li class="arrival-card" [class.loading]="refreshing()">
-            <a [routerLink]="['/train-follow', arrival.rn]" [queryParams]="{from: stationId(), rt: arrival.rt}" class="arrival-link">
-              @if (arrival.isDly === '1') {
-                <div class="delayed-banner">
-                  <svg class="delayed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                    <line x1="12" y1="9" x2="12" y2="13"></line>
-                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                  </svg>
-                  <span class="delayed-text">Delayed</span>
-                </div>
-              }
-              @if (arrival.isSch === '1') {
-                <div class="scheduled-banner">
-                  <svg class="scheduled-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                  <span class="scheduled-text">Scheduled</span>
-                </div>
-              }
-              <div class="arrival-content">
-                <div class="arrival-badge" [style.backgroundColor]="arrival.lineColor">
-                  <span class="badge-number">{{ arrival.rt }}</span>
-                </div>
-                <div class="arrival-details">
-                  <span class="arrival-destination">To {{ arrival.destNm }}</span>
-                  <span class="arrival-time">{{ arrival.countdown | timeuntil:'time' }}</span>
-                </div>
-                <div class="arrival-countdown"
-                     [class.countdown-due]="arrival.countdown === 'DUE'"
-                     [class.countdown-delayed]="arrival.isDly === '1'"
-                     [class.countdown-scheduled]="arrival.isSch === '1'">
-                  <span class="countdown-value">{{ arrival.countdown }}</span>
-                  <span class="countdown-unit">{{ arrival.countdown | timeuntil:'minutes' }}</span>
-                </div>
-              </div>
-            </a>
-          </li>
-        }
-      </ul>
+} @loading {
+  <ul class="cols-4 arrivals-list">
+    @for (card of skeletonCards; track card) {
+      <li class="arrival-card skeleton-card" aria-hidden="true">
+        <div class="arrival-content skeleton-content">
+          <div class="arrival-badge skeleton-badge skeleton-surface"></div>
+          <div class="arrival-details skeleton-details">
+            <span class="skeleton-line skeleton-line-title skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-time skeleton-surface"></span>
+          </div>
+          <div class="arrival-countdown skeleton-countdown skeleton-surface">
+            <span class="skeleton-line skeleton-line-count skeleton-surface"></span>
+            <span class="skeleton-line skeleton-line-unit skeleton-surface"></span>
+          </div>
+        </div>
+      </li>
     }
-  }
+  </ul>
+} @error {
+  <p class="cols-4 error-message">Could not load arrivals.</p>
 }
 @if (!isFavorite()) {
   <button class="fab button-favorite"

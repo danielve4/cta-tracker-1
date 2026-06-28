@@ -16,6 +16,7 @@ export class RoutesComponent implements OnInit {
   private readonly busService = inject(BusService);
   private readonly trainService = inject(TrainService);
 
+  readonly placeholderRows = [0, 1, 2, 3, 4, 5];
   routes = signal<Route[] | null>(null);
   private allRoutes: Route[] = [];
   error = signal<Error[] | null>(null);
