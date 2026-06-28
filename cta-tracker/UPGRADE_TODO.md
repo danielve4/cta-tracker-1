@@ -192,18 +192,49 @@ RxJS off the hot path, so data fetching moves to the stable Resource APIs.
 
 ---
 
-## [ ] TODO 6 — Code-splitting: lazy routes + `injectAsync` for heavy services
+## [~] TODO 6 — Code-splitting: lazy routes + `injectAsync` for heavy services
 
 **Story:** As a user, I want only the landing route's JS at startup, so non-critical routes and
 heavy services load on demand.
 
 **Acceptance criteria**
-- [ ] `app.routes.ts` uses `loadComponent: () => import(...)` for non-landing routes (settings, follow/train-follow, train-* and other below-the-fold screens); `/routes` stays eager.
-- [ ] At least one heavy/background service (e.g. `FavoritesService` sync or `TrainService`'s large `traindata` path) loads via **`injectAsync()`** (with `onIdle` prefetch where it helps) instead of eager root injection — confirmed by a separate lazy chunk.
-- [ ] Build output shows the initial chunk shrank and lazy chunks exist; all routes still navigate and function.
+- [x] `app.routes.ts` uses `loadComponent: () => import(...)` for non-landing routes (settings, follow/train-follow, train-* and other below-the-fold screens); `/routes` stays eager.
+- [x] At least one heavy/background service (e.g. `FavoritesService` sync or `TrainService`'s large `traindata` path) loads via **`injectAsync()`** (with `onIdle` prefetch where it helps) instead of eager root injection — confirmed by a separate lazy chunk.
+- [x] Build output shows the initial chunk shrank and lazy chunks exist; all routes still navigate and function.
 
 **Files:** `src/app/app.routes.ts`, the targeted service consumers
 **Depends on:** TODO 1
+
+**Result:**
+- **Lazy routes:** `app.routes.ts` now imports only `RoutesComponent` (the eager landing route); the other 9
+  routes use `loadComponent: () => import('./…').then(m => m.…Component)`. Redirects (`''`, `'**'`) unchanged.
+  Safe because routing was the sole reference path to those components (`app.component.ts` imports only
+  router primitives).
+- **`injectAsync` (scoped to Settings, per plan):** `SettingsComponent` drops eager
+  `inject(FavoritesService)` for `injectAsync(() => import('../services/favorites.service').then(m => m.FavoritesService), { prefetch: onIdle })`.
+  `FavoritesService` is only needed when the user taps Save/Sync, so `onIdle` warms the chunk in the
+  background. `saveFavorites`/`syncFavorites` became `async` and `await` the getter inside a **try/catch** (a
+  lazy-chunk fetch is a new failure mode — on failure they set `Error: could not load favorites` instead of
+  hanging on `Saving…`/`Syncing…`). Both `FavoritesService` and `Favorite` switched to **`import type`** so no
+  value import survives to defeat the split. The interactive favoriting toggles in
+  `arrivals`/`train-arrivals`/`favorites` keep synchronous `inject(FavoritesService)` (lowest risk) — the
+  service still lands in a non-initial chunk since no consumer is on the landing route.
+- **Bundle (production):** build green. **Initial total 370.28 → 308.79 kB raw (−61.49 kB) / 92.37 → 83.12 kB
+  transfer (−9.25 kB).** Emitted lazy chunks for all 9 routed components plus a dedicated **`favorites-service`
+  chunk (1.85 kB)**. Verified by content, not chunk name: the `/savefavorites`/`/myfavorites` markers are
+  **absent from `main*.js`** and present only in the favorites-service chunk. Pre-existing component-CSS budget
+  **warnings** unchanged (`train-arrivals.css` 5.73 kB, `arrivals.css` 5.24 kB; → TODO 10).
+- **Note on the PWA:** the win here is reduced **initial parse/execute**, not network "fetch on demand" in the
+  installed PWA — `ngsw-config.json` uses `installMode: "prefetch"` over `/*.js`, so the service worker
+  background-downloads every lazy chunk after it registers. On-demand network loading was therefore verified on
+  the **dev server (no SW)**.
+- **Verified (Chrome, dev server, phone-ish viewport):** cleared `LS_SAVED_ROUTE` first (`AppComponent`
+  restores the last route on boot, which had defeated a naive "`/` → `/routes`" check). With it cleared, `/`
+  redirected to `/routes` rendering from the eager chunk. Navigating `/settings` fetched `settings-component`
+  **and** the `favorites-service` chunk on demand (the `onIdle` prefetch); the bad-phone validation path ran
+  (`Enter a valid 10-digit phone number`). A bus flow `directions → stops → arrivals` each fetched its chunk
+  only on first navigation, rendered live predictions, and the favorite toggle exercised the statically-imported
+  `FavoritesService` (localStorage updated). **0 console errors** throughout.
 
 ---
 

@@ -1,27 +1,45 @@
 import { Routes } from '@angular/router';
 
-import { ArrivalsComponent } from './arrivals/arrivals.component';
-import { DirectionsComponent } from './directions/directions.component';
-import { FavoritesComponent } from './favorites/favorites.component';
-import { FollowVehicleComponent } from './follow-vehicle/follow-vehicle.component';
 import { RoutesComponent } from './routes/routes.component';
-import { StopsComponent } from './stops/stops.component';
-import { TrainStopsComponent } from './train-stops/train-stops.component';
-import { TrainArrivalsComponent } from './train-arrivals/train-arrivals.component';
-import { TrainFollowComponent } from './train-follow/train-follow.component';
-import { SettingsComponent } from './settings/settings.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/routes', pathMatch: 'full' },
   { path: 'routes', component: RoutesComponent },
-  { path: 'directions/:route', component: DirectionsComponent },
-  { path: 'stops/:route/:direction', component: StopsComponent },
-  { path: 'arrivals/:route/:direction/:stopId/:stopName', component: ArrivalsComponent },
-  { path: 'follow/:vehicleId', component: FollowVehicleComponent },
-  { path: 'favorites', component: FavoritesComponent },
-  { path: 'train-stops/:routeId', component: TrainStopsComponent },
-  { path: 'train-arrivals/:routeId/:stationId/:stationName', component: TrainArrivalsComponent },
-  { path: 'train-follow/:runNumber', component: TrainFollowComponent },
-  { path: 'settings', component: SettingsComponent },
+  {
+    path: 'directions/:route',
+    loadComponent: () => import('./directions/directions.component').then(m => m.DirectionsComponent)
+  },
+  {
+    path: 'stops/:route/:direction',
+    loadComponent: () => import('./stops/stops.component').then(m => m.StopsComponent)
+  },
+  {
+    path: 'arrivals/:route/:direction/:stopId/:stopName',
+    loadComponent: () => import('./arrivals/arrivals.component').then(m => m.ArrivalsComponent)
+  },
+  {
+    path: 'follow/:vehicleId',
+    loadComponent: () => import('./follow-vehicle/follow-vehicle.component').then(m => m.FollowVehicleComponent)
+  },
+  {
+    path: 'favorites',
+    loadComponent: () => import('./favorites/favorites.component').then(m => m.FavoritesComponent)
+  },
+  {
+    path: 'train-stops/:routeId',
+    loadComponent: () => import('./train-stops/train-stops.component').then(m => m.TrainStopsComponent)
+  },
+  {
+    path: 'train-arrivals/:routeId/:stationId/:stationName',
+    loadComponent: () => import('./train-arrivals/train-arrivals.component').then(m => m.TrainArrivalsComponent)
+  },
+  {
+    path: 'train-follow/:runNumber',
+    loadComponent: () => import('./train-follow/train-follow.component').then(m => m.TrainFollowComponent)
+  },
+  {
+    path: 'settings',
+    loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent)
+  },
   { path: '**', redirectTo: '/routes' }
 ];

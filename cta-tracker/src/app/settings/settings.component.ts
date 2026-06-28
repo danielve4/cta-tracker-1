@@ -1,8 +1,8 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, injectAsync, onIdle, ChangeDetectionStrategy, signal } from '@angular/core';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ThemeService } from '../services/theme.service';
-import { FavoritesService } from '../services/favorites.service';
-import { Favorite } from '../services/Favorite';
+import type { FavoritesService } from '../services/favorites.service';
+import type { Favorite } from '../services/Favorite';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -14,21 +14,31 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 })
 export class SettingsComponent {
   protected readonly theme = inject(ThemeService);
-  private readonly favoritesService = inject(FavoritesService);
+  private readonly loadFavoritesService = injectAsync(
+    () => import('../services/favorites.service').then(m => m.FavoritesService),
+    { prefetch: onIdle }
+  );
 
   syncStatus = signal('');
   cacheCleared = signal(false);
 
   readonly appVersion = '1.0.0';
 
-  saveFavorites(phone: string): void {
+  async saveFavorites(phone: string): Promise<void> {
     if (!/^[0-9]{10}$/.test(phone.trim())) {
       this.syncStatus.set('Enter a valid 10-digit phone number');
       return;
     }
     this.syncStatus.set('Saving...');
-    this.favoritesService.getFavorites().subscribe((favorites: Array<Favorite>) => {
-      this.favoritesService.saveFavorites(phone.trim(), favorites).subscribe({
+    let favoritesService: FavoritesService;
+    try {
+      favoritesService = await this.loadFavoritesService();
+    } catch {
+      this.syncStatus.set('Error: could not load favorites');
+      return;
+    }
+    favoritesService.getFavorites().subscribe((favorites: Array<Favorite>) => {
+      favoritesService.saveFavorites(phone.trim(), favorites).subscribe({
         next: (response: HttpResponse<string>) => {
           this.syncStatus.set(response.status === 202 ? 'Favorites saved' : 'Error saving favorites');
         },
@@ -39,13 +49,20 @@ export class SettingsComponent {
     });
   }
 
-  syncFavorites(phone: string): void {
+  async syncFavorites(phone: string): Promise<void> {
     if (!/^[0-9]{10}$/.test(phone.trim())) {
       this.syncStatus.set('Enter a valid 10-digit phone number');
       return;
     }
     this.syncStatus.set('Syncing...');
-    this.favoritesService.syncFavorites(phone.trim()).subscribe({
+    let favoritesService: FavoritesService;
+    try {
+      favoritesService = await this.loadFavoritesService();
+    } catch {
+      this.syncStatus.set('Error: could not load favorites');
+      return;
+    }
+    favoritesService.syncFavorites(phone.trim()).subscribe({
       next: (response: HttpResponse<string>) => {
         this.syncStatus.set(response.status === 200 ? 'Favorites synced' : 'Error syncing favorites');
       },
