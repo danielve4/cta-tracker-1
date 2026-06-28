@@ -9,6 +9,9 @@
   <label class="search-label" for="search-stations">Search Stations</label>
 </section>
 
+@if (errorMsg(); as errorMsg) {
+  <p class="cols-4 error-message">{{ errorMsg }}</p>
+}
 <ul class="cols-4">
   @if (stops(); as stops) {
     @for (stop of stops; track stop.id) {

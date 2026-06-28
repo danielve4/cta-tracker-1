@@ -2,6 +2,8 @@
   height: 72px;
 }
 
+.error-message { padding: 16px; border-radius: 16px; background-color: var(--pink-opacity); color: var(--pink); font-weight: 600; font-size: 15px; }
+
 a {
   color: var(--text-primary);
   text-decoration: none;

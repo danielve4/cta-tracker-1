@@ -1,10 +1,9 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { httpResource } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { timer } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 @Component({
@@ -14,67 +13,63 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TimeuntilPipe]
 })
-export class FollowVehicleComponent implements OnInit {
+export class FollowVehicleComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly busService = inject(BusService);
   private readonly destroyRef = inject(DestroyRef);
 
-  vehicleId = signal(0);
-  fromStopId = signal('');
-  routeNumber = signal('');
-  direction = signal('');
-  destination = signal('');
-  predictions = signal<Prd[] | null>(null);
-  error = signal<Error[] | null>(null);
-  refreshInterval = 30 * 1000;
-  canRefresh = signal(false);
-  refreshing = signal(false);
+  private readonly refreshInterval = 30 * 1000;
 
-  ngOnInit(): void {
-    this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(qp => {
-      this.fromStopId.set(qp['from'] || '');
+  private readonly routeParams = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  private readonly queryParams = toSignal(this.activatedRoute.queryParamMap,
+    { initialValue: this.activatedRoute.snapshot.queryParamMap });
+  vehicleId = computed(() => +(this.routeParams().get('vehicleId') ?? 0));
+  fromStopId = computed(() => this.queryParams().get('from') ?? '');
+
+  private readonly followResource = httpResource<BustimeResponse>(() => {
+    const id = this.vehicleId();
+    return id ? this.busService.followUrl(id) : undefined;
+  });
+
+  private readonly response = computed(() =>
+    this.followResource.hasValue() ? this.followResource.value() : undefined);
+
+  predictions = computed<Prd[] | null>(() => {
+    const response = this.response();
+    if (!response || response.error || !response.prd) {
+      return null;
+    }
+    return response.prd.map(p => p.dly ? { ...p, prdctdn: this.getMinutesDifference(p.tmstmp, p.prdtm) } : p);
+  });
+
+  routeNumber = computed(() => this.predictions()?.[0]?.rt ?? '');
+  direction = computed(() => this.predictions()?.[0]?.rtdir ?? '');
+  destination = computed(() => this.predictions()?.[0]?.des ?? '');
+
+  error = computed<Error[] | null>(() => {
+    if (this.followResource.error()) {
+      return [{ stpid: '', msg: 'Network error' }];
+    }
+    return this.response()?.error ?? null;
+  });
+
+  refreshing = computed(() => this.followResource.isLoading());
+  canRefresh = computed(() => this.vehicleId() > 0);
+
+  constructor() {
+    effect(() => {
+      if (this.followResource.status() === 'resolved' && typeof navigator.vibrate !== 'undefined') {
+        navigator.vibrate(5);
+      }
     });
-    this.activatedRoute.params.pipe(
-      tap(params => {
-        this.canRefresh.set(true);
-        this.vehicleId.set(+params['vehicleId']);
-      }),
-      switchMap(() => timer(0, this.refreshInterval)),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.getFollowData());
+
+    const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
+    this.destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
   getFollowData(): void {
-    if (!this.refreshing()) {
-      this.busService.follow(this.vehicleId()).subscribe((response: BustimeResponse) => {
-        this.handleResponse(response);
-      });
-    }
-  }
-
-  handleResponse(response: BustimeResponse): void {
-    this.refreshing.set(true);
-    if (response.error) {
-      this.error.set(response.error);
-    } else if (response.prd) {
-      if (response.prd.length > 0) {
-        this.routeNumber.set(response.prd[0].rt);
-        this.direction.set(response.prd[0].rtdir);
-        this.destination.set(response.prd[0].des);
-      }
-      for (let i = 0; i < response.prd.length; i++) {
-        if (response.prd[i].dly) {
-          response.prd[i].prdctdn = this.getMinutesDifference(
-            response.prd[i].tmstmp,
-            response.prd[i].prdtm);
-        }
-      }
-      this.predictions.set(response.prd);
-    }
-    setTimeout(() => this.refreshing.set(false), 500);
-    if (typeof window.navigator.vibrate !== 'undefined') {
-      window.navigator.vibrate(5);
-    }
+    this.followResource.reload();
   }
 
   getMinutesDifference(now: string, future: string): string {

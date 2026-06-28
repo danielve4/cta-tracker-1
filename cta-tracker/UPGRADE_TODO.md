@@ -143,19 +143,52 @@ runs fully zoneless.
 
 ---
 
-## [ ] TODO 5 — Signal data fetching with `resource()` / `httpResource()`
+## [~] TODO 5 — Signal data fetching with `resource()` / `httpResource()`
 
 **Story:** As a user, I want arrivals to fetch reactively, auto-cancel superseded requests, and keep
 RxJS off the hot path, so data fetching moves to the stable Resource APIs.
 
 **Acceptance criteria**
-- [ ] The 4 polling components (`arrivals`, `train-arrivals`, `train-follow`, `follow-vehicle`) drive fetches via `resource`/`httpResource` keyed on signal params, replacing `timer(0,30s)+subscribe`; periodic refresh preserved and **in-flight duplicates auto-cancel**.
-- [ ] Route-param-driven loaders (`stops`, `directions`, `train-stops`) use `httpResource`/`rxResource` instead of `switchMap` chains.
-- [ ] `loading`/`error`/`value` states come from the resource; existing localStorage caching in `bus/train.service.ts` preserved or deliberately re-homed.
-- [ ] Behavior parity verified by running the app; `withFetch` (TODO 2) underpins `httpResource`.
+- [x] The 4 polling components (`arrivals`, `train-arrivals`, `train-follow`, `follow-vehicle`) drive fetches via `resource`/`httpResource` keyed on signal params, replacing `timer(0,30s)+subscribe`; periodic refresh preserved and **in-flight duplicates auto-cancel**.
+- [x] Route-param-driven loaders (`stops`, `directions`, `train-stops`) use `httpResource`/`rxResource` instead of `switchMap` chains.
+- [x] `loading`/`error`/`value` states come from the resource; existing localStorage caching in `bus/train.service.ts` preserved or deliberately re-homed.
+- [x] Behavior parity verified by running the app; `withFetch` (TODO 2) underpins `httpResource`.
 
 **Files:** the listed components + `src/app/services/bus.service.ts`, `train.service.ts`
 **Depends on:** TODO 2, TODO 3
+
+**Result:**
+- **Polling components → `httpResource`** keyed on a URL computed from signal params. Added
+  `arrivalsUrl()`/`followUrl()` string builders to `bus.service.ts`/`train.service.ts` and dropped the
+  now-unused Observable `arrivals()`/`follow()`. Each component reads route/query params via
+  `toSignal(paramMap, { initialValue: snapshot })`, exposes view state as guarded `computed`s off the
+  resource, and runs a single `effect` for the per-load side effects (`lastRefreshed` + `navigator.vibrate`).
+  Periodic refresh is a 30s `setInterval(() => resource.reload(), …)` (cleared via `destroyRef.onDestroy`);
+  the manual FAB calls the same `reload()`. The `params`/`timer(0,30s)`/`switchMap` pipelines and the
+  800ms `refreshing` `setTimeout`s are gone — `refreshing`/`isInitialLoading` derive from
+  `resource.isLoading()`/`status()`.
+- **Route-param loaders → `rxResource`** wrapping the existing cached service Observables, so the
+  `localStorage` caching in the services is untouched. `params` returns `undefined` until required params
+  exist (no empty-arg fetch). Search filtering moved from mutating a list signal to a `searchTerm` signal +
+  `computed` filter, with an `effect` that resets `searchTerm` on route change for parity with the old
+  reset-on-new-data behavior. All three loaders surface the resource error — `stops`/`directions` via the
+  payload-or-transport `Error[]` computed, and `train-stops` via an `errorMsg` computed off
+  `dataResource.error()` with a matching `.error-message` block (the `/traindata` payload has no error
+  field, so the transport state is the only error signal).
+- **Angular 22 resource gotchas handled:** `value()` throws in the `'error'` state, so every read is
+  `hasValue() ? value() : undefined`; transport failures surface via `resource.error()`. `reload()` is a
+  no-op while already loading, so the auto-cancel guarantee rides on param change, not reload.
+- **Train line colors** now return `var(--cta-*)` strings (no `getComputedStyle` DOM reads) — SSR-safe
+  ahead of TODO 8.
+- **Templates unchanged** — only `*.component.ts` + the two services changed.
+- **Verified:** production build green (initial **370.28 kB raw / 92.37 kB transfer**, up from TODO 4's
+  357.44 / 88.57 — the `httpResource`/`rxResource`/`resource` machinery is the cost; bundle shrink is
+  TODO 6/7). Pre-existing component-CSS budget **warnings** unchanged (`train-arrivals.css` 5.73 kB,
+  `arrivals.css` 5.24 kB; → TODO 10). Ran the served app on a phone viewport and exercised all 7 screens
+  with live data + error paths: bus/train arrivals skeleton→data→grouping→`lastRefreshed`, follow
+  predictions, `directions`/`stops`/`train-stops` lists from cache, live search filter + reset-on-nav,
+  manual refresh updated the timestamp (7:40:03→7:40:05), and the train-follow API error rendered — all
+  with **0 console errors**.
 
 ---
 

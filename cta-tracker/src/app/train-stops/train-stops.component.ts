@@ -1,9 +1,8 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, ChangeDetectionStrategy, signal, computed, effect, inject } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TrainService } from '../services/train.service';
-import { CTAComprehensiveData, CTALine, TRAIN_ROUTE_ID_TO_LINE_NAME } from '../trainResponse';
-import { switchMap } from 'rxjs/operators';
+import { CTALine, TRAIN_ROUTE_ID_TO_LINE_NAME } from '../trainResponse';
 
 interface TrainStop {
   id: string;
@@ -17,33 +16,57 @@ interface TrainStop {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink]
 })
-export class TrainStopsComponent implements OnInit {
+export class TrainStopsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
-  private readonly destroyRef = inject(DestroyRef);
 
-  routeId = signal('');
-  line = signal<CTALine | undefined>(undefined);
-  stops = signal<TrainStop[] | null>(null);
-  private allStops: TrainStop[] = [];
+  private readonly params = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  routeId = computed(() => this.params().get('routeId') ?? '');
+  searchTerm = signal('');
 
-  ngOnInit(): void {
-    this.activatedRoute.paramMap.pipe(
-      switchMap(params => {
-        this.routeId.set(params.get('routeId') ?? '');
-        return this.trainService.getComprehensiveData();
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe((data: CTAComprehensiveData) => {
-      this.line.set(data.lines.find(l => l.route_id === this.routeId()));
-      const lineName = TRAIN_ROUTE_ID_TO_LINE_NAME[this.routeId()];
-      const sequence = data.stopSequences[lineName];
-      if (sequence) {
-        this.allStops = sequence.stops
-          .filter(id => data.stations[id])
-          .map(id => ({ id, name: data.stations[id].name }));
-        this.stops.set(this.allStops);
-      }
+  private readonly dataResource = rxResource({
+    params: () => {
+      const routeId = this.routeId();
+      return routeId ? routeId : undefined;
+    },
+    stream: () => this.trainService.getComprehensiveData()
+  });
+
+  line = computed<CTALine | undefined>(() => {
+    const data = this.dataResource.hasValue() ? this.dataResource.value() : undefined;
+    return data?.lines.find(l => l.route_id === this.routeId());
+  });
+
+  private readonly allStops = computed<TrainStop[]>(() => {
+    const data = this.dataResource.hasValue() ? this.dataResource.value() : undefined;
+    if (!data) {
+      return [];
+    }
+    const lineName = TRAIN_ROUTE_ID_TO_LINE_NAME[this.routeId()];
+    const sequence = data.stopSequences[lineName];
+    if (!sequence) {
+      return [];
+    }
+    return sequence.stops
+      .filter(id => data.stations[id])
+      .map(id => ({ id, name: data.stations[id].name }));
+  });
+
+  stops = computed<TrainStop[]>(() => {
+    const criteria = this.searchTerm().trim().toLowerCase();
+    const stops = this.allStops();
+    return criteria ? stops.filter(stop => stop.name.toLowerCase().includes(criteria)) : stops;
+  });
+
+  errorMsg = computed<string | undefined>(() =>
+    this.dataResource.error() ? 'Unable to load train data.' : undefined);
+
+  constructor() {
+    // Reset the search box's effect on the list when switching train lines.
+    effect(() => {
+      this.routeId();
+      this.searchTerm.set('');
     });
   }
 
@@ -52,7 +75,6 @@ export class TrainStopsComponent implements OnInit {
   }
 
   search(criteria: string): void {
-    criteria = (criteria ? criteria.trim() : '').toLowerCase();
-    this.stops.set(this.allStops.filter(stop => stop.name.toLowerCase().includes(criteria)));
+    this.searchTerm.set(criteria ?? '');
   }
 }

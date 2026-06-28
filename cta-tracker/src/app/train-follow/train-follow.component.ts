@@ -1,10 +1,9 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, ChangeDetectionStrategy, computed, effect, inject, DestroyRef } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { httpResource } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP } from '../trainResponse';
-import { timer } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainStopDisplay extends TrainEta {
@@ -18,89 +17,90 @@ interface TrainStopDisplay extends TrainEta {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TimeuntilPipe]
 })
-export class TrainFollowComponent implements OnInit {
+export class TrainFollowComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
   private readonly destroyRef = inject(DestroyRef);
 
-  runNumber = signal('');
-  fromStationId = signal('');
-  private routeCode = '';
-  routeName = signal('');
-  destination = signal('');
-  predictions = signal<TrainStopDisplay[] | null>(null);
-  errorMsg = signal<string | undefined>(undefined);
-  refreshInterval = 30 * 1000;
-  canRefresh = signal(false);
-  refreshing = signal(false);
-  lineColor = signal('');
+  private readonly refreshInterval = 30 * 1000;
 
-  ngOnInit(): void {
-    this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(qp => {
-      this.fromStationId.set(qp['from'] || '');
-      this.routeCode = qp['rt'] || '';
+  private readonly routeParams = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  private readonly queryParams = toSignal(this.activatedRoute.queryParamMap,
+    { initialValue: this.activatedRoute.snapshot.queryParamMap });
+  runNumber = computed(() => this.routeParams().get('runNumber') ?? '');
+  fromStationId = computed(() => this.queryParams().get('from') ?? '');
+  private readonly routeCode = computed(() => this.queryParams().get('rt') ?? '');
 
-      const cssVar = TRAIN_LINE_CSS_MAP[this.routeCode];
-      if (cssVar) {
-        this.lineColor.set(getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim());
+  private readonly followResource = httpResource<TrainApiResponse>(() => {
+    const run = this.runNumber();
+    return run ? this.trainService.followUrl(run) : undefined;
+  });
+
+  private readonly response = computed(() =>
+    this.followResource.hasValue() ? this.followResource.value() : undefined);
+
+  predictions = computed<TrainStopDisplay[] | null>(() => {
+    const response = this.response();
+    if (!response || (response.ctatt.errCd !== '0' && response.ctatt.errNm)) {
+      return null;
+    }
+    const etas = response.ctatt.eta;
+    if (!etas || etas.length === 0) {
+      return null;
+    }
+    return etas.map(eta => ({
+      ...eta,
+      countdown: eta.isApp === '1' ? 'DUE' : this.computeCountdown(eta.prdt, eta.arrT)
+    }));
+  });
+
+  routeName = computed(() => this.response()?.ctatt.eta?.[0]?.rt ?? '');
+  destination = computed(() => this.response()?.ctatt.eta?.[0]?.destNm ?? '');
+
+  lineColor = computed(() => {
+    const fromQuery = this.lineColorFor(this.routeCode());
+    if (fromQuery) {
+      return fromQuery;
+    }
+    const rt = this.response()?.ctatt.eta?.[0]?.rt;
+    return rt ? this.lineColorFor(rt) : '';
+  });
+
+  errorMsg = computed<string | undefined>(() => {
+    if (this.followResource.error()) {
+      return 'Network error';
+    }
+    const response = this.response();
+    if (!response) {
+      return undefined;
+    }
+    if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
+      return response.ctatt.errNm;
+    }
+    const etas = response.ctatt.eta;
+    if (!etas || etas.length === 0) {
+      return 'No predictions found';
+    }
+    return undefined;
+  });
+
+  refreshing = computed(() => this.followResource.isLoading());
+  canRefresh = computed(() => this.runNumber() !== '');
+
+  constructor() {
+    effect(() => {
+      if (this.followResource.status() === 'resolved' && typeof navigator.vibrate !== 'undefined') {
+        navigator.vibrate(5);
       }
     });
-    this.activatedRoute.params.pipe(
-      tap(params => {
-        this.canRefresh.set(true);
-        this.runNumber.set(params['runNumber']);
-      }),
-      switchMap(() => timer(0, this.refreshInterval)),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => this.getFollowData());
+
+    const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
+    this.destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
   getFollowData(): void {
-    if (!this.refreshing()) {
-      this.trainService.follow(this.runNumber()).subscribe((response: TrainApiResponse) => {
-        this.handleResponse(response);
-      });
-    }
-  }
-
-  handleResponse(response: TrainApiResponse): void {
-    this.refreshing.set(true);
-
-    if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
-      this.errorMsg.set(response.ctatt.errNm);
-      this.predictions.set(null);
-    } else if (response.ctatt.eta && response.ctatt.eta.length > 0) {
-      const etas = response.ctatt.eta;
-      if (etas.length > 0) {
-        this.routeName.set(etas[0].rt);
-        this.destination.set(etas[0].destNm);
-
-        if (!this.lineColor()) {
-          const cssVar = TRAIN_LINE_CSS_MAP[etas[0].rt];
-          if (cssVar) {
-            this.lineColor.set(getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim());
-          }
-        }
-      }
-
-      const displays: TrainStopDisplay[] = etas.map(eta => {
-        const countdown = eta.isApp === '1'
-          ? 'DUE'
-          : this.computeCountdown(eta.prdt, eta.arrT);
-        return { ...eta, countdown };
-      });
-
-      this.predictions.set(displays);
-      this.errorMsg.set(undefined);
-    } else {
-      this.errorMsg.set('No predictions found');
-      this.predictions.set(null);
-    }
-
-    setTimeout(() => this.refreshing.set(false), 500);
-    if (typeof window.navigator.vibrate !== 'undefined') {
-      window.navigator.vibrate(5);
-    }
+    this.followResource.reload();
   }
 
   computeCountdown(prdt: string, arrT: string): string {
@@ -112,5 +112,10 @@ export class TrainFollowComponent implements OnInit {
     } catch {
       return '--';
     }
+  }
+
+  private lineColorFor(rt: string): string {
+    const cssVar = TRAIN_LINE_CSS_MAP[rt];
+    return cssVar ? `var(${cssVar})` : '';
   }
 }
