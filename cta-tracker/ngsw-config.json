@@ -1,5 +1,6 @@
 {
   "index": "/index.html",
+  "navigationUrls": ["/"],
   "assetGroups": [
     {
       "name": "app",
@@ -8,6 +9,7 @@
         "files": [
           "/favicon.ico",
           "/index.html",
+          "/index.csr.html",
           "/*.css",
           "/*.js"
         ]

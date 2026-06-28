@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, DestroyRef, afterNextRender } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
@@ -13,7 +13,7 @@ import { TRAIN_LINE_CSS_MAP } from '../trainResponse';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, SlicePipe]
 })
-export class FavoritesComponent implements OnInit {
+export class FavoritesComponent {
   private readonly favoritesService = inject(FavoritesService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -21,8 +21,11 @@ export class FavoritesComponent implements OnInit {
   editing = signal(false);
   editableFavorites = signal<Favorite[]>([]);
 
-  ngOnInit(): void {
-    this.loadFavorites();
+  constructor() {
+    // Load after the first (hydration) render: getFavorites() emits cached favorites
+    // synchronously via of(...), so deferring keeps the server render and client first
+    // render identical.
+    afterNextRender(() => this.loadFavorites());
   }
 
   private loadFavorites(): void {
