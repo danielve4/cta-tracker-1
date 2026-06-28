@@ -1,83 +1,76 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { httpResource } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
-import { of, Observable, timer, Subscription } from 'rxjs';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 @Component({
   selector: 'app-follow-vehicle',
   templateUrl: './follow-vehicle.component.html',
   styleUrls: ['./follow-vehicle.component.css'],
-  imports: [AsyncPipe, TimeuntilPipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TimeuntilPipe]
 })
-export class FollowVehicleComponent implements OnInit, OnDestroy {
-  vehicleId = 0;
-  fromStopId = '';
-  routeNumber = '';
-  direction = '';
-  destination = '';
-  predictions$: Observable<Prd[]> | undefined;
-  error$: Observable<Error[]> | undefined;
-  refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
-  canRefresh = false;
-  refreshing = false;
+export class FollowVehicleComponent {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly busService = inject(BusService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private busService: BusService
-  ) {}
+  private readonly refreshInterval = 30 * 1000;
+  readonly placeholderRows = [0, 1, 2, 3];
 
-  ngOnInit(): void {
-    this.activatedRoute.queryParams.subscribe(qp => {
-      this.fromStopId = qp['from'] || '';
+  private readonly routeParams = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  private readonly queryParams = toSignal(this.activatedRoute.queryParamMap,
+    { initialValue: this.activatedRoute.snapshot.queryParamMap });
+  vehicleId = computed(() => +(this.routeParams().get('vehicleId') ?? 0));
+  fromStopId = computed(() => this.queryParams().get('from') ?? '');
+
+  private readonly followResource = httpResource<BustimeResponse>(() => {
+    const id = this.vehicleId();
+    return id ? this.busService.followUrl(id) : undefined;
+  });
+
+  private readonly response = computed(() =>
+    this.followResource.hasValue() ? this.followResource.value() : undefined);
+
+  predictions = computed<Prd[] | null>(() => {
+    const response = this.response();
+    if (!response || response.error || !response.prd) {
+      return null;
+    }
+    return response.prd.map(p => p.dly ? { ...p, prdctdn: this.getMinutesDifference(p.tmstmp, p.prdtm) } : p);
+  });
+
+  routeNumber = computed(() => this.predictions()?.[0]?.rt ?? '');
+  direction = computed(() => this.predictions()?.[0]?.rtdir ?? '');
+  destination = computed(() => this.predictions()?.[0]?.des ?? '');
+
+  error = computed<Error[] | null>(() => {
+    if (this.followResource.error()) {
+      return [{ stpid: '', msg: 'Network error' }];
+    }
+    return this.response()?.error ?? null;
+  });
+
+  refreshing = computed(() => this.followResource.isLoading());
+  canRefresh = computed(() => this.vehicleId() > 0);
+
+  constructor() {
+    effect(() => {
+      if (this.followResource.status() === 'resolved' && typeof navigator.vibrate !== 'undefined') {
+        navigator.vibrate(5);
+      }
     });
-    this.activatedRoute.params.subscribe(params => {
-      this.canRefresh = true;
-      this.vehicleId = +params['vehicleId'];
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getFollowData();
-      });
-    });
-  }
 
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
+    const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
+    this.destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
   getFollowData(): void {
-    if (!this.refreshing) {
-      this.busService.follow(this.vehicleId).subscribe((response: BustimeResponse) => {
-        this.handleResponse(response);
-      });
-    }
-  }
-
-  handleResponse(response: BustimeResponse): void {
-    this.refreshing = true;
-    if (response.error) {
-      this.error$ = of(response.error);
-    } else if (response.prd) {
-      if (response.prd.length > 0) {
-        this.routeNumber = response.prd[0].rt;
-        this.direction = response.prd[0].rtdir;
-        this.destination = response.prd[0].des;
-      }
-      for (let i = 0; i < response.prd.length; i++) {
-        if (response.prd[i].dly) {
-          response.prd[i].prdctdn = this.getMinutesDifference(
-            response.prd[i].tmstmp,
-            response.prd[i].prdtm);
-        }
-      }
-      this.predictions$ = of(response.prd);
-    }
-    setTimeout(() => this.refreshing = false, 500);
-    if (typeof window.navigator.vibrate !== 'undefined') {
-      window.navigator.vibrate(5);
-    }
+    this.followResource.reload();
   }
 
   getMinutesDifference(now: string, future: string): string {

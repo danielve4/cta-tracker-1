@@ -48,12 +48,12 @@ export class BusService {
       }));
   }
 
-  arrivals(stopId: number): Observable<BustimeResponse> {
-    return this.http.get<BustimeResponse>(`${this.arrivalsURL}?stopId=${stopId}`);
+  arrivalsUrl(stopId: number): string {
+    return `${this.arrivalsURL}?stopId=${stopId}`;
   }
 
-  follow(vehicleId: number): Observable<BustimeResponse> {
-    return this.http.get<BustimeResponse>(`${this.followURL}?vehicleId=${vehicleId}`);
+  followUrl(vehicleId: number): string {
+    return `${this.followURL}?vehicleId=${vehicleId}`;
   }
 
   private getCached(item: string): Observable<BustimeResponse> | null {

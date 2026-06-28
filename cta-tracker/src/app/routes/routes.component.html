@@ -1,5 +1,5 @@
 <h1 class="cols-4">Routes</h1>
-@if (trainLines$ | async; as trainLines) {
+@if (trainLines(); as trainLines) {
   <h3 class="cols-4 section-label">Train Lines</h3>
   <ul class="cols-4 train-lines-grid">
     @for (line of trainLines; track line.route_id) {
@@ -19,22 +19,40 @@
   </svg>
   <label class="search-label" for="search-routes">Search Routes</label>
 </section>
-<ul class="cols-4">
-  @if (error$ | async; as errors) {
-    @for (anError of errors; track anError.msg) {
-      <li>{{ anError.msg }}</li>
+@defer (on viewport) {
+  <ul class="cols-4">
+    @if (error(); as errors) {
+      @for (anError of errors; track anError.msg) {
+        <li>{{ anError.msg }}</li>
+      }
     }
-  }
-  @if (routes$ | async; as routes) {
-    @for (route of routes; track route.rt) {
-      <li class="bus-route">
-        <a routerLink="/directions/{{ route.rt }}">
-          <span class="bus-route-number-container">
-            <span class="bus-route-number">{{ route.rt }}</span>
-          </span>
-          <span class="bus-route-name">{{ route.rtnm }}</span>
-        </a>
-      </li>
+    @if (routes(); as routes) {
+      @for (route of routes; track route.rt) {
+        <li class="bus-route">
+          <a routerLink="/directions/{{ route.rt }}">
+            <span class="bus-route-number-container">
+              <span class="bus-route-number">{{ route.rt }}</span>
+            </span>
+            <span class="bus-route-name">{{ route.rtnm }}</span>
+          </a>
+        </li>
+      }
     }
-  }
-</ul>
+  </ul>
+} @placeholder {
+  <ul class="cols-4">
+    @for (n of placeholderRows; track n) {
+      <li class="bus-route skeleton-row" aria-hidden="true"></li>
+    }
+  </ul>
+} @loading {
+  <ul class="cols-4">
+    @for (n of placeholderRows; track n) {
+      <li class="bus-route skeleton-row" aria-hidden="true"></li>
+    }
+  </ul>
+} @error {
+  <ul class="cols-4">
+    <li>Could not load routes.</li>
+  </ul>
+}

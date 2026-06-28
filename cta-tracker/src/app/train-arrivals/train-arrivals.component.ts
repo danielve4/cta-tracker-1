@@ -1,11 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
-import { of, Observable, timer, Subscription } from 'rxjs';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainArrivalDisplay extends TrainEta {
@@ -22,103 +23,45 @@ interface ArrivalGroup {
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
-  imports: [AsyncPipe, DatePipe, TimeuntilPipe, RouterLink]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [DatePipe, TimeuntilPipe, RouterLink]
 })
-export class TrainArrivalsComponent implements OnInit, OnDestroy {
+export class TrainArrivalsComponent {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly trainService = inject(TrainService);
+  private readonly favoritesService = inject(FavoritesService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly skeletonCards = [0, 1, 2];
-  routeId = '';
-  stationId = '';
-  stationName = '';
-  arrivalGroups$: Observable<ArrivalGroup[]> | undefined;
-  errorMsg: string | undefined;
-  refreshInterval = 30 * 1000;
-  timerRef: Subscription | undefined;
-  canRefresh = false;
-  refreshing = false;
-  isInitialLoading = true;
-  lineColor = '';
-  isFavorite = true;
-  favoriteStop: Favorite | undefined;
-  favorited = false;
-  lastRefreshed: Date | null = null;
+  private readonly refreshInterval = 30 * 1000;
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private trainService: TrainService,
-    private favoritesService: FavoritesService
-  ) {}
+  private readonly routeParams = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  routeId = computed(() => this.routeParams().get('routeId') ?? '');
+  stationId = computed(() => this.routeParams().get('stationId') ?? '');
+  stationName = computed(() => this.routeParams().get('stationName') ?? '');
 
-  ngOnInit(): void {
-    this.activatedRoute.params.subscribe(params => {
-      this.canRefresh = true;
-      this.isInitialLoading = true;
-      this.errorMsg = undefined;
-      this.arrivalGroups$ = undefined;
-      this.routeId = params['routeId'];
-      this.stationId = params['stationId'];
-      this.stationName = params['stationName'];
+  private readonly arrivalsResource = httpResource<TrainApiResponse>(() => {
+    const stationId = this.stationId();
+    return stationId ? this.trainService.arrivalsUrl(stationId) : undefined;
+  });
 
-      const cssVar = TRAIN_LINE_CSS_MAP[this.routeId];
-      if (cssVar) {
-        this.lineColor = getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim();
-      }
-
-      const tempFavoriteStop: Favorite = {
-        route: this.routeId,
-        stopId: +this.stationId,
-        stopName: this.stationName,
-        direction: '',
-        type: 'train'
-      };
-      this.favoritesService.search(tempFavoriteStop).subscribe((index: number) => {
-        this.isFavorite = index >= 0;
-      });
-      this.favoriteStop = tempFavoriteStop;
-
-      this.timerRef = timer(0, this.refreshInterval).subscribe(() => {
-        this.getArrivals();
-      });
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.timerRef?.unsubscribe();
-  }
-
-  getArrivals(): void {
-    if (!this.refreshing) {
-      this.trainService.arrivals(this.stationId).subscribe((response: TrainApiResponse) => {
-        this.handleResponse(response);
-      });
+  private readonly processed = computed<{ groups: ArrivalGroup[] | null; error: string | undefined }>(() => {
+    const response = this.arrivalsResource.hasValue() ? this.arrivalsResource.value() : undefined;
+    if (!response) {
+      return { groups: null, error: this.arrivalsResource.error() ? 'Network error' : undefined };
     }
-  }
-
-  handleResponse(response: TrainApiResponse): void {
-    this.isInitialLoading = false;
-    this.refreshing = true;
-    this.lastRefreshed = new Date();
-
     if (response.ctatt.errCd !== '0' && response.ctatt.errNm) {
-      this.errorMsg = response.ctatt.errNm;
-      this.arrivalGroups$ = undefined;
-    } else if (response.ctatt.eta && response.ctatt.eta.length > 0) {
-      const filtered = response.ctatt.eta.filter(eta => eta.rt === this.routeId);
+      return { groups: null, error: response.ctatt.errNm };
+    }
+    if (response.ctatt.eta && response.ctatt.eta.length > 0) {
+      const filtered = response.ctatt.eta.filter(eta => eta.rt === this.routeId());
       if (filtered.length === 0) {
-        this.errorMsg = 'No arrivals found';
-        this.arrivalGroups$ = undefined;
-        setTimeout(() => this.refreshing = false, 800);
-        return;
+        return { groups: null, error: 'No arrivals found' };
       }
       const displays: TrainArrivalDisplay[] = filtered.map(eta => {
-        const countdown = eta.isApp === '1'
-          ? 'DUE'
-          : this.computeCountdown(eta.prdt, eta.arrT);
-
-        const cssVar = TRAIN_LINE_CSS_MAP[eta.rt];
-        const lineColor = cssVar
-          ? getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim()
-          : this.lineColor;
-
+        const countdown = eta.isApp === '1' ? 'DUE' : this.computeCountdown(eta.prdt, eta.arrT);
+        const lineColor = this.lineColorFor(eta.rt) || this.lineColorFor(this.routeId());
         return { ...eta, countdown, lineColor };
       });
 
@@ -136,17 +79,52 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
       const groups = Array.from(groupMap.values()).sort((a, b) =>
         a.directionLabel.localeCompare(b.directionLabel)
       );
-      this.arrivalGroups$ = of(groups);
-      this.errorMsg = undefined;
-    } else {
-      this.errorMsg = 'No arrivals found';
-      this.arrivalGroups$ = undefined;
+      return { groups, error: undefined };
     }
+    return { groups: null, error: 'No arrivals found' };
+  });
 
-    setTimeout(() => this.refreshing = false, 800);
-    if (typeof window.navigator.vibrate !== 'undefined') {
-      window.navigator.vibrate(5);
-    }
+  arrivalGroups = computed(() => this.processed().groups);
+  errorMsg = computed(() => this.processed().error);
+
+  isInitialLoading = computed(() => this.arrivalsResource.status() === 'loading');
+  refreshing = computed(() => this.arrivalsResource.isLoading());
+  canRefresh = computed(() => this.stationId() !== '');
+  lastRefreshed = signal<Date | null>(null);
+
+  isFavorite = signal(true);
+  favorited = signal(false);
+  favoriteStop = computed<Favorite>(() => ({
+    route: this.routeId(),
+    stopId: +this.stationId(),
+    stopName: this.stationName(),
+    direction: '',
+    type: 'train'
+  }));
+
+  constructor() {
+    effect(() => {
+      if (this.arrivalsResource.status() === 'resolved') {
+        this.lastRefreshed.set(new Date());
+        if (typeof navigator.vibrate !== 'undefined') {
+          navigator.vibrate(5);
+        }
+      }
+    });
+
+    effect(() => {
+      const stop = this.favoriteStop();
+      this.favoritesService.search(stop)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((index: number) => this.isFavorite.set(index >= 0));
+    });
+
+    const intervalId = setInterval(() => this.arrivalsResource.reload(), this.refreshInterval);
+    this.destroyRef.onDestroy(() => clearInterval(intervalId));
+  }
+
+  getArrivals(): void {
+    this.arrivalsResource.reload();
   }
 
   computeCountdown(prdt: string, arrT: string): string {
@@ -160,14 +138,19 @@ export class TrainArrivalsComponent implements OnInit, OnDestroy {
     }
   }
 
+  private lineColorFor(rt: string): string {
+    const cssVar = TRAIN_LINE_CSS_MAP[rt];
+    return cssVar ? `var(${cssVar})` : '';
+  }
+
   addToFavorite(): void {
-    if (this.favoriteStop) {
-      this.favoritesService.addToFavorites(this.favoriteStop).subscribe((wasAdded: boolean) => {
-        this.favorited = wasAdded;
+    this.favoritesService.addToFavorites(this.favoriteStop())
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((wasAdded: boolean) => {
+        this.favorited.set(wasAdded);
         setTimeout(() => {
-          this.isFavorite = wasAdded;
+          this.isFavorite.set(wasAdded);
         }, 300);
       });
-    }
   }
 }

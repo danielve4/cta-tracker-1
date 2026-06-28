@@ -42,6 +42,27 @@
   background-color: var(--cta-blue-opacity);
 }
 
+.skeleton-row {
+  min-height: 61px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.skeleton-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-secondary) 12%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: skeletonRowShimmer 1.25s ease-in-out infinite;
+}
+
+@keyframes skeletonRowShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
 .prediction-row {
   display: flex;
   align-items: center;

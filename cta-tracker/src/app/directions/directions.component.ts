@@ -1,38 +1,39 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { AsyncPipe } from '@angular/common';
+import { Component, ChangeDetectionStrategy, computed, inject } from '@angular/core';
+import { rxResource, toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BusService } from '../services/bus.service';
-import { BustimeResponse, Direction, Error } from '../busResponse';
-import { of, Observable } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { Direction, Error } from '../busResponse';
 
 @Component({
   selector: 'app-directions',
   templateUrl: './directions.component.html',
   styleUrls: ['./directions.component.css'],
-  imports: [RouterLink, AsyncPipe]
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink]
 })
-export class DirectionsComponent implements OnInit {
-  forRoute = '';
-  directions$: Observable<Direction[]> | undefined;
-  error$: Observable<Error[]> | undefined;
+export class DirectionsComponent {
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly busService = inject(BusService);
 
-  constructor(
-    private activatedRoute: ActivatedRoute,
-    private router: Router,
-    private busService: BusService
-  ) {}
+  private readonly params = toSignal(this.activatedRoute.paramMap,
+    { initialValue: this.activatedRoute.snapshot.paramMap });
+  forRoute = computed(() => this.params().get('route') ?? '');
 
-  ngOnInit(): void {
-    this.activatedRoute.paramMap.pipe(switchMap(params => {
-      this.forRoute = params.get('route') ?? '';
-      return this.busService.directions(this.forRoute);
-    })).subscribe((response: BustimeResponse) => {
-      if (response.error) {
-        this.error$ = of(response.error);
-      } else if (response.directions) {
-        this.directions$ = of(response.directions);
-      }
-    });
-  }
+  private readonly directionsResource = rxResource({
+    params: () => {
+      const route = this.forRoute();
+      return route ? { route } : undefined;
+    },
+    stream: ({ params }) => this.busService.directions(params.route)
+  });
+
+  directions = computed<Direction[] | null>(() =>
+    this.directionsResource.hasValue() ? this.directionsResource.value().directions ?? null : null);
+
+  error = computed<Error[] | null>(() => {
+    if (this.directionsResource.error()) {
+      return [{ stpid: '', msg: 'Network error' }];
+    }
+    return (this.directionsResource.hasValue() ? this.directionsResource.value().error : null) ?? null;
+  });
 }
