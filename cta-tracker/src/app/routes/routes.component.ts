@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, afterNextRender } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { TrainService } from '../services/train.service';
@@ -12,7 +12,7 @@ import { CTALine } from '../trainResponse';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink]
 })
-export class RoutesComponent implements OnInit {
+export class RoutesComponent {
   private readonly busService = inject(BusService);
   private readonly trainService = inject(TrainService);
 
@@ -22,20 +22,25 @@ export class RoutesComponent implements OnInit {
   error = signal<Error[] | null>(null);
   trainLines = signal<CTALine[] | null>(null);
 
-  ngOnInit(): void {
-    this.trainService.getComprehensiveData().subscribe(data => {
-      if (data.lines) {
-        this.trainLines.set(data.lines);
-      }
-    });
+  constructor() {
+    // Load after the first (hydration) render so the synchronous cached `of(...)` paths
+    // in the services can't populate signals before hydration — keeps the server skeleton
+    // and the client's first render identical.
+    afterNextRender(() => {
+      this.trainService.getComprehensiveData().subscribe(data => {
+        if (data.lines) {
+          this.trainLines.set(data.lines);
+        }
+      });
 
-    this.busService.routes().subscribe((response: BustimeResponse) => {
-      if (response.error) {
-        this.error.set(response.error);
-      } else if (response.routes) {
-        this.routes.set(response.routes);
-        this.allRoutes = response.routes;
-      }
+      this.busService.routes().subscribe((response: BustimeResponse) => {
+        if (response.error) {
+          this.error.set(response.error);
+        } else if (response.routes) {
+          this.routes.set(response.routes);
+          this.allRoutes = response.routes;
+        }
+      });
     });
   }
 

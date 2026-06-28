@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0",
-    "build": "ng build --configuration production",
+    "build": "ng build --configuration production && node scripts/patch-ngsw-index.mjs",
     "watch": "ng build --watch --configuration development"
   },
   "private": true,
@@ -16,8 +16,10 @@
     "@angular/forms": "^22.0.4",
     "@angular/platform-browser": "^22.0.4",
     "@angular/platform-browser-dynamic": "^22.0.4",
+    "@angular/platform-server": "^22.0.4",
     "@angular/router": "^22.0.4",
     "@angular/service-worker": "^22.0.4",
+    "@angular/ssr": "^22.0.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

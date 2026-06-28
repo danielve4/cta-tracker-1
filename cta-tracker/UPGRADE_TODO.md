@@ -282,19 +282,71 @@ keeping the initial bundle microscopic.
 
 ---
 
-## [ ] TODO 8 — Static prerender (SSG) + non-destructive hydration
+## [~] TODO 8 — Static prerender (SSG) + non-destructive hydration
 
 **Story:** As an installed-PWA user, I want the app shell painted from prerendered HTML and reused
 (not destroyed) when JS boots, eliminating startup flicker — while staying on static Firebase Hosting.
 
 **Acceptance criteria**
-- [ ] `@angular/ssr` added; SSR schematic wired with **`outputMode: 'static'`**, `app.config.server.ts`, `main.server.ts`, `server.ts` as needed; `angular.json` server/prerender config builds **without a runtime server**.
-- [ ] `provideClientHydration(withEventReplay())` added; landing/shell routes prerendered to static HTML under `dist/cta-tracker/browser` so `firebase.json` stays unchanged.
-- [ ] Production build emits prerendered HTML containing real shell markup (not just `<app-root></app-root>`); hydration logs **no `NG0500`-style mismatch** warnings.
-- [ ] PWA/service worker still registers and caches the prerendered shell; iOS meta tags and theme bootstrap script in `index.html` preserved.
+- [x] `@angular/ssr` added; SSR schematic wired with **`outputMode: 'static'`**, `app.config.server.ts`, `main.server.ts` (the schematic's `server.ts` Express entry was **deleted** — not needed for static); `angular.json` builds **without a runtime server** (no `dist/cta-tracker/server`).
+- [x] `provideClientHydration(withEventReplay())` added; `''`/`routes`/`favorites` prerendered to static HTML under `dist/cta-tracker/browser` (`firebase.json` `public` path unchanged; its rewrite target changed — see Decision 3).
+- [x] Production build emits prerendered HTML with real shell markup (`pill-nav`, `skeleton-row`, `ngh`/`ng-server-context="ssg"`); hydration logs **no `NG0500`** (verified in Chrome).
+- [x] PWA/service worker registers and caches the prerendered shell; iOS meta tags + inline theme bootstrap script in `index.html` preserved.
 
-**Files:** new `src/app/app.config.server.ts`, `src/main.server.ts`, `server.ts`, `angular.json`, `src/app/app.config.ts`, `ngsw-config.json` (verify), `firebase.json` (verify)
+**Files:** new `src/app/app.config.server.ts`, `src/app/app.routes.server.ts`, `src/main.server.ts`, `scripts/patch-ngsw-index.mjs`; `angular.json`, `tsconfig.app.json`, `package.json`(+lock), `src/app/app.config.ts`, `app.routes.ts`, `app.component.ts`, `services/theme.service.ts`, `routes/routes.component.ts`, `favorites/favorites.component.ts`, `firebase.json`, `ngsw-config.json`
 **Depends on:** TODO 4, TODO 3
+
+**Result:**
+- **SSR scaffolding (static).** `ng add @angular/ssr`, then converted to prerender-only: `angular.json`
+  `outputMode: "static"` (dropped the generated `ssr.entry`), **deleted `src/server.ts`** (no runtime
+  server — build emits **no `dist/cta-tracker/server`**, `firebase.json` `public` stays
+  `dist/cta-tracker/browser`). `app.config.server.ts` uses `provideServerRendering(withRoutes(serverRoutes))`
+  (the schematic's own Angular-22 API). Removed `express`/`@types/express`/`@types/node` + the `serve:ssr`
+  script; reverted `tsconfig.app.json` `types` to `[]`.
+- **Render modes (`app.routes.server.ts`).** `''` + `routes` + `favorites` = `Prerender`; `settings` +
+  `**` = `Client`. `settings` is client-only because it renders `theme.isDark()` in Angular-owned DOM,
+  which the server can't resolve (would mismatch). `''` now **renders `RoutesComponent`** (was a redirect)
+  so `/index.html` is a real shell.
+- **Hydration + SSR-safety.** `provideClientHydration(withEventReplay())`. `ThemeService` guards
+  `window`/`document`/`localStorage`/`matchMedia` behind `isPlatformBrowser` (it's force-instantiated on
+  the server by the AppInitializer). `RoutesComponent`/`FavoritesComponent` moved data loads from
+  `ngOnInit` to **`afterNextRender`** so the synchronous `of(cached)` paths can't populate signals before
+  hydration (server skeleton == client first render). `AppComponent` moved the saved-route restore to
+  `afterNextRender` and **only restores when `location.pathname === '/'`** — using `location.pathname`,
+  not `router.url`, which hasn't resolved the initial navigation yet at that point (caught in browser
+  testing: `router.url` was prematurely `'/'`, redirecting a `/settings` deep-link to `/routes`).
+- **Decision 3 — Firebase rewrite `/index.html` → `/index.csr.html`:** first-load deep-links to client
+  routes boot the clean CSR shell, no NG0500. `public` path unchanged.
+- **Decision 4 — NGSW root-only navigation fallback** (so the installed PWA actually paints the
+  prerendered shell on launch): `ngsw-config.json` sets `navigationUrls: ["/"]` — the SW serves its
+  navigation index **only** for the start_url `/`; every sub-route bypasses the SW to the network
+  (→ Firebase rewrite `/index.csr.html`, no mismatch). **Builder gotcha:** Angular hard-codes the SW
+  `index` to `index.csr.html` in prerender mode (`@angular/build/.../service-worker.js`), ignoring
+  ngsw-config's `index`, so a **post-build patch** (`scripts/patch-ngsw-index.mjs`, wired into
+  `npm run build`; CI runs `npm run build`) rewrites `ngsw.json` `index` → `/index.html` (already
+  precached). Net: SW-controlled `/` is served the prerendered shell **cache-first, online + offline**.
+  *(Rejected the earlier `index: "/index.csr.html"` approach — it rendered CSR on every PWA launch,
+  defeating the flicker-free goal.)* **Residual:** offline document-load of a *non-root* URL isn't
+  covered (single SW index, scoped to `/`) — ≈unreachable in standalone iOS PWA (cold-launch is always
+  `/`; in-app nav + the `afterNextRender` saved-route restore stay client-side).
+- **Build (production, green):** `Prerendered 3 static routes`; emits `browser/{index.html,
+  routes/index.html, favorites/index.html, index.csr.html}`, **no `server/`**. Initial total
+  **321.63 → 340.82 kB raw / 86.77 → 98.74 kB transfer** (~19 kB raw is the hydration runtime).
+  Pre-existing component-CSS budget **warnings** unchanged (`arrivals.css` 5.24 kB,
+  `train-arrivals.css` 5.73 kB; → TODO 10).
+- **Verified (Firebase hosting emulator + Chrome, served prod build):**
+  - *Static:* `index.html`/route files have real shell markup + `ng-server-context="ssg"`;
+    `index.csr.html` is bare `<app-root></app-root>`; iOS meta + inline theme script preserved;
+    `ngsw.json` `index` = `/index.csr.html`, both shells + 22 JS chunks precached.
+  - *First-load (no SW):* `/` and `/routes` (via `/routes/` 301) prerendered + hydrated with **0 console
+    messages / no NG0500**; `/settings`, `/arrivals/...` → `index.csr.html` clean CSR.
+  - *SW controlling (review-critical):* hard-load `/` is served the **prerendered `/index.html`**
+    (`ng-server-context="ssg"`, cache-first) and hydrates clean — the flicker-free PWA launch;
+    `/settings`/`/favorites`/`/arrivals/...` bypass the SW → `index.csr.html` (no `ng-server-context`);
+    all **no NG0500**; `/settings` deep-link stays on settings (restore-bug fix confirmed).
+  - *Offline (emulator stopped, SW controlling):* cold-launch `/` document boots from the **precached
+    prerendered shell** (`ng-server-context="ssg"`), saved-route restore client-navigates onward,
+    **no errors**.
 
 ---
 

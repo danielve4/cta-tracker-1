@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { RoutesComponent } from './routes/routes.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/routes', pathMatch: 'full' },
+  { path: '', component: RoutesComponent },
   { path: 'routes', component: RoutesComponent },
   {
     path: 'directions/:route',
