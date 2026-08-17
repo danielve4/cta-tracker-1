@@ -9,12 +9,14 @@ import { FavoritesService } from '../services/favorites.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
 import { parseTrainTime, formatClockTime, countdownLabel } from '../services/arrival-time';
+import { trainDistanceLabel } from '../services/distance';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainArrivalDisplay extends TrainEta {
   countdown: string;
   apiArrivalTime: string;
+  distance: string;
   lineColor: string;
 }
 
@@ -52,6 +54,14 @@ export class TrainArrivalsComponent {
     return stationId ? this.trainService.arrivalsUrl(stationId) : undefined;
   });
 
+  // The train API reports no distance, so it is computed against the station's coordinates.
+  // Resolves synchronously from the 'traindata' localStorage cache in the normal flow; a cold
+  // deep-link fetches it and the distances fill in when it lands.
+  private readonly comprehensiveData = toSignal(this.trainService.getComprehensiveData(),
+    { initialValue: null });
+  private readonly station = computed(() =>
+    this.comprehensiveData()?.stations?.[this.stationId()] ?? null);
+
   private readonly processed = computed<{ groups: ArrivalGroup[] | null; error: string | undefined }>(() => {
     const response = this.arrivalsResource.hasValue() ? this.arrivalsResource.value() : undefined;
     if (!response) {
@@ -70,6 +80,7 @@ export class TrainArrivalsComponent {
       const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
       const now = this.clock.now();
       const responseTime = parseTrainTime(response.ctatt.tmst);
+      const station = this.station();
 
       const displays: TrainArrivalDisplay[] = filtered.map(eta => {
         const arrivalTime = parseTrainTime(eta.arrT);
@@ -78,7 +89,13 @@ export class TrainArrivalsComponent {
         const arrivalEpochMs = receivedAt + (arrivalTime - apiNow);
         const countdown = eta.isApp === '1' ? 'DUE' : countdownLabel(arrivalEpochMs - now);
         const lineColor = this.lineColorFor(eta.rt) || this.lineColorFor(this.routeId());
-        return { ...eta, countdown, apiArrivalTime: formatClockTime(arrivalTime), lineColor };
+        return {
+          ...eta,
+          countdown,
+          apiArrivalTime: formatClockTime(arrivalTime),
+          distance: trainDistanceLabel(station, eta.lat, eta.lon),
+          lineColor
+        };
       });
 
       // Group by direction using rt + trDr

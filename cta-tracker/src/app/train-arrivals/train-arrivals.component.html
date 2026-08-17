@@ -61,9 +61,14 @@
                   <div class="arrival-details">
                     <span class="arrival-destination">To {{ arrival.destNm }}</span>
                     <span class="arrival-time">{{ arrival.countdown | timeuntil:'time' }}</span>
-                    @if (prefs.showApiTimestamp()) {
-                      <span class="arrival-api-time">API {{ arrival.apiArrivalTime }}</span>
-                    }
+                    <span class="arrival-meta">
+                      @if (prefs.showApiTimestamp()) {
+                        <span>API {{ arrival.apiArrivalTime }}</span>
+                      }
+                      @if (prefs.showDistance() && arrival.distance) {
+                        <span>{{ arrival.distance }}</span>
+                      }
+                    </span>
                   </div>
                   <div class="arrival-countdown"
                        [class.countdown-due]="arrival.countdown === 'DUE'"

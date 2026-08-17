@@ -2,13 +2,13 @@ import { Component, inject, injectAsync, onIdle, ChangeDetectionStrategy, signal
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ToggleSwitchComponent } from '../toggle-switch/toggle-switch.component';
 import { ThemeService } from '../services/theme.service';
-import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY } from '../services/display-preferences.service';
+import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY } from '../services/display-preferences.service';
 import type { FavoritesService } from '../services/favorites.service';
 import type { Favorite } from '../services/Favorite';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 
 /** Keys that survive "Clear Cache" — user preferences and data, not cached API payloads. */
-const PRESERVED_KEYS = ['favorites', 'theme-preference', SHOW_API_TIMESTAMP_KEY];
+const PRESERVED_KEYS = ['favorites', 'theme-preference', SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY];
 
 @Component({
   selector: 'app-settings',

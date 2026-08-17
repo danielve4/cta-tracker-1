@@ -120,7 +120,8 @@
   font-weight: 600;
 }
 
-.api-time {
+.api-time,
+.distance {
   font-size: 0.7em;
   color: var(--text-tertiary);
   font-weight: 500;

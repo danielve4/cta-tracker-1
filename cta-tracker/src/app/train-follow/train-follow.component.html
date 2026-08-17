@@ -27,6 +27,9 @@
               @if (prefs.showApiTimestamp()) {
                 <span class="api-time">API {{ prediction.apiArrivalTime }}</span>
               }
+              @if (prefs.showDistance() && prediction.distance) {
+                <span class="distance">{{ prediction.distance }}</span>
+              }
             </div>
           </div>
         </li>

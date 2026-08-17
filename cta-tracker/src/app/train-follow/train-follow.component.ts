@@ -6,12 +6,14 @@ import { TrainService } from '../services/train.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
 import { parseTrainTime, formatClockTime, countdownLabel } from '../services/arrival-time';
+import { trainDistanceLabel } from '../services/distance';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainStopDisplay extends TrainEta {
   countdown: string;
   apiArrivalTime: string;
+  distance: string;
 }
 
 @Component({
@@ -47,6 +49,11 @@ export class TrainFollowComponent {
   private readonly response = computed(() =>
     this.followResource.hasValue() ? this.followResource.value() : undefined);
 
+  // Station coordinates for the computed distances; see the note in train-arrivals.
+  private readonly comprehensiveData = toSignal(this.trainService.getComprehensiveData(),
+    { initialValue: null });
+  private readonly stations = computed(() => this.comprehensiveData()?.stations ?? {});
+
   predictions = computed<TrainStopDisplay[] | null>(() => {
     const response = this.response();
     if (!response || (response.ctatt.errCd !== '0' && response.ctatt.errNm)) {
@@ -59,6 +66,11 @@ export class TrainFollowComponent {
     const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
     const now = this.clock.now();
     const responseTime = parseTrainTime(response.ctatt.tmst);
+    // The follow endpoint omits lat/lon from each eta and reports the train's position once at
+    // the top level, so the position is fixed here and the station varies per row — the mirror
+    // image of the arrivals screen.
+    const position = response.ctatt.position;
+    const stations = this.stations();
 
     return etas.map(eta => {
       const arrivalTime = parseTrainTime(eta.arrT);
@@ -68,7 +80,8 @@ export class TrainFollowComponent {
       return {
         ...eta,
         countdown: eta.isApp === '1' ? 'DUE' : countdownLabel(arrivalEpochMs - now),
-        apiArrivalTime: formatClockTime(arrivalTime)
+        apiArrivalTime: formatClockTime(arrivalTime),
+        distance: trainDistanceLabel(stations[eta.staId], position?.lat, position?.lon)
       };
     });
   });

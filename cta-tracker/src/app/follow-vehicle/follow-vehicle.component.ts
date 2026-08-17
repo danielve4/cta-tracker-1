@@ -6,11 +6,13 @@ import { BusService } from '../services/bus.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
 import { busArrivalTimes } from '../services/arrival-time';
+import { formatDistance } from '../services/distance';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface BusPredictionDisplay extends Prd {
   apiArrivalTime: string;
+  distance: string;
 }
 
 @Component({
@@ -52,7 +54,12 @@ export class FollowVehicleComponent {
     }
     const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
     const now = this.clock.now();
-    return response.prd.map(p => ({ ...p, ...busArrivalTimes(p, receivedAt, now) }));
+    return response.prd.map(p => ({
+      ...p,
+      ...busArrivalTimes(p, receivedAt, now),
+      // dstp is linear feet remaining along the route pattern, straight from the API.
+      distance: formatDistance(p.dstp)
+    }));
   });
 
   routeNumber = computed(() => this.predictions()?.[0]?.rt ?? '');
