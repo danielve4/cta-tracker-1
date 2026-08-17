@@ -3,8 +3,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { BusService } from '../services/bus.service';
+import { ClockService } from '../services/clock.service';
+import { DisplayPreferencesService } from '../services/display-preferences.service';
+import { busArrivalTimes } from '../services/arrival-time';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
+
+interface BusPredictionDisplay extends Prd {
+  apiArrivalTime: string;
+}
 
 @Component({
   selector: 'app-follow-vehicle',
@@ -16,6 +23,8 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
 export class FollowVehicleComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly busService = inject(BusService);
+  private readonly clock = inject(ClockService);
+  protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly refreshInterval = 30 * 1000;
@@ -36,12 +45,14 @@ export class FollowVehicleComponent {
   private readonly response = computed(() =>
     this.followResource.hasValue() ? this.followResource.value() : undefined);
 
-  predictions = computed<Prd[] | null>(() => {
+  predictions = computed<BusPredictionDisplay[] | null>(() => {
     const response = this.response();
     if (!response || response.error || !response.prd) {
       return null;
     }
-    return response.prd.map(p => p.dly ? { ...p, prdctdn: this.getMinutesDifference(p.tmstmp, p.prdtm) } : p);
+    const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
+    const now = this.clock.now();
+    return response.prd.map(p => ({ ...p, ...busArrivalTimes(p, receivedAt, now) }));
   });
 
   routeNumber = computed(() => this.predictions()?.[0]?.rt ?? '');
@@ -57,11 +68,15 @@ export class FollowVehicleComponent {
 
   refreshing = computed(() => this.followResource.isLoading());
   canRefresh = computed(() => this.vehicleId() > 0);
+  lastRefreshed = signal<Date | null>(null);
 
   constructor() {
     effect(() => {
-      if (this.followResource.status() === 'resolved' && typeof navigator.vibrate !== 'undefined') {
-        navigator.vibrate(5);
+      if (this.followResource.status() === 'resolved') {
+        this.lastRefreshed.set(new Date());
+        if (typeof navigator.vibrate !== 'undefined') {
+          navigator.vibrate(5);
+        }
       }
     });
 
@@ -71,25 +86,5 @@ export class FollowVehicleComponent {
 
   getFollowData(): void {
     this.followResource.reload();
-  }
-
-  getMinutesDifference(now: string, future: string): string {
-    try {
-      const minutes: string = (((this.getDate(future).getTime() - this.getDate(now).getTime()) / 1000) / 60).toFixed(0);
-      return +minutes > 1 ? minutes : 'DUE';
-    } catch {
-      return 'DLY';
-    }
-  }
-
-  getDate(date: string): Date {
-    const dateTime: string[] = date.split(' ');
-    return new Date(
-      +dateTime[0].slice(0, 4),
-      +dateTime[0].slice(4, 6) - 1,
-      +dateTime[0].slice(6, 8),
-      +dateTime[1].slice(0, 2),
-      +dateTime[1].slice(3, 5)
-    );
   }
 }

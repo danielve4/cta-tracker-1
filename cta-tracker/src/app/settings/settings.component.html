@@ -12,6 +12,22 @@
   </div>
 </section>
 
+<!-- Arrivals -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Arrivals</h2>
+  <p class="section-description">Show the raw arrival time reported by the CTA API beneath the estimated time.</p>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Show API Timestamp</span>
+      <span class="settings-row-subtitle">{{ prefs.showApiTimestamp() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="prefs.showApiTimestamp()"
+      label="Show API timestamp"
+      (toggled)="prefs.toggleApiTimestamp()" />
+  </div>
+</section>
+
 <!-- Sync Favorites -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Sync Favorites</h2>

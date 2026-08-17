@@ -6,8 +6,15 @@ import { DatePipe } from '@angular/common';
 import { BusService } from '../services/bus.service';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { FavoritesService } from '../services/favorites.service';
+import { ClockService } from '../services/clock.service';
+import { DisplayPreferencesService } from '../services/display-preferences.service';
+import { busArrivalTimes } from '../services/arrival-time';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
+
+interface BusArrivalDisplay extends Prd {
+  apiArrivalTime: string;
+}
 
 @Component({
   selector: 'app-arrivals',
@@ -20,6 +27,8 @@ export class ArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly busService = inject(BusService);
   private readonly favoritesService = inject(FavoritesService);
+  private readonly clock = inject(ClockService);
+  protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly skeletonCards = [0, 1, 2];
@@ -37,14 +46,16 @@ export class ArrivalsComponent {
     return stopId ? this.busService.arrivalsUrl(stopId) : undefined;
   });
 
-  vehicles = computed<Prd[] | null>(() => {
+  vehicles = computed<BusArrivalDisplay[] | null>(() => {
     const response = this.arrivalsResource.hasValue() ? this.arrivalsResource.value() : undefined;
     if (!response || response.error || !response.prd) {
       return null;
     }
+    const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
+    const now = this.clock.now();
     return response.prd
       .filter(p => p.vid)
-      .map(p => p.dly ? { ...p, prdctdn: this.getMinutesDifference(p.tmstmp, p.prdtm) } : p);
+      .map(p => ({ ...p, ...busArrivalTimes(p, receivedAt, now) }));
   });
 
   error = computed<Error[] | null>(() => {
@@ -94,26 +105,6 @@ export class ArrivalsComponent {
 
   getArrivals(): void {
     this.arrivalsResource.reload();
-  }
-
-  getMinutesDifference(now: string, future: string): string {
-    try {
-      const minutes: string = (((this.getDate(future).getTime() - this.getDate(now).getTime()) / 1000) / 60).toFixed(0);
-      return +minutes > 1 ? minutes : 'DUE';
-    } catch {
-      return 'DLY';
-    }
-  }
-
-  getDate(date: string): Date {
-    const dateTime: string[] = date.split(' ');
-    return new Date(
-      +dateTime[0].slice(0, 4),
-      +dateTime[0].slice(4, 6) - 1,
-      +dateTime[0].slice(6, 8),
-      +dateTime[1].slice(0, 2),
-      +dateTime[1].slice(3, 5)
-    );
   }
 
   addToFavorite(): void {

@@ -6,11 +6,15 @@ import { DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
+import { ClockService } from '../services/clock.service';
+import { DisplayPreferencesService } from '../services/display-preferences.service';
+import { parseTrainTime, formatClockTime, countdownLabel } from '../services/arrival-time';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainArrivalDisplay extends TrainEta {
   countdown: string;
+  apiArrivalTime: string;
   lineColor: string;
 }
 
@@ -30,6 +34,8 @@ export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
   private readonly favoritesService = inject(FavoritesService);
+  private readonly clock = inject(ClockService);
+  protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly skeletonCards = [0, 1, 2];
@@ -59,10 +65,20 @@ export class TrainArrivalsComponent {
       if (filtered.length === 0) {
         return { groups: null, error: 'No arrivals found' };
       }
+      // Anchor each prediction to a real instant on this device's clock, then let it decay
+      // against the ticking clock rather than freezing at the API's snapshot.
+      const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
+      const now = this.clock.now();
+      const responseTime = parseTrainTime(response.ctatt.tmst);
+
       const displays: TrainArrivalDisplay[] = filtered.map(eta => {
-        const countdown = eta.isApp === '1' ? 'DUE' : this.computeCountdown(eta.prdt, eta.arrT);
+        const arrivalTime = parseTrainTime(eta.arrT);
+        // tmst is the response-level "as of"; prdt is the per-prediction fallback.
+        const apiNow = isNaN(responseTime) ? parseTrainTime(eta.prdt) : responseTime;
+        const arrivalEpochMs = receivedAt + (arrivalTime - apiNow);
+        const countdown = eta.isApp === '1' ? 'DUE' : countdownLabel(arrivalEpochMs - now);
         const lineColor = this.lineColorFor(eta.rt) || this.lineColorFor(this.routeId());
-        return { ...eta, countdown, lineColor };
+        return { ...eta, countdown, apiArrivalTime: formatClockTime(arrivalTime), lineColor };
       });
 
       // Group by direction using rt + trDr
@@ -125,17 +141,6 @@ export class TrainArrivalsComponent {
 
   getArrivals(): void {
     this.arrivalsResource.reload();
-  }
-
-  computeCountdown(prdt: string, arrT: string): string {
-    try {
-      const predTime = new Date(prdt).getTime();
-      const arrTime = new Date(arrT).getTime();
-      const minutes = Math.round((arrTime - predTime) / 60000);
-      return minutes > 1 ? String(minutes) : 'DUE';
-    } catch {
-      return '--';
-    }
   }
 
   private lineColorFor(rt: string): string {

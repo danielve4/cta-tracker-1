@@ -111,6 +111,14 @@
   font-weight: 600;
 }
 
+.api-time {
+  font-size: 0.7em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
 .route-number {
   border-radius: 4px;
   padding: 0 4px;

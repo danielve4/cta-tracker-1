@@ -1,13 +1,17 @@
-import { Component, ChangeDetectionStrategy, computed, effect, inject, DestroyRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { TrainService } from '../services/train.service';
+import { ClockService } from '../services/clock.service';
+import { DisplayPreferencesService } from '../services/display-preferences.service';
+import { parseTrainTime, formatClockTime, countdownLabel } from '../services/arrival-time';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
 interface TrainStopDisplay extends TrainEta {
   countdown: string;
+  apiArrivalTime: string;
 }
 
 @Component({
@@ -20,6 +24,8 @@ interface TrainStopDisplay extends TrainEta {
 export class TrainFollowComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly trainService = inject(TrainService);
+  private readonly clock = inject(ClockService);
+  protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
 
   private readonly refreshInterval = 30 * 1000;
@@ -50,10 +56,21 @@ export class TrainFollowComponent {
     if (!etas || etas.length === 0) {
       return null;
     }
-    return etas.map(eta => ({
-      ...eta,
-      countdown: eta.isApp === '1' ? 'DUE' : this.computeCountdown(eta.prdt, eta.arrT)
-    }));
+    const receivedAt = this.lastRefreshed()?.getTime() ?? Date.now();
+    const now = this.clock.now();
+    const responseTime = parseTrainTime(response.ctatt.tmst);
+
+    return etas.map(eta => {
+      const arrivalTime = parseTrainTime(eta.arrT);
+      // tmst is the response-level "as of"; prdt is the per-prediction fallback.
+      const apiNow = isNaN(responseTime) ? parseTrainTime(eta.prdt) : responseTime;
+      const arrivalEpochMs = receivedAt + (arrivalTime - apiNow);
+      return {
+        ...eta,
+        countdown: eta.isApp === '1' ? 'DUE' : countdownLabel(arrivalEpochMs - now),
+        apiArrivalTime: formatClockTime(arrivalTime)
+      };
+    });
   });
 
   routeName = computed(() => this.response()?.ctatt.eta?.[0]?.rt ?? '');
@@ -88,11 +105,15 @@ export class TrainFollowComponent {
 
   refreshing = computed(() => this.followResource.isLoading());
   canRefresh = computed(() => this.runNumber() !== '');
+  lastRefreshed = signal<Date | null>(null);
 
   constructor() {
     effect(() => {
-      if (this.followResource.status() === 'resolved' && typeof navigator.vibrate !== 'undefined') {
-        navigator.vibrate(5);
+      if (this.followResource.status() === 'resolved') {
+        this.lastRefreshed.set(new Date());
+        if (typeof navigator.vibrate !== 'undefined') {
+          navigator.vibrate(5);
+        }
       }
     });
 
@@ -102,17 +123,6 @@ export class TrainFollowComponent {
 
   getFollowData(): void {
     this.followResource.reload();
-  }
-
-  computeCountdown(prdt: string, arrT: string): string {
-    try {
-      const predTime = new Date(prdt).getTime();
-      const arrTime = new Date(arrT).getTime();
-      const minutes = Math.round((arrTime - predTime) / 60000);
-      return minutes > 1 ? String(minutes) : 'DUE';
-    } catch {
-      return '--';
-    }
   }
 
   private lineColorFor(rt: string): string {

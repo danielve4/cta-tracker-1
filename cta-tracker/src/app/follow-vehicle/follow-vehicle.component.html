@@ -26,6 +26,9 @@
             <div class="prediction-right">
               <span class="minutes">{{ prediction.prdctdn }}{{ prediction.prdctdn | timeuntil:'minutes' }}</span>
               <span class="time">{{ prediction.prdctdn | timeuntil:'time' }}</span>
+              @if (prefs.showApiTimestamp()) {
+                <span class="api-time">API {{ prediction.apiArrivalTime }}</span>
+              }
             </div>
           </div>
         </li>
