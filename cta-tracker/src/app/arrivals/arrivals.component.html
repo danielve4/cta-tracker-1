@@ -51,6 +51,14 @@
                 <div class="arrival-details">
                   <span class="arrival-destination">To {{ vehicle.des }}</span>
                   <span class="arrival-time">{{ vehicle.prdctdn | timeuntil:'time' }}</span>
+                  <span class="arrival-meta">
+                    @if (prefs.showApiTimestamp()) {
+                      <span>API {{ vehicle.apiArrivalTime }}</span>
+                    }
+                    @if (prefs.showDistance() && vehicle.distance) {
+                      <span>{{ vehicle.distance }}</span>
+                    }
+                  </span>
                 </div>
                 <div class="arrival-countdown"
                      [class.countdown-due]="vehicle.prdctdn === 'DUE'"

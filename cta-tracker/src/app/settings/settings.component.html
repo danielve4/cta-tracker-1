@@ -12,6 +12,32 @@
   </div>
 </section>
 
+<!-- Arrivals -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Arrivals</h2>
+  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~.</p>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Show API Timestamp</span>
+      <span class="settings-row-subtitle">{{ prefs.showApiTimestamp() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="prefs.showApiTimestamp()"
+      label="Show API timestamp"
+      (toggled)="prefs.toggleApiTimestamp()" />
+  </div>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Show Distance</span>
+      <span class="settings-row-subtitle">{{ prefs.showDistance() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="prefs.showDistance()"
+      label="Show distance"
+      (toggled)="prefs.toggleDistance()" />
+  </div>
+</section>
+
 <!-- Sync Favorites -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Sync Favorites</h2>
