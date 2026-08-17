@@ -11,7 +11,7 @@ const FEET_PER_MILE = 5280;
 
 /** Great-circle distance in feet. NaN if any coordinate is missing or unparseable. */
 export function haversineFeet(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) {
     return NaN;
   }
   const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -25,33 +25,58 @@ export function haversineFeet(lat1: number, lon1: number, lat2: number, lon2: nu
 /**
  * Formats a distance in feet for display, or '' when there is nothing meaningful to show.
  * Short distances round to the nearest 10 ft rather than claiming foot-level precision.
+ *
+ * A value that rounds to zero renders as nothing at all. It tells the rider less than the
+ * countdown already does, and for trains it is usually not even a real reading: when the CTA has
+ * no position fix it reports the station's own coordinates, so several trains at one station come
+ * back sitting on the platform to within a couple of feet.
  */
 export function formatDistance(feet: number): string {
-  if (feet === null || feet === undefined || isNaN(feet) || feet < 0) {
+  if (!Number.isFinite(feet) || feet < 0) {
     return '';
   }
   if (feet < 1000) {
-    return `${Math.round(feet / 10) * 10} ft`;
+    const rounded = Math.round(feet / 10) * 10;
+    return rounded === 0 ? '' : `${rounded} ft`;
   }
   return `${(feet / FEET_PER_MILE).toFixed(1)} mi`;
 }
 
 /**
+ * Parses a CTA coordinate, treating "no fix" as absent.
+ *
+ * The CTA signals a missing position three different ways: the field is absent (documented for
+ * schedule-based predictions), it is an empty string, or it is the literal "0". That last one is
+ * the dangerous case — "0" is a truthy string, so an unguarded read puts the train at Null Island
+ * and yields a confident ~6099 mi.
+ */
+function parseCoordinate(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed !== 0 ? parsed : null;
+}
+
+/**
  * Distance from a train's GPS position to a station, for the arrival and follow views.
  *
- * Returns '' when either end is unknown — notably for schedule-based predictions
- * (`isSch="1"`), which the CTA documents as having empty lat/lon. The `~` prefix marks this as
- * straight-line, since unlike the bus API's along-route `dstp` a train can be much further away
- * by track than by air.
+ * Returns '' whenever the answer would not be meaningful: either end's position is unknown, or
+ * the train reads as sitting on the platform. The `~` prefix marks this as straight-line, since
+ * unlike the bus API's along-route `dstp` a train can be much further away by track than by air.
  */
 export function trainDistanceLabel(
   station: { latitude: number; longitude: number } | null | undefined,
-  lat: string | undefined,
-  lon: string | undefined
+  lat: string | number | null | undefined,
+  lon: string | number | null | undefined
 ): string {
-  if (!station || !lat || !lon) {
+  const trainLat = parseCoordinate(lat);
+  const trainLon = parseCoordinate(lon);
+  const stationLat = parseCoordinate(station?.latitude);
+  const stationLon = parseCoordinate(station?.longitude);
+  if (trainLat === null || trainLon === null || stationLat === null || stationLon === null) {
     return '';
   }
-  const label = formatDistance(haversineFeet(+lat, +lon, station.latitude, station.longitude));
+  const label = formatDistance(haversineFeet(trainLat, trainLon, stationLat, stationLon));
   return label ? `~${label}` : '';
 }
