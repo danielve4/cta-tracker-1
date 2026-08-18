@@ -21,7 +21,8 @@
       "updateMode": "prefetch",
       "resources": {
         "files": [
-          "/assets/**"
+          "/assets/**",
+          "!/assets/splash/**"
         ]
       }
     }

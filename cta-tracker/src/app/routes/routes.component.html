@@ -19,7 +19,7 @@
   </svg>
   <label class="search-label" for="search-routes">Search Routes</label>
 </section>
-@defer (on viewport) {
+@defer (on viewport; hydrate on viewport) {
   <ul class="cols-4">
     @if (error(); as errors) {
       @for (anError of errors; track anError.msg) {
@@ -36,6 +36,14 @@
             <span class="bus-route-name">{{ route.rtnm }}</span>
           </a>
         </li>
+      }
+    } @else if (!error()) {
+      <!-- Prerender + pre-data client render: with a hydrate trigger the SSG
+           output contains this main block (not @placeholder), and routes()
+           is still null there — keep the skeletons so the static shell never
+           ships an empty list. -->
+      @for (n of placeholderRows; track n) {
+        <li class="bus-route skeleton-row" aria-hidden="true"></li>
       }
     }
   </ul>
