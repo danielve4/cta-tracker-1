@@ -4,13 +4,14 @@ import { BusService } from '../services/bus.service';
 import { TrainService } from '../services/train.service';
 import { BustimeResponse, Route, Error } from '../busResponse';
 import { CTALine } from '../trainResponse';
+import { SuggestedStopComponent } from '../suggested-stop/suggested-stop.component';
 
 @Component({
   selector: 'app-routes',
   templateUrl: './routes.component.html',
   styleUrls: ['./routes.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink]
+  imports: [RouterLink, SuggestedStopComponent]
 })
 export class RoutesComponent {
   private readonly busService = inject(BusService);

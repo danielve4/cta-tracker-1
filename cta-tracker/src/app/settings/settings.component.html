@@ -62,6 +62,44 @@
   }
 </section>
 
+<!-- Suggestions -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Stop Suggestions</h2>
+  <p class="section-description">Learns which stops you check and when, so it can offer the right one when you open the app after a while. Everything stays on this device and is never uploaded.</p>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Remember Stop History</span>
+      <span class="settings-row-subtitle">{{ predictionPrefs.collectHistory() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="predictionPrefs.collectHistory()"
+      label="Remember stop history"
+      (toggled)="toggleHistory()" />
+  </div>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Use My Location</span>
+      <span class="settings-row-subtitle">{{ predictionPrefs.useLocation() ? 'On' : 'Off' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="predictionPrefs.useLocation()"
+      label="Use my location"
+      (toggled)="toggleLocation()" />
+  </div>
+  @if (accuracy(); as accuracy) {
+    <p class="sync-status">{{ accuracy }}</p>
+  }
+  @if (historyStatus(); as historyStatus) {
+    <p class="sync-status">{{ historyStatus }}</p>
+  }
+  <div class="sync-buttons">
+    <button class="settings-btn" (click)="exportHistory()">Export Data</button>
+    <button class="settings-btn settings-btn-danger" (click)="clearHistory()">
+      {{ historyCleared() ? 'History Cleared' : 'Clear History' }}
+    </button>
+  </div>
+</section>
+
 <!-- Cache -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Storage</h2>

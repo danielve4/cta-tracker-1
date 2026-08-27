@@ -1,0 +1,83 @@
+/* The host is the grid item inside app-routes, not the card — a custom element defaults to inline
+   and to a single column, which squeezes the card into a quarter of the width. */
+:host {
+  display: block;
+  grid-column: 1 / 5;
+}
+
+.suggestion-card {
+  background: var(--card-bg, rgba(127, 127, 127, 0.08));
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.suggestion-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.suggestion-dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.5;
+  padding: 0.25rem;
+  cursor: pointer;
+  /* styles.css gives every button width:100% and height:56px; an icon button wants neither. */
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.suggestion-dismiss svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
+.suggestion-list {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+}
+
+.suggestion-item {
+  /* Overrides the global button height so the row is sized by its own padding. */
+  width: 100%;
+  height: auto;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0.55rem 0;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.suggestion-stop {
+  font-weight: 500;
+  min-width: 0;
+}
+
+.suggestion-route {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
