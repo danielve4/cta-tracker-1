@@ -51,12 +51,17 @@ export class AppComponent {
 
         // Read before the navigation settles — getCurrentNavigation() is null once it has.
         const stateEntry = this.entryFromState();
-        void this.tracker.handleNavigation(event, stateEntry).then((stopKey) => {
-          if (stopKey) {
-            // Closes out an open shadow impression with where the user actually went.
-            void this.predictor.resolveWith(stopKey);
-          }
-        });
+        // Caught rather than left floating: this is telemetry, and an unhandled rejection here
+        // would take the impression-resolution step down with it.
+        void this.tracker.handleNavigation(event, stateEntry)
+          .then((stopKey) => {
+            if (stopKey) {
+              // Closes out an open shadow impression with where the user actually went.
+              return this.predictor.resolveWith(stopKey);
+            }
+            return undefined;
+          })
+          .catch(() => undefined);
       }
     });
   }

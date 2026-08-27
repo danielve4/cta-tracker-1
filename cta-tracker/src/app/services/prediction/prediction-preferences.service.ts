@@ -1,5 +1,6 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { SafeStorage, browserStorage, nullStorage } from './safe-storage';
 
 export const COLLECT_STOP_HISTORY_KEY = 'predict-collect-history';
 export const USE_LOCATION_KEY = 'predict-use-location';
@@ -15,8 +16,11 @@ export const USE_LOCATION_KEY = 'predict-use-location';
  */
 @Injectable({ providedIn: 'root' })
 export class PredictionPreferencesService {
-  // Must be initialized before the signals below, which read localStorage.
-  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  // Must be initialized before the signals below, which read from it. Goes through SafeStorage
+  // because these are field initializers: a raw localStorage throw here fails DI for every
+  // consumer, which would stop the arrivals components rendering at all.
+  private readonly storage: SafeStorage =
+    isPlatformBrowser(inject(PLATFORM_ID)) ? browserStorage() : nullStorage();
 
   readonly collectHistory = signal<boolean>(this.load(COLLECT_STOP_HISTORY_KEY, true));
   readonly useLocation = signal<boolean>(this.load(USE_LOCATION_KEY, false));
@@ -32,16 +36,11 @@ export class PredictionPreferencesService {
   }
 
   private store(key: string, value: boolean): void {
-    if (this.isBrowser) {
-      localStorage.setItem(key, String(value));
-    }
+    this.storage.set(key, String(value));
   }
 
   private load(key: string, fallback: boolean): boolean {
-    if (!this.isBrowser) {
-      return fallback;
-    }
-    const stored = localStorage.getItem(key);
+    const stored = this.storage.get(key);
     return stored === null ? fallback : stored === 'true';
   }
 }

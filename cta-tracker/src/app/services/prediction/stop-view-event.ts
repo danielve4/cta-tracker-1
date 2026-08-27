@@ -6,7 +6,7 @@
 // has to be migrated (or thrown away) every time it does. Storing `ts` and the raw inter-session
 // gap instead means a change to features.ts applies retroactively to all history already collected.
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type StopKind = 'bus' | 'train';
 
@@ -28,6 +28,11 @@ export type StopKey = `${StopKind}:${string}`;
  * - `restored` — AppComponent auto-navigates to LS_SAVED_ROUTE when the app is launched from '/'.
  *   Untagged, every cold launch looks like a deliberate deep-link and injects a stop the user never
  *   chose as the "first stop of the session" label.
+ * - `reload` — the document was reloaded or restored onto a stop page rather than navigated to it.
+ *   iOS discards a backgrounded PWA and reloads the URL it was on, so without this the browser
+ *   putting the user back where they already were is indistinguishable from them deliberately
+ *   opening that stop after hours away — and it lands in exactly the cold-start situation the
+ *   predictor targets.
  */
 export type EntrySource =
   | 'browse'
@@ -36,8 +41,12 @@ export type EntrySource =
   | 'follow'
   | 'deep-link'
   | 'restored'
+  | 'reload'
   | 'suggestion'
   | 'unknown';
+
+/** Mirrors PerformanceNavigationTiming.type; 'unknown' when the API is unavailable. */
+export type DocumentNavigationType = 'navigate' | 'reload' | 'back_forward' | 'prerender' | 'unknown';
 
 export type LocationSource = 'live' | 'cached' | 'denied' | 'unavailable' | 'off';
 
@@ -57,7 +66,13 @@ export interface StopViewEvent {
   tzOffsetMin: number;
 
   sessionId: string;
-  /** 0 = first stop opened in this session, which is the event the predictor is trying to guess. */
+  /**
+   * Position of this view within its session, 0-based.
+   *
+   * Note this is *not* the same as "the stop the user chose": seq 0 is frequently the app's own
+   * doing (a LS_SAVED_ROUTE restore, a reload). `extractTrainingExamples` derives the real choice
+   * by taking the session's first user-driven entry rather than trusting this field.
+   */
   seqInSession: number;
   msSincePrevEvent: number | null;
   /**
@@ -84,6 +99,11 @@ export interface StopViewEvent {
   stopLon: number | null;
 
   entry: EntrySource;
+  /**
+   * How the *document* was loaded, independent of `entry`. Stored raw as well as folded into
+   * `entry` so an offline consumer can re-derive the distinction differently later.
+   */
+  navigationType: DocumentNavigationType;
   fromUrl: string | null;
   isFavorite: boolean;
   favoriteRank: number | null;

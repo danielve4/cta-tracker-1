@@ -16,7 +16,9 @@ import { LocationService } from './location.service';
 import { PredictionPreferencesService } from './prediction-preferences.service';
 import { SessionService } from './session.service';
 import { stopKeyOf } from './stop-key';
-import { EntrySource, SCHEMA_VERSION, StopKey, StopKind, StopViewEvent } from './stop-view-event';
+import {
+  DocumentNavigationType, EntrySource, SCHEMA_VERSION, StopKey, StopKind, StopViewEvent
+} from './stop-view-event';
 
 const ARRIVALS_PATH = 'arrivals/:route/:direction/:stopId/:stopName';
 const TRAIN_ARRIVALS_PATH = 'train-arrivals/:routeId/:stationId/:stationName';
@@ -51,6 +53,9 @@ export class StopViewTrackerService {
   private pending: PendingView | null = null;
   private previousUrl: string | null = null;
   private lastStopKey: StopKey | null = null;
+  private navigationType: DocumentNavigationType = 'unknown';
+  /** Increments per navigation so a slow record() can tell it has been superseded. */
+  private navigationToken = 0;
 
   /**
    * Called from AppComponent inside afterNextRender. Idempotent, browser-only, and it also arms the
@@ -61,6 +66,7 @@ export class StopViewTrackerService {
       return;
     }
     this.started = true;
+    this.navigationType = this.readNavigationType();
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
@@ -99,16 +105,22 @@ export class StopViewTrackerService {
     this.accumulateDwell();
     this.flushDwell();
     this.pending = null;
+    const token = ++this.navigationToken;
 
     const params = this.matchStopView();
     const from = this.previousUrl;
+    const isFirstOfDocument = this.previousUrl === null;
     this.previousUrl = event.urlAfterRedirects;
     if (!params) {
       return null;
     }
     const stopKey = stopKeyOf(params.kind, params.stopId);
     if (this.prefs.collectHistory()) {
-      await this.record(params, stateEntry ?? this.inferEntry(from), from);
+      // Claimed synchronously, before any await: record() resolves after several IndexedDB
+      // round-trips, so claiming it there would let two interleaved navigations assign sequence
+      // numbers in a different order than their timestamps.
+      const seq = this.session.takeSeq();
+      await this.record(params, stateEntry ?? this.inferEntry(from, isFirstOfDocument), from, seq, token);
     }
     return stopKey;
   }
@@ -168,8 +180,16 @@ export class StopViewTrackerService {
    * deep link. The two cases that would otherwise be misread as one, a restored session and a
    * tapped suggestion, are passed in as explicit navigation state instead of guessed here.
    */
-  private inferEntry(from: string | null): EntrySource {
-    if (from === null) return 'deep-link';
+  private inferEntry(from: string | null, isFirstOfDocument: boolean): EntrySource {
+    if (from === null) {
+      // No previous URL means this is the document's first navigation. Whether that is a real deep
+      // link or the browser putting the user back where they already were is the difference between
+      // a training label and a fabricated one, and only the navigation type can tell them apart.
+      if (isFirstOfDocument && this.navigationType !== 'navigate' && this.navigationType !== 'unknown') {
+        return 'reload';
+      }
+      return 'deep-link';
+    }
     if (from.startsWith('/favorites')) return 'favorites';
     if (from.startsWith('/stops/') || from.startsWith('/train-stops/')) return 'browse';
     if (from.startsWith('/follow/') || from.startsWith('/train-follow/')) return 'follow';
@@ -177,7 +197,22 @@ export class StopViewTrackerService {
     return 'unknown';
   }
 
-  private async record(params: StopViewParams, entry: EntrySource, fromUrl: string | null): Promise<void> {
+  private readNavigationType(): DocumentNavigationType {
+    try {
+      const [entry] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+      return (entry?.type as DocumentNavigationType) ?? 'unknown';
+    } catch {
+      return 'unknown';
+    }
+  }
+
+  private async record(
+    params: StopViewParams,
+    entry: EntrySource,
+    fromUrl: string | null,
+    seqInSession: number,
+    token: number
+  ): Promise<void> {
     const now = Date.now();
     const stopKey = stopKeyOf(params.kind, params.stopId);
     const coordinates = this.stopCoordinates(params);
@@ -188,7 +223,7 @@ export class StopViewTrackerService {
       ts: now,
       tzOffsetMin: new Date(now).getTimezoneOffset(),
       sessionId: this.session.currentSessionId(),
-      seqInSession: this.session.takeSeq(),
+      seqInSession,
       msSincePrevEvent: null,
       msSinceLastAppOpen: this.session.gapMs(),
       stopKey,
@@ -200,6 +235,7 @@ export class StopViewTrackerService {
       stopLat: coordinates?.lat ?? null,
       stopLon: coordinates?.lon ?? null,
       entry,
+      navigationType: this.navigationType,
       fromUrl,
       isFavorite: favorite.index >= 0,
       favoriteRank: favorite.index >= 0 ? favorite.index : null,
@@ -215,20 +251,28 @@ export class StopViewTrackerService {
 
     // `msSincePrevEvent` needs the row before this one; the log is the source of truth for it, so
     // it is read rather than tracked in memory (a reload would otherwise reset it to null forever).
-    const recent = await this.store.recentEvents(now - 24 * 60 * 60 * 1000);
-    const previous = recent.length ? recent[recent.length - 1] : null;
+    // The window spans the whole retained log rather than a day: a shorter one silently collapses
+    // "the previous view was 25 hours ago" into the same null that means "there was no previous
+    // view", which is not recoverable offline.
+    const previous = await this.store.lastEvent();
     if (previous) {
       event.msSincePrevEvent = now - previous.ts;
     }
 
     const id = await this.store.append(event);
-    this.lastStopKey = stopKey;
     if (id === null) {
       return;
     }
+    // A newer navigation may have landed while the writes above were in flight. Installing this
+    // view as `pending` now would attribute the *next* stop's dwell time and refresh taps to this
+    // row, and leave `lastStopKey` — the Markov feature's previous stop — pointing at the wrong one.
+    if (token !== this.navigationToken) {
+      return;
+    }
+    this.lastStopKey = stopKey;
     this.pending = {
       id,
-      visibleSince: this.isBrowser && document.visibilityState === 'visible' ? Date.now() : null,
+      visibleSince: document.visibilityState === 'visible' ? Date.now() : null,
       accumulatedMs: 0,
       refreshCount: 0
     };

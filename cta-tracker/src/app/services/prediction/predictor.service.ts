@@ -46,6 +46,8 @@ export class PredictorService {
   readonly suggestions = signal<Suggestion[]>([]);
 
   private pendingRecordId: number | null = null;
+  /** SuggestedStopComponent re-mounts on every return to /routes; the ranking should not. */
+  private hasPredicted = false;
 
   /**
    * Ranks the candidate stops and records the impression.
@@ -55,9 +57,13 @@ export class PredictorService {
    * opened yet this session.
    */
   async predictForColdStart(): Promise<void> {
-    if (!this.prefs.collectHistory() || !this.session.isColdStart() || this.session.hasViewedStop()) {
+    if (this.hasPredicted || !this.prefs.collectHistory()
+      || !this.session.isColdStart() || this.session.hasViewedStop()) {
       return;
     }
+    // Set before the first await, so two mounts in the same tick cannot both get through and
+    // orphan the earlier impression by overwriting pendingRecordId.
+    this.hasPredicted = true;
 
     const events = await this.store.allEvents();
     if (events.length < MIN_EVENTS_FOR_SUGGESTION) {
@@ -77,7 +83,7 @@ export class PredictorService {
       msSinceLastAppOpen: this.session.gapMs(),
       userLat: position.userLat,
       userLon: position.userLon,
-      launchedStandalone: window.matchMedia('(display-mode: standalone)').matches,
+      launchedStandalone: this.isStandalone(),
       previousStopKey: this.tracker.previousStopKey() ?? mostRecentlyUsed(events)
     };
 
@@ -114,6 +120,12 @@ export class PredictorService {
     );
   }
 
+  private isStandalone(): boolean {
+    // Unreachable on the server today only because the event log is empty there, which is too
+    // incidental to rely on.
+    return typeof window !== 'undefined' && window.matchMedia('(display-mode: standalone)').matches;
+  }
+
   private rank(
     events: StopViewEvent[],
     favoriteKeys: StopKey[],
@@ -131,12 +143,15 @@ export class PredictorService {
 
   /** Closes out the open impression with where the user actually went. */
   async resolveWith(stopKey: StopKey): Promise<void> {
+    // Cleared before the guard: if appendPrediction failed (IndexedDB unavailable) the chip was
+    // still rendered but there is no record id, and returning early would leave it on screen
+    // offering a stop the user has just opened, with no way to dismiss it.
+    this.suggestions.set([]);
     const id = this.pendingRecordId;
     if (id === null) {
       return;
     }
     this.pendingRecordId = null;
-    this.suggestions.set([]);
 
     const records = await this.store.allPredictions();
     const record = records.find(candidate => candidate.id === id);
@@ -153,8 +168,8 @@ export class PredictorService {
    * cleaner negative than the absence of a tap, and a bandit will want it as a reward signal.
    */
   async dismiss(): Promise<void> {
-    const id = this.pendingRecordId;
     this.suggestions.set([]);
+    const id = this.pendingRecordId;
     if (id === null) {
       return;
     }
