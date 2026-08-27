@@ -17,11 +17,10 @@ The frontend is built and its output is copied into the backend's `public/` dire
 
 | Technology | Version | Purpose |
 |---|---|---|
-| Angular | 21.x | UI framework (standalone components, built-in control flow) |
+| Angular | 22.x | UI framework (standalone components, built-in control flow) |
 | TypeScript | 5.9.x | Language |
 | RxJS | 7.8.x | Reactive programming / async data streams |
-| Zone.js | 0.15.x | Change detection (Zone-based) |
-| Angular Service Worker | 21.x | PWA offline support and caching |
+| Angular Service Worker | 22.x | PWA offline support and caching |
 
 ### Backend
 
@@ -51,6 +50,8 @@ cta-tracker-1/
 │   │   │   ├── routes/           # Route listing with search
 │   │   │   ├── stops/            # Stop listing for a route/direction
 │   │   │   ├── services/         # BusService, FavoritesService
+│   │   │   │   └── prediction/   # On-device stop-view log and suggestion ranking
+│   │   │   ├── suggested-stop/   # Home-screen "heading here?" suggestion chip
 │   │   │   ├── app.component.ts  # Root component with nav
 │   │   │   ├── app.config.ts     # Application providers config
 │   │   │   ├── app.routes.ts     # Route definitions
@@ -81,10 +82,54 @@ cta-tracker-1/
 ### Angular Patterns
 - **Standalone components**: All components are standalone (no NgModules). Imports are declared directly in each component's `imports` array.
 - **Built-in control flow**: Templates use `@if`, `@for`, `@switch` syntax instead of `*ngIf`/`*ngFor` structural directives.
-- **Functional providers**: Application is bootstrapped via `bootstrapApplication()` with `provideRouter()`, `provideHttpClient()`, and `provideServiceWorker()`.
-- **Zone-based change detection**: Uses `provideZoneChangeDetection()` with event coalescing enabled.
-- **Async pipe**: Components expose `Observable` properties and use the `async` pipe in templates for automatic subscription management.
+- **Functional providers**: Application is bootstrapped via `bootstrapApplication()` with `provideRouter()`, `provideHttpClient()`, `provideServiceWorker()` and `provideClientHydration()`.
+- **Prerendering**: `''`, `routes` and `favorites` are prerendered. Anything reading `localStorage`, IndexedDB or `navigator` must be guarded with `isPlatformBrowser` and deferred to `afterNextRender()`.
+- **Zoneless change detection**: Uses `provideZonelessChangeDetection()`; Zone.js is not installed and `polyfills` is empty.
+- **Signals**: Components expose `signal()`/`computed()` state, with `toSignal`, `rxResource` and `httpResource` bridging async sources. `FavoritesService` is the one remaining Observable-based service.
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
+
+### Stop Prediction (on-device)
+
+`src/app/services/prediction/` collects the data for predicting which stop a user will open after
+being away for a few hours, and ships a heuristic ranker over it. Nothing is transmitted — the log
+lives in IndexedDB (`cta-prediction`) and leaves the device only via Settings → Export Data.
+
+The governing rule is **log raw observations, derive features at read time**. `StopViewEvent` stores
+`ts`, `tzOffsetMin` and the raw inter-session gap; it never stores an encoding or an `isColdStart`
+flag. All feature engineering lives in `features.ts`, so changing it applies retroactively to
+history already collected and needs no migration.
+
+| File | Role |
+|---|---|
+| `stop-view-event.ts` | Event and impression schemas, `SCHEMA_VERSION`, the namespaced `StopKey` |
+| `event-log.store.ts` | IndexedDB wrapper, retention pruning, JSON export |
+| `stop-view-tracker.service.ts` | The single write path, hooked to router `NavigationEnd` |
+| `session.service.ts` | Session id, sequence, and the two distinct gap thresholds |
+| `location.service.ts` | Opt-in coarse geolocation (3 dp), never awaited on the write path |
+| `features.ts` | Cyclic time encoding, context and per-candidate features |
+| `candidates.ts` | Candidate set and offline training-example extraction |
+| `baseline-scorer.ts` | Hand-weighted heuristic — the baseline any model must beat |
+| `predictor.service.ts` | Ranking, shadow impressions, accuracy readout |
+
+Things to know before changing any of it:
+
+- **Time features must use the stored `tzOffsetMin`**, not the device's current offset, or a DST
+  change silently rotates months of history. Any "same time of day" comparison must use
+  `circularDistance`, not a plain difference.
+- **Time-of-day uses three harmonics**, not one. A single `(cos, sin)` pair is one sinusoid per day
+  and cannot represent the AM/PM rush bimodality that dominates transit use.
+- **`entry` keeps the training labels honest.** `'suggestion'` marks views the model itself caused
+  (a feedback loop if trained on) and `'restored'` marks `AppComponent`'s `LS_SAVED_ROUTE`
+  auto-navigation (not a user choice). Both are excluded by `extractTrainingExamples`. Any new code
+  path that navigates to a stop programmatically must pass an `entry` in navigation state.
+- **Stop coordinates are denormalized onto each event** because Settings → Clear Cache wipes the
+  `busroutestops?...` and `traindata` entries they come from.
+- **New persisted keys must be added to `PRESERVED_KEYS`** in `settings.component.ts`, or
+  `clearCache()` will wipe them.
+- **No ML library is used, deliberately.** With a few hundred per-user examples over ~24 features
+  and ~20 candidates, a linear model is the right size; TensorFlow.js would cost more gzipped than
+  the app's entire initial bundle. The next step is a per-user online linear model (LinUCB or
+  logistic regression) in plain TypeScript at the `baseline-scorer.ts` seam.
 
 ### Backend Patterns
 - **API proxy**: The backend proxies all requests to the CTA Bus Tracker API and CTA Train Tracker API, keeping API keys server-side.

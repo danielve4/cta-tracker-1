@@ -12,6 +12,7 @@ import { busArrivalTimes } from '../services/arrival-time';
 import { formatDistance } from '../services/distance';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
+import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
 
 interface BusArrivalDisplay extends Prd {
   apiArrivalTime: string;
@@ -32,6 +33,7 @@ export class ArrivalsComponent {
   private readonly clock = inject(ClockService);
   protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly tracker = inject(StopViewTrackerService);
 
   readonly skeletonCards = [0, 1, 2];
   private readonly refreshInterval = 30 * 1000;
@@ -111,6 +113,9 @@ export class ArrivalsComponent {
   }
 
   getArrivals(): void {
+    // A manual refresh says the rider is actually waiting at this stop, which dwell time alone
+    // doesn't distinguish from a screen left open in a pocket.
+    this.tracker.noteRefresh();
     this.arrivalsResource.reload();
   }
 
