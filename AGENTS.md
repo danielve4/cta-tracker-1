@@ -104,7 +104,9 @@ history already collected and needs no migration.
 | `stop-view-event.ts` | Event and impression schemas, `SCHEMA_VERSION`, the namespaced `StopKey` |
 | `event-log.store.ts` | IndexedDB wrapper, retention pruning, JSON export |
 | `stop-view-tracker.service.ts` | The single write path, hooked to router `NavigationEnd` |
-| `session.service.ts` | Session id, sequence, and the two distinct gap thresholds |
+| `session-state.ts` | Session id, sequence, and the two distinct gap thresholds (plain, testable) |
+| `session.service.ts` | Thin Angular wrapper around `SessionState` |
+| `safe-storage.ts` | `localStorage` that swallows quota and security errors |
 | `location.service.ts` | Opt-in coarse geolocation (3 dp), never awaited on the write path |
 | `features.ts` | Cyclic time encoding, context and per-candidate features |
 | `candidates.ts` | Candidate set and offline training-example extraction |
@@ -118,10 +120,26 @@ Things to know before changing any of it:
   `circularDistance`, not a plain difference.
 - **Time-of-day uses three harmonics**, not one. A single `(cos, sin)` pair is one sinusoid per day
   and cannot represent the AM/PM rush bimodality that dominates transit use.
-- **`entry` keeps the training labels honest.** `'suggestion'` marks views the model itself caused
-  (a feedback loop if trained on) and `'restored'` marks `AppComponent`'s `LS_SAVED_ROUTE`
-  auto-navigation (not a user choice). Both are excluded by `extractTrainingExamples`. Any new code
-  path that navigates to a stop programmatically must pass an `entry` in navigation state.
+- **`entry` keeps the training labels honest.** Three values mark views the *app* produced rather
+  than the user: `'suggestion'` (the model's own guess, a feedback loop if trained on), `'restored'`
+  (`AppComponent`'s `LS_SAVED_ROUTE` auto-navigation) and `'reload'` (the document was reloaded onto
+  a stop page — iOS discards a backgrounded PWA and reloads the URL it was on). `isUserDriven()` in
+  `candidates.ts` is the single source of truth for that set. Any new code path that navigates to a
+  stop programmatically must pass an `entry` in navigation state.
+- **`seqInSession === 0` is not "the stop the user chose".** Seq 0 is frequently the app's own
+  restore or reload. `extractTrainingExamples` derives the real choice by skipping leading
+  app-driven views and taking the session's first user-driven one — filtering on seq 0 *and*
+  excluding app-driven entries would discard the whole session, which is the dominant PWA launch
+  path.
+- **Telemetry must never throw.** Everything touching `localStorage` goes through `safe-storage.ts`;
+  `EventLogStore` tolerates a null database throughout. A quota error must not stop a navigation or
+  take down `LS_SAVED_ROUTE` restore.
+- **Location never prompts on the write path.** `LocationService.current()` checks
+  `navigator.permissions` and returns early unless already granted — the stored opt-in flag alone is
+  not enough, since permission can be reset to "ask" long after the user enabled it.
+- **Affinity features are smoothed.** `timeAffinity`/`dowAffinity` are ratios, and a ratio over one
+  observation is 1.0; they are smoothed toward the base rate so a single glance cannot outrank a
+  real routine.
 - **Stop coordinates are denormalized onto each event** because Settings → Clear Cache wipes the
   `busroutestops?...` and `traindata` entries they come from.
 - **New persisted keys must be added to `PRESERVED_KEYS`** in `settings.component.ts`, or
@@ -130,6 +148,17 @@ Things to know before changing any of it:
   and ~20 candidates, a linear model is the right size; TensorFlow.js would cost more gzipped than
   the app's entire initial bundle. The next step is a per-user online linear model (LinUCB or
   logistic regression) in plain TypeScript at the `baseline-scorer.ts` seam.
+
+### Testing
+
+`npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
+dependency-free logic under `services/prediction/` — those modules import nothing from Angular, so
+the runner needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
+`npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
+reach the bundle.
+
+There are no component or integration tests. Anything involving the router, IndexedDB or
+geolocation is verified by driving a real browser instead.
 
 ### Backend Patterns
 - **API proxy**: The backend proxies all requests to the CTA Bus Tracker API and CTA Train Tracker API, keeping API keys server-side.

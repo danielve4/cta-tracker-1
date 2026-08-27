@@ -136,6 +136,21 @@ export class EventLogStore {
     return events ?? [];
   }
 
+  /**
+   * The most recent event, or null on an empty log. Uses a reverse cursor rather than reading a
+   * time window, so it cannot silently return null just because the previous view is older than
+   * whatever window the caller guessed.
+   */
+  async lastEvent(): Promise<StopViewEvent | null> {
+    const event = await this.withStore(STORE_VIEWS, 'readonly', (store) =>
+      new Promise<StopViewEvent | null>((resolve, reject) => {
+        const request = store.index('ts').openCursor(null, 'prev');
+        request.onsuccess = () => resolve(request.result?.value ?? null);
+        request.onerror = () => reject(request.error);
+      }));
+    return event ?? null;
+  }
+
   async countEvents(): Promise<number> {
     return (await this.withStore(STORE_VIEWS, 'readonly', (store) => promisify(store.count()))) ?? 0;
   }

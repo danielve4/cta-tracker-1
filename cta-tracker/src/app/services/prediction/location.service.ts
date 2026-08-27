@@ -42,6 +42,27 @@ export class LocationService {
   private lastDenied = false;
 
   /**
+   * Whether the browser will hand over a position without asking. Returns true when the Permissions
+   * API is unavailable (Safari has historically not exposed geolocation there), falling back to the
+   * stored opt-in flag on those browsers.
+   */
+  private async isAlreadyGranted(): Promise<boolean> {
+    try {
+      if (!navigator.permissions?.query) {
+        return true;
+      }
+      const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+      if (status.state === 'denied') {
+        this.lastDenied = true;
+        this.prefs.setUseLocation(false);
+      }
+      return status.state === 'granted';
+    } catch {
+      return true;
+    }
+  }
+
+  /**
    * Turns the feature on and asks for permission in the same gesture, so the prompt always has
    * visible cause. Resolves false if the user declines, leaving the toggle off rather than showing
    * an "on" switch that can't do anything.
@@ -50,13 +71,18 @@ export class LocationService {
     if (!this.isBrowser || !('geolocation' in navigator)) {
       return false;
     }
-    const granted = await new Promise<boolean>((resolve) => {
-      navigator.geolocation.getCurrentPosition(
-        () => resolve(true),
-        () => resolve(false),
-        { enableHighAccuracy: false, timeout: 10_000, maximumAge: 0 }
-      );
-    });
+    // The spec excludes time spent awaiting the user's decision from `timeout`, so a prompt left
+    // open (rather than answered) never settles. The outer race keeps the toggle responsive.
+    const granted = await Promise.race([
+      new Promise<boolean>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          () => resolve(true),
+          () => resolve(false),
+          { enableHighAccuracy: false, timeout: 10_000, maximumAge: 0 }
+        );
+      }),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 30_000))
+    ]);
     this.lastDenied = !granted;
     this.prefs.setUseLocation(granted);
     return granted;
@@ -78,6 +104,12 @@ export class LocationService {
     if (!this.isBrowser || !('geolocation' in navigator)) {
       return UNAVAILABLE;
     }
+    // The stored flag alone is not enough. Permission can be reset to "ask" in browser settings
+    // long after the user opted in, and calling getCurrentPosition in that state would raise a
+    // gestureless permission dialog in the middle of opening a bus stop.
+    if (!await this.isAlreadyGranted()) {
+      return { ...UNAVAILABLE, locSource: this.lastDenied ? 'denied' : 'unavailable' };
+    }
 
     return new Promise<CoarsePosition>((resolve) => {
       navigator.geolocation.getCurrentPosition(
@@ -88,7 +120,8 @@ export class LocationService {
             userLon: coarsen(position.coords.longitude),
             userAccuracyM: Math.round(position.coords.accuracy),
             userPosAgeMs: age,
-            // A fix older than the max age we asked for came from the platform's cache.
+            // Anything not essentially instantaneous came from the platform's position cache
+            // rather than a fresh fix; `maximumAge` below is what allows it.
             locSource: age > 5_000 ? 'cached' : 'live'
           });
         },

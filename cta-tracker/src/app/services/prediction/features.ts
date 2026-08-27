@@ -188,9 +188,14 @@ export function buildHistoryIndex(
       byStop.set(event.stopKey, [event]);
     }
 
-    // Only count a transition across a session boundary or between distinct stops; a repeat view of
-    // the same stop within a session is a refresh, not a movement pattern.
-    if (previous && previous.stopKey !== event.stopKey) {
+    // A repeat of the same stop *within* a session is a refresh, not a pattern. The same repeat
+    // *across* sessions is the strongest habit in this dataset — the rider who opens their home
+    // stop every morning — so self-transitions must be counted there or that pattern can never be
+    // learned. The staleness bound stops two views months apart from counting as adjacency.
+    const crossesSession = previous !== null && previous.sessionId !== event.sessionId;
+    const differentStop = previous !== null && previous.stopKey !== event.stopKey;
+    const recentEnough = previous !== null && event.ts - previous.ts <= MAX_TRANSITION_GAP_MS;
+    if (previous && recentEnough && (crossesSession || differentStop)) {
       let row = transitions.get(previous.stopKey);
       if (!row) {
         row = new Map<StopKey, number>();
@@ -207,8 +212,30 @@ export function buildHistoryIndex(
   return { byStop, transitions, favoriteRank, favoriteCount: favoriteKeys.length };
 }
 
+/**
+ * Beyond this, two consecutive views are not a transition — they are just the two nearest points in
+ * a sparse log. A week keeps weekday-to-weekday and across-the-weekend pairs while excluding the
+ * months-apart ones.
+ */
+const MAX_TRANSITION_GAP_MS = 7 * MS_PER_DAY;
+
 /** ±90 minutes, circular. Wide enough to survive a rider who is not punctual. */
 const TIME_AFFINITY_WINDOW_MIN = 90;
+
+/**
+ * Affinity is a ratio, and a ratio over one observation is 1.0 — a stop glanced at exactly once is
+ * trivially "always viewed at this time, on this day". Smoothing toward the base rate makes thin
+ * evidence read as weak rather than perfect, which is what it is. `k` is the number of pseudo-counts
+ * at the base rate; 3 means a stop needs a handful of real views before its affinity moves much.
+ */
+const AFFINITY_SMOOTHING = 3;
+/** Share of the day inside a ±90-minute window, and of the week inside one weekday. */
+const TIME_WINDOW_BASE_RATE = (2 * TIME_AFFINITY_WINDOW_MIN) / MINUTES_PER_DAY;
+const DOW_BASE_RATE = 1 / 7;
+
+function smoothedRate(hits: number, total: number, baseRate: number): number {
+  return (hits + AFFINITY_SMOOTHING * baseRate) / (total + AFFINITY_SMOOTHING);
+}
 
 export function candidateFeatures(
   stopKey: StopKey,
@@ -240,8 +267,8 @@ export function candidateFeatures(
       sameDow++;
     }
   }
-  const timeAffinity = viewCount ? inTimeWindow / viewCount : 0;
-  const dowAffinity = viewCount ? sameDow / viewCount : 0;
+  const timeAffinity = viewCount ? smoothedRate(inTimeWindow, viewCount, TIME_WINDOW_BASE_RATE) : 0;
+  const dowAffinity = viewCount ? smoothedRate(sameDow, viewCount, DOW_BASE_RATE) : 0;
 
   let markovProb = 0;
   if (context.previousStopKey) {
