@@ -1,5 +1,6 @@
-/* The host is the grid item inside app-routes, not the card — a custom element defaults to inline
-   and to a single column, which squeezes the card into a quarter of the width. */
+/* The host is the grid item inside app-routes and app-favorites, not the card — a custom element
+   defaults to inline and to a single column, which squeezes the card into a quarter of the width.
+   Both screens use the same four-column grid, so one rule covers them. */
 :host {
   display: block;
   grid-column: 1 / 5;

@@ -1,6 +1,18 @@
 // Shared builders for the prediction specs. Not imported by app code.
 
+import { SafeStorage } from './safe-storage';
 import { EntrySource, SCHEMA_VERSION, StopKey, StopViewEvent } from './stop-view-event';
+
+/** A SafeStorage backed by a plain Map, so two SessionStates can share one "browser". */
+export function memoryStorage(
+  backing = new Map<string, string>()
+): SafeStorage & { backing: Map<string, string> } {
+  return {
+    backing,
+    get: (key) => backing.get(key) ?? null,
+    set: (key, value) => { backing.set(key, value); return true; }
+  };
+}
 
 export const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
