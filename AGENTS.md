@@ -51,7 +51,7 @@ cta-tracker-1/
 │   │   │   ├── stops/            # Stop listing for a route/direction
 │   │   │   ├── services/         # BusService, FavoritesService
 │   │   │   │   └── prediction/   # On-device stop-view log and suggestion ranking
-│   │   │   ├── suggested-stop/   # Home-screen "heading here?" suggestion chip
+│   │   │   ├── suggested-stop/   # "Heading here?" chip, rendered on Routes and Favorites
 │   │   │   ├── app.component.ts  # Root component with nav
 │   │   │   ├── app.config.ts     # Application providers config
 │   │   │   ├── app.routes.ts     # Route definitions
@@ -130,7 +130,22 @@ Things to know before changing any of it:
   restore or reload. `extractTrainingExamples` derives the real choice by skipping leading
   app-driven views and taking the session's first user-driven one — filtering on seq 0 *and*
   excluding app-driven entries would discard the whole session, which is the dominant PWA launch
-  path.
+  path. The same distinction exists at runtime: `SessionState` counts `userSeq` alongside `seq`, and
+  `hasViewedStop()` — the gate that hides the suggestion once the user has chosen — reads `userSeq`.
+  `takeSeq(userDriven)` is how the tracker keeps them apart.
+- **The suggestion chip has to be on the screen the user actually launches into.** It renders in
+  `RoutesComponent` *and* `FavoritesComponent`. Whichever mounts first triggers the single ranking;
+  `PredictorService.hasPredicted` makes the second a no-op. A launch restores `LS_SAVED_ROUTE`, so
+  for anyone whose last page was Favorites the Routes screen is never seen — mounting the chip only
+  there meant the feature could not fire at all, which is how it shipped and why nobody saw it.
+- **Every gate is a silent early return, so name them.** `PredictorService.suppressionReason` records
+  which one fired and Settings renders it in words. Diagnosing "I have never seen a suggestion"
+  without that required exporting the log and replaying it offline. `gateReason()` is shared by the
+  live path and `explain()` so the readout cannot drift from what actually runs.
+- **`MIN_CONFIDENT_SCORE` and the distance term are calibrated as a pair.** `distanceRank` is scored
+  relative to the neutral rank of 0.5, so an unknown distance — the default, since location is
+  opt-in — contributes nothing. The threshold absorbs the offset that centering removed, which keeps
+  the effective bar exactly where it was. Change one and the other has to move with it.
 - **Telemetry must never throw.** Everything touching `localStorage` goes through `safe-storage.ts`;
   `EventLogStore` tolerates a null database throughout. A quota error must not stop a navigation or
   take down `LS_SAVED_ROUTE` restore.

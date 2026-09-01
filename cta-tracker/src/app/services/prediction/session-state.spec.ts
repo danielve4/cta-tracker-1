@@ -3,15 +3,7 @@ import { SafeStorage } from './safe-storage';
 import {
   COLD_START_GAP_MS, LAST_ACTIVITY_KEY, SESSION_GAP_MS, SESSION_KEY, SessionState
 } from './session-state';
-
-/** A SafeStorage backed by a plain Map, so two SessionStates can share one "browser". */
-function fakeStorage(backing = new Map<string, string>()): SafeStorage & { backing: Map<string, string> } {
-  return {
-    backing,
-    get: (key) => backing.get(key) ?? null,
-    set: (key, value) => { backing.set(key, value); return true; }
-  };
-}
+import { memoryStorage as fakeStorage } from './test-fixtures';
 
 /** Storage that fails every operation, as a full quota or blocked site data would. */
 function throwingStorage(): SafeStorage {
@@ -154,6 +146,25 @@ describe('SessionState across two tabs', () => {
     expect(new Set(claimed).size).toBe(claimed.length);
     // Exactly one of them may claim seq 0, the session's first stop.
     expect(claimed.filter(seq => seq === 0)).toHaveLength(1);
+  });
+
+  it('treats a session persisted before userSeq existed as already viewed', () => {
+    // Deploying this mid-session must not re-arm the suggestion for someone who has already been
+    // using the app: without a userSeq to read, seq is the closest honest answer and is what the
+    // gate used to consult.
+    const storage = fakeStorage();
+    const session = new SessionState(storage);
+    session.start(NOW);
+    const legacy = JSON.parse(storage.backing.get(SESSION_KEY)!);
+    delete legacy.userSeq;
+    legacy.seq = 2;
+    storage.backing.set(SESSION_KEY, JSON.stringify(legacy));
+
+    // A reload inside the session window resumes that same session, now through the new code.
+    const resumed = new SessionState(storage);
+    resumed.start(NOW + 60_000);
+
+    expect(resumed.hasViewedStop()).toBe(true);
   });
 
   it('reports hasViewedStop across tabs, so the chip does not fire twice', () => {

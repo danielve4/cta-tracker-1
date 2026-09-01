@@ -89,6 +89,9 @@
   @if (accuracy(); as accuracy) {
     <p class="sync-status">{{ accuracy }}</p>
   }
+  @if (suggestionState(); as suggestionState) {
+    <p class="sync-status">{{ suggestionState }}</p>
+  }
   @if (historyStatus(); as historyStatus) {
     <p class="sync-status">{{ historyStatus }}</p>
   }

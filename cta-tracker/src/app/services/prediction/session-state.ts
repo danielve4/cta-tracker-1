@@ -25,11 +25,16 @@ export const COLD_START_GAP_MS = 2 * 60 * 60 * 1000;
 export interface PersistedSession {
   id: string;
   seq: number;
+  /**
+   * Views the *user* chose, as opposed to `seq`, which counts every stop view including the ones
+   * the app itself caused. The suggestion gate reads this one; see `hasViewedStop`.
+   */
+  userSeq: number;
   gapMs: number | null;
 }
 
 export class SessionState {
-  private session: PersistedSession = { id: '', seq: 0, gapMs: null };
+  private session: PersistedSession = { id: '', seq: 0, userSeq: 0, gapMs: null };
   private started = false;
 
   constructor(private readonly storage: SafeStorage) {}
@@ -55,6 +60,7 @@ export class SessionState {
     this.session = resumed ?? {
       id: `${now.toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       seq: 0,
+      userSeq: 0,
       // Only a genuinely new session carries a gap, so this stays readable as "how long the user
       // was away before this visit".
       gapMs: gap !== null && gap >= SESSION_GAP_MS ? gap : null
@@ -97,24 +103,45 @@ export class SessionState {
    * tab already used — producing two events in the same session both claiming to be its first,
    * which is two contradictory positive labels. Read-modify-write closes the realistic window;
    * fully serializing it would need Web Locks and is not worth the cost here.
+   *
+   * `userDriven` is false for the views the app caused rather than the user — a LS_SAVED_ROUTE
+   * restore or a reload onto a stop page. Those still take a sequence number, because they really
+   * did happen and the log has to stay a faithful record of the session, but they must not count
+   * as the user having made a choice; see `hasViewedStop`.
    */
-  takeSeq(): number {
+  takeSeq(userDriven = true): number {
     const stored = this.load();
-    if (stored && stored.id === this.session.id && stored.seq > this.session.seq) {
-      this.session.seq = stored.seq;
+    if (stored && stored.id === this.session.id) {
+      if (stored.seq > this.session.seq) {
+        this.session.seq = stored.seq;
+      }
+      if (stored.userSeq > this.session.userSeq) {
+        this.session.userSeq = stored.userSeq;
+      }
     }
     const seq = this.session.seq++;
+    if (userDriven) {
+      this.session.userSeq++;
+    }
     this.persist();
     return seq;
   }
 
-  /** Whether any stop has been opened yet this session — the suggestion hides once one has. */
+  /**
+   * Whether the user has opened a stop yet this session — the suggestion hides once they have.
+   *
+   * Deliberately counts `userSeq` rather than `seq`. When LS_SAVED_ROUTE restores into a stop page,
+   * or iOS reloads a discarded PWA onto one, the app has opened a stop but the user has not chosen
+   * anything, and gating on the raw sequence number suppressed the suggestion for the rest of that
+   * launch. That is the same confusion `extractTrainingExamples` already corrects for offline
+   * labels; this is the runtime half of it.
+   */
   hasViewedStop(): boolean {
     const stored = this.load();
-    const seq = stored && stored.id === this.session.id
-      ? Math.max(stored.seq, this.session.seq)
-      : this.session.seq;
-    return seq > 0;
+    const userSeq = stored && stored.id === this.session.id
+      ? Math.max(stored.userSeq, this.session.userSeq)
+      : this.session.userSeq;
+    return userSeq > 0;
   }
 
   private load(): PersistedSession | null {
@@ -122,8 +149,15 @@ export class SessionState {
       const raw = this.storage.get(SESSION_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw) as PersistedSession;
-      return typeof parsed?.id === 'string' && typeof parsed.seq === 'number'
-        && Number.isFinite(parsed.seq) ? parsed : null;
+      if (typeof parsed?.id !== 'string' || typeof parsed.seq !== 'number' || !Number.isFinite(parsed.seq)) {
+        return null;
+      }
+      // Sessions persisted before userSeq existed fall back to seq, which is what the gate used to
+      // read. That keeps an in-flight session behaving as it did rather than suddenly re-arming.
+      const userSeq = typeof parsed.userSeq === 'number' && Number.isFinite(parsed.userSeq)
+        ? parsed.userSeq
+        : parsed.seq;
+      return { ...parsed, userSeq };
     } catch {
       return null;
     }

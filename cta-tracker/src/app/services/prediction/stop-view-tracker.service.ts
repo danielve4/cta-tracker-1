@@ -11,6 +11,7 @@ import { BustimeResponse } from '../../busResponse';
 import { CTAComprehensiveData } from '../../trainResponse';
 import { Favorite } from '../Favorite';
 import { FavoritesService } from '../favorites.service';
+import { isUserDriven } from './candidates';
 import { EventLogStore } from './event-log.store';
 import { LocationService } from './location.service';
 import { PredictionPreferencesService } from './prediction-preferences.service';
@@ -116,11 +117,14 @@ export class StopViewTrackerService {
     }
     const stopKey = stopKeyOf(params.kind, params.stopId);
     if (this.prefs.collectHistory()) {
+      const entry = stateEntry ?? this.inferEntry(from, isFirstOfDocument);
       // Claimed synchronously, before any await: record() resolves after several IndexedDB
       // round-trips, so claiming it there would let two interleaved navigations assign sequence
-      // numbers in a different order than their timestamps.
-      const seq = this.session.takeSeq();
-      await this.record(params, stateEntry ?? this.inferEntry(from, isFirstOfDocument), from, seq, token);
+      // numbers in a different order than their timestamps. `isUserDriven` keeps a restore or a
+      // reload from counting as the user having chosen a stop, which would suppress the suggestion
+      // for the rest of the launch.
+      const seq = this.session.takeSeq(isUserDriven(entry));
+      await this.record(params, entry, from, seq, token);
     }
     return stopKey;
   }
@@ -299,11 +303,47 @@ export class StopViewTrackerService {
         const station = data.stations?.[params.stopId];
         return station ? { lat: station.latitude, lon: station.longitude } : null;
       }
-      const raw = localStorage.getItem(`busroutestops?route=${params.route}&direction=${params.direction}`);
-      if (!raw) return null;
+      const exact = this.busStopFrom(
+        `busroutestops?route=${params.route}&direction=${params.direction}`, params.stopId);
+      return exact ?? this.searchCachedBusStops(params.stopId);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Last resort for a bus stop whose own route/direction list was never cached.
+   *
+   * Opening a stop from Favorites goes straight to the arrivals URL without ever fetching that
+   * route's stop list, so the exact-key lookup above misses — and it misses on precisely the stops
+   * the user cares most about. Their coordinates are usually still on disk under a *different*
+   * route or direction the user did browse, because stop ids are global rather than per-route.
+   * Scanning a handful of localStorage keys is far cheaper than a network call on the write path,
+   * and a miss just leaves the coordinates null as before.
+   */
+  private searchCachedBusStops(stopId: string): { lat: number; lon: number } | null {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith('busroutestops?')) {
+        continue;
+      }
+      const found = this.busStopFrom(key, stopId);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+
+  private busStopFrom(key: string, stopId: string): { lat: number; lon: number } | null {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    try {
       const data = JSON.parse(raw) as BustimeResponse;
-      const stop = data.stops?.find(candidate => candidate.stpid === params.stopId);
-      return stop ? { lat: stop.lat, lon: stop.lon } : null;
+      const stop = data.stops?.find(candidate => candidate.stpid === stopId);
+      return stop && Number.isFinite(stop.lat) && Number.isFinite(stop.lon)
+        ? { lat: stop.lat, lon: stop.lon }
+        : null;
     } catch {
       return null;
     }

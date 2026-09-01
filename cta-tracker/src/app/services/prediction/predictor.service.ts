@@ -26,6 +26,23 @@ export interface Suggestion {
   event: StopViewEvent;
 }
 
+/**
+ * Why the last cold-start check produced nothing, for the Settings readout.
+ *
+ * This exists because the feature failing is indistinguishable from the feature not triggering:
+ * every gate below is a silent early return, and working out which one fired took exporting the
+ * event log and replaying it offline. Naming the gate turns that into a glance.
+ */
+export type SuppressionReason =
+  | 'ok'
+  | 'not-evaluated'
+  | 'collection-off'
+  | 'not-cold-start'
+  | 'already-viewed-stop'
+  | 'too-few-events'
+  | 'too-few-candidates'
+  | 'below-confidence';
+
 export interface AccuracyStats {
   resolved: number;
   top1: number;
@@ -45,6 +62,9 @@ export class PredictorService {
   /** Top suggestions for the current cold start, or empty when there is nothing worth showing. */
   readonly suggestions = signal<Suggestion[]>([]);
 
+  /** Which gate the last evaluation stopped at. Surfaced in Settings; see SuppressionReason. */
+  readonly suppressionReason = signal<SuppressionReason>('not-evaluated');
+
   private pendingRecordId: number | null = null;
   /** SuggestedStopComponent re-mounts on every return to /routes; the ranking should not. */
   private hasPredicted = false;
@@ -56,23 +76,44 @@ export class PredictorService {
    * for: a genuine cold start, with enough history for the features to mean anything, and no stop
    * opened yet this session.
    */
+  /**
+   * The launch-time gates, in order, without side effects.
+   *
+   * Shared with `explain()` so the Settings readout cannot drift from what actually runs — the two
+   * disagreeing would be worse than no readout, since the whole point is to be trusted.
+   */
+  private gateReason(): Exclude<SuppressionReason, 'ok' | 'too-few-events' | 'too-few-candidates' | 'below-confidence'> | null {
+    if (!this.prefs.collectHistory()) return 'collection-off';
+    if (!this.session.isColdStart()) return 'not-cold-start';
+    if (this.session.hasViewedStop()) return 'already-viewed-stop';
+    return null;
+  }
+
   async predictForColdStart(): Promise<void> {
-    if (this.hasPredicted || !this.prefs.collectHistory()
-      || !this.session.isColdStart() || this.session.hasViewedStop()) {
+    if (this.hasPredicted) {
+      return;
+    }
+    const blocked = this.gateReason();
+    if (blocked) {
+      this.suppressionReason.set(blocked);
       return;
     }
     // Set before the first await, so two mounts in the same tick cannot both get through and
-    // orphan the earlier impression by overwriting pendingRecordId.
+    // orphan the earlier impression by overwriting pendingRecordId. Only latched once the gates
+    // above pass: they can each flip during a launch, and latching earlier would mean the first
+    // screen to mount permanently decided the answer for the whole session.
     this.hasPredicted = true;
 
     const events = await this.store.allEvents();
     if (events.length < MIN_EVENTS_FOR_SUGGESTION) {
+      this.suppressionReason.set('too-few-events');
       return;
     }
 
     const favoriteKeys = await this.favoriteKeys();
     const candidates = buildCandidates(events, favoriteKeys);
     if (candidates.length < 2) {
+      this.suppressionReason.set('too-few-candidates');
       return;
     }
 
@@ -110,14 +151,14 @@ export class PredictorService {
     // The impression is recorded whatever the score; only *showing* it is gated on confidence, so
     // the accuracy readout measures the ranker rather than the display rule.
     const confident = ranked.filter(entry => entry.score >= MIN_CONFIDENT_SCORE).slice(0, 2);
-    this.suggestions.set(
-      confident
-        .map(entry => {
-          const candidate = byStop.get(entry.stopKey);
-          return candidate ? { stopKey: entry.stopKey, score: entry.score, event: candidate.latest } : null;
-        })
-        .filter((entry): entry is Suggestion => entry !== null)
-    );
+    const suggestions = confident
+      .map(entry => {
+        const candidate = byStop.get(entry.stopKey);
+        return candidate ? { stopKey: entry.stopKey, score: entry.score, event: candidate.latest } : null;
+      })
+      .filter((entry): entry is Suggestion => entry !== null);
+    this.suggestions.set(suggestions);
+    this.suppressionReason.set(suggestions.length ? 'ok' : 'below-confidence');
   }
 
   private isStandalone(): boolean {
@@ -175,6 +216,25 @@ export class PredictorService {
     }
     this.pendingRecordId = null;
     await this.store.patchPrediction(id, { dismissed: true, resolvedAt: Date.now() });
+  }
+
+  /**
+   * Why there is no suggestion right now, for Settings.
+   *
+   * Settings is reachable without ever rendering the chip, so `suppressionReason` may still be
+   * 'not-evaluated' when the user goes looking. This re-runs the cheap gates and falls back to the
+   * live value once they pass, which is the only part that needs the log.
+   */
+  async explain(): Promise<SuppressionReason> {
+    const blocked = this.gateReason();
+    if (blocked) {
+      return blocked;
+    }
+    const reason = this.suppressionReason();
+    if (reason !== 'not-evaluated') {
+      return reason;
+    }
+    return await this.store.countEvents() < MIN_EVENTS_FOR_SUGGESTION ? 'too-few-events' : 'ok';
   }
 
   /** Top-1 / top-3 hit rates against the MRU floor, straight from the impression store. */
