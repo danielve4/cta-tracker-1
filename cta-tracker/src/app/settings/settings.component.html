@@ -15,7 +15,7 @@
 <!-- Arrivals -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Arrivals</h2>
-  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~.</p>
+  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~. Column layout shows each direction of a train line side by side.</p>
   <div class="settings-row">
     <div class="settings-row-label">
       <span class="settings-row-title">Show API Timestamp</span>
@@ -35,6 +35,16 @@
       [checked]="prefs.showDistance()"
       label="Show distance"
       (toggled)="prefs.toggleDistance()" />
+  </div>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Column Layout</span>
+      <span class="settings-row-subtitle">{{ prefs.arrivalsLayout() === 'columns' ? 'Side by side' : 'Stacked' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="prefs.arrivalsLayout() === 'columns'"
+      label="Column layout"
+      (toggled)="prefs.toggleArrivalsLayout()" />
   </div>
 </section>
 
