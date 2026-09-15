@@ -1,4 +1,8 @@
 @switch (prefs.columnStyle()) {
+  @case ('mirror-timeline') {
+    <app-mirror-timeline [groups]="groups()" [loading]="loading()"
+                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
   @default {
     <app-split-board [groups]="groups()" [loading]="loading()"
                      [stationId]="stationId()" [refreshing]="refreshing()" />

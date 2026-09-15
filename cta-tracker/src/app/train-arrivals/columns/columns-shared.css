@@ -31,8 +31,10 @@
    Every pill carries the 2px border (transparent when filled) so a filled and an outlined pill
    side by side are the same height. */
 .pill { border: 2px solid transparent; }
-.fill .pill { background: var(--col-color); color: var(--col-text, #fff); border-color: transparent; }
-.outline .pill { background: var(--surface-card); color: var(--col-ink); border-color: var(--col-color); }
+/* The compound form is for pills that carry the treatment themselves — the timeline's two headers
+   sit in one row rather than inside a per-direction column. */
+.fill .pill, .pill.fill { background: var(--col-color); color: var(--col-text, #fff); border-color: transparent; }
+.outline .pill, .pill.outline { background: var(--surface-card); color: var(--col-ink); border-color: var(--col-color); }
 
 .column-header {
   font-size: 11px;

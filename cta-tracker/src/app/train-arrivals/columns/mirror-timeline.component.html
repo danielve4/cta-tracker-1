@@ -1,0 +1,76 @@
+@if (loading()) {
+  <div class="timeline" aria-hidden="true">
+    <ol class="timeline-rows skeleton-spine">
+      @for (row of skeletonRows; track row) {
+        <li class="timeline-row" [class.left]="$even" [class.right]="$odd">
+          <div class="timeline-card skeleton-card">
+            <div class="col-countdown skeleton-block skeleton-surface"></div>
+            <div class="timeline-text">
+              <span class="skeleton-line skeleton-surface skeleton-line-destination"></span>
+              <span class="skeleton-line skeleton-surface skeleton-line-time"></span>
+            </div>
+          </div>
+          <span class="spine-dot"></span>
+        </li>
+      }
+    </ol>
+  </div>
+} @else if (groups(); as groups) {
+  <div class="timeline" [class.single]="isSingle(groups)"
+       [style.--col-color]="colorFor(groups[0])"
+       [style.--col-text]="textColorFor(groups[0])">
+    <header class="timeline-head">
+      @if (!isSingle(groups)) {
+        <h3 class="column-header pill fill">{{ groups[0].directionLabel }}</h3>
+      }
+      <span class="spine-cap" aria-hidden="true"></span>
+      @if (groups[1]) {
+        <h3 class="column-header pill outline">{{ groups[1].directionLabel }}</h3>
+      } @else {
+        <h3 class="column-header pill fill">{{ groups[0].directionLabel }}</h3>
+      }
+    </header>
+    <ol class="timeline-rows">
+      @for (row of rows(); track row.arrival.rn + row.arrival.stpId) {
+        <li class="timeline-row"
+            [class.left]="row.side === 'left'"
+            [class.right]="row.side === 'right'"
+            [class.fill]="row.side === 'left'"
+            [class.outline]="row.side === 'right'"
+            [class.loading]="refreshing()">
+          <a class="timeline-card"
+             [routerLink]="['/train-follow', row.arrival.rn]"
+             [queryParams]="{from: stationId(), rt: row.arrival.rt}"
+             [attr.aria-label]="labelFor(row)">
+            <div class="col-countdown pill"
+                 [class.countdown-due]="row.arrival.countdown === 'DUE'"
+                 [class.countdown-delayed]="row.arrival.isDly === '1'"
+                 [class.countdown-scheduled]="row.arrival.isSch === '1'">
+              <span class="countdown-value">{{ row.arrival.countdown }}</span>
+              <span class="countdown-unit">{{ row.arrival.countdown | timeuntil:'minutes' }}</span>
+            </div>
+            <div class="timeline-text">
+              <span class="col-destination">To {{ row.arrival.destNm }}</span>
+              <span class="col-time">{{ row.arrival.countdown | timeuntil:'time' }}</span>
+              @if (row.arrival.isDly === '1') {
+                <span class="status-chip delayed">Delayed</span>
+              }
+              @if (row.arrival.isSch === '1') {
+                <span class="status-chip scheduled">Scheduled</span>
+              }
+              <span class="col-meta">
+                @if (prefs.showApiTimestamp()) {
+                  <span>API {{ row.arrival.apiArrivalTime }}</span>
+                }
+                @if (prefs.showDistance() && row.arrival.distance) {
+                  <span>{{ row.arrival.distance }}</span>
+                }
+              </span>
+            </div>
+          </a>
+          <span class="spine-dot" aria-hidden="true"></span>
+        </li>
+      }
+    </ol>
+  </div>
+}
