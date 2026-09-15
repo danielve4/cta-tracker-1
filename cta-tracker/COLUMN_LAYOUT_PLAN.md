@@ -1,6 +1,7 @@
 # Plan: direction-column layouts for train arrivals (six variants + settings)
 
-**Status:** planned, not started · **Branch:** `claude/train-arrivals-column-layout-ox4gzk`
+**Status:** implemented on `claude/column-layout-plan-gfgg8s` · originally planned for `claude/train-arrivals-column-layout-ox4gzk`
+Deviations from this document, each with its reason in the commit that made it: the meta line stacks instead of using the list's `·` separator (wrapping left the separator starting the second line); both Spine Rails rails read top-to-bottom rather than mirroring; Mirror Timeline and Departure Board change shape under 340px beyond what §4.2/§4.3 describe.
 **Audience:** the agent implementing this. Everything needed is in this file plus `AGENTS.md`;
 the code survey it references was done against the `develop` head this branch forks from.
 Work the "Implementation steps" top to bottom, one commit each, and run the "Verification"

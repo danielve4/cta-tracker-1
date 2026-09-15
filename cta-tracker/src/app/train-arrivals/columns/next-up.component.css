@@ -39,8 +39,12 @@
   text-overflow: ellipsis;
   opacity: 0.9;
 }
-/* Chips take the column's treatment, muted so the hero keeps the eye. */
-.fill .chip { background: color-mix(in srgb, var(--col-color) 80%, var(--surface-card)); }
+/* Chips take the column's treatment, muted so the hero keeps the eye — but not over a status
+   colour, which this file loads late enough to have painted over while keeping its text colour:
+   a scheduled chip came out black on green instead of yellow. */
+.fill .chip:not(.countdown-due):not(.countdown-delayed):not(.countdown-scheduled) {
+  background: color-mix(in srgb, var(--col-color) 80%, var(--surface-card));
+}
 .outline .chip { border-width: 1.5px; }
 /* The pulse belongs to the hero; a row of pulsing chips is noise. */
 .chip.countdown-due { animation: none; }

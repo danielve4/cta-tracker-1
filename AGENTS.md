@@ -88,12 +88,25 @@ cta-tracker-1/
 - **Signals**: Components expose `signal()`/`computed()` state, with `toSignal`, `rxResource` and `httpResource` bridging async sources. `FavoritesService` is the one remaining Observable-based service.
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
 - **Train arrivals layout**: The train arrivals screen renders either a stacked list (the default)
-  or side-by-side direction columns, chosen in Settings and stored under `train-arrivals-layout`.
-  The Split Board layout lives in `train-arrivals/train-arrival-columns.component.*`; the list
-  markup stays in the parent template. Grouping and ordering are Angular-free and unit-tested in
-  `train-arrivals/train-arrival-groups.ts` — the two layouts order the same groups differently
-  (A-Z for the list, CTA's `trDr` for the columns, so a direction keeps the same side at every
-  station on a line).
+  or side-by-side direction columns, chosen in Settings and stored under `train-arrivals-layout`,
+  with one of six column styles under `train-arrivals-column-style`. The list markup stays in the
+  parent template; everything else lives in `train-arrivals/columns/`, where
+  `train-arrival-columns.component` switches on the style and each style is its own standalone
+  component extending `ColumnVariantBase` and listing `columns-shared.css` first in `styleUrls`.
+  Things to know before changing any of it:
+  - `COLUMN_STYLES` in `services/arrivals-layout.ts` is what the Settings picker offers; a style
+    listed there but not handled by the switcher silently renders the default instead.
+  - A column is a header plus **exactly one** body element. The shared subgrid rule that levels the
+    two header pills gives it two rows, so a third child lands back in the body's cell and paints
+    over it (`.column-body` exists for styles with more than one thing to show).
+  - The shared `.fill`/`.outline` rules match on an ancestor *and* on the pill itself, because the
+    timeline's two headers sit in one row rather than inside a per-direction column.
+  - Reusing the shared `countdown-*` class names pulls in the pill background rules; a style that
+    is not drawing a pill (the departure board's rows) needs its own names.
+  - Grouping and ordering are Angular-free and unit-tested in
+    `train-arrivals/train-arrival-groups.ts`, along with `mergeTimeline`, `splitNextUp` and
+    `shortDestination`. The two layouts order the same groups differently (A-Z for the list, CTA's
+    `trDr` for the columns, so a direction keeps the same side at every station on a line).
 
 ### Stop Prediction (on-device)
 
