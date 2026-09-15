@@ -11,6 +11,10 @@
     <app-next-up [groups]="groups()" [loading]="loading()"
                  [stationId]="stationId()" [refreshing]="refreshing()" />
   }
+  @case ('spine-rails') {
+    <app-spine-rails [groups]="groups()" [loading]="loading()"
+                     [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
   @default {
     <app-split-board [groups]="groups()" [loading]="loading()"
                      [stationId]="stationId()" [refreshing]="refreshing()" />

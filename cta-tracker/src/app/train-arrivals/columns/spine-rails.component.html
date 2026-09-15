@@ -1,0 +1,66 @@
+@if (loading()) {
+  <div class="columns" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column railed" [class.rail-left]="$first" [class.rail-right]="$last">
+        <div class="rail skeleton-block skeleton-surface"></div>
+        <ul class="column-list">
+          @for (card of column; track card) {
+            <div class="col-card skeleton-card">
+              <div class="col-countdown skeleton-block skeleton-surface"></div>
+              <span class="skeleton-line skeleton-surface skeleton-line-destination"></span>
+            </div>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)">
+    @for (group of groups; track group.key; let i = $index) {
+      <section class="column railed"
+               [class.rail-left]="i === 0"
+               [class.rail-right]="i === 1"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(group)"
+               [style.--col-text]="textColorFor(group)">
+        <h3 class="rail pill" [title]="group.directionLabel">
+          <span class="rail-text">{{ group.directionLabel }}</span>
+        </h3>
+        <ul class="column-list">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li class="col-card" [class.loading]="refreshing()">
+              <a [routerLink]="['/train-follow', arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: arrival.rt}"
+                 class="col-link">
+                @if (arrival.isDly === '1') {
+                  <span class="status-chip delayed">Delayed</span>
+                }
+                @if (arrival.isSch === '1') {
+                  <span class="status-chip scheduled">Scheduled</span>
+                }
+                <div class="col-countdown pill"
+                     [class.countdown-due]="arrival.countdown === 'DUE'"
+                     [class.countdown-delayed]="arrival.isDly === '1'"
+                     [class.countdown-scheduled]="arrival.isSch === '1'">
+                  <span class="countdown-value">{{ arrival.countdown }}</span>
+                  <span class="countdown-unit">{{ arrival.countdown | timeuntil:'minutes' }}</span>
+                </div>
+                <span class="col-destination">To {{ arrival.destNm }}</span>
+                <span class="col-time">{{ arrival.countdown | timeuntil:'time' }}</span>
+                <span class="col-meta">
+                  @if (prefs.showApiTimestamp()) {
+                    <span>API {{ arrival.apiArrivalTime }}</span>
+                  }
+                  @if (prefs.showDistance() && arrival.distance) {
+                    <span>{{ arrival.distance }}</span>
+                  }
+                </span>
+              </a>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  </div>
+}
