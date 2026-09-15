@@ -1,6 +1,6 @@
 # Plan: side-by-side "Split Board" column layout for train arrivals
 
-**Status:** planned, not started · **Branch:** `claude/train-arrivals-column-layout-ox4gzk`
+**Status:** implemented on `claude/column-layout-plan-gfgg8s` · originally planned for `claude/train-arrivals-column-layout-ox4gzk`
 **Audience:** the agent implementing this. Everything needed is in this file plus `AGENTS.md`;
 the survey of the code it references was done against the `develop` head this branch forks from.
 Work the "Implementation steps" top to bottom, one commit each, and run the "Verification"

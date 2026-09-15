@@ -6,12 +6,16 @@
 .columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 10px;
   padding-bottom: calc(56px + 24px);
 }
 /* One direction (a terminal, a Loop stop, a late-night gap) spans the width instead of leaving a
    permanently empty half-screen. */
 .columns.single { grid-template-columns: minmax(0, 1fr); }
+/* Full width, but the countdown pill is capped: a 343px slab of solid line colour per card is far
+   louder than the same treatment at column width. */
+.columns.single .col-countdown { max-width: 160px; }
 
 .column {
   /* Pulled toward the text colour so dark Brown and Purple stay legible on a dark surface and
@@ -23,6 +27,20 @@
   min-width: 0;
 }
 
+/* Direction labels are not the same length — "Harlem/Lake-bound" wraps to two lines where
+   "Ashland/63rd & Cottage Grove-bound" takes three — and two header pills of visibly different
+   heights side by side read as a bug. Subgrid puts both headers in one shared row, so the shorter
+   label gets a taller pill instead. Without subgrid the flex layout above still stands. */
+@supports (grid-template-rows: subgrid) {
+  .columns:not(.single) { grid-template-rows: auto auto; }
+  .columns:not(.single) .column {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
+  }
+  .columns:not(.single) .column-list { align-self: start; }
+}
+
 /* Header: filled on the left, the same pill inverted on the right. Both carry the 2px border so
    the two headers are the same height when one of them wraps. */
 .column-header {
@@ -31,6 +49,9 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   line-height: 1.25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 6px 10px;
   border-radius: 999px;
@@ -128,8 +149,9 @@
   opacity: 0.8;
 }
 
-.fill .countdown-due { background: var(--bus-due); color: #fff; animation: duePulse 2.5s ease infinite; }
-.outline .countdown-due { color: var(--bus-due); border-color: var(--bus-due); animation: duePulse 2.5s ease infinite; }
+.countdown-due { animation: duePulse 2.5s ease infinite; }
+.fill .countdown-due { background: var(--bus-due); color: #fff; }
+.outline .countdown-due { color: var(--bus-due); border-color: var(--bus-due); }
 .fill .countdown-delayed { background: var(--pink); color: #fff; }
 .outline .countdown-delayed { color: var(--pink); border-color: var(--pink); }
 .fill .countdown-scheduled { background: var(--yellow); color: #000; }
@@ -147,10 +169,13 @@
   overflow: hidden;
 }
 .col-time { color: var(--text-tertiary); font-size: 12px; font-weight: 500; }
+/* Stacked rather than the list layout's '·'-separated row: a column is too narrow to hold the API
+   time and the distance on one line, and wrapping the row leaves the separator dangling at the
+   start of the second line. */
 .col-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-direction: column;
+  gap: 2px;
   color: var(--text-tertiary);
   font-size: 10px;
   font-weight: 500;
@@ -158,7 +183,6 @@
   font-variant-numeric: tabular-nums;
 }
 .col-meta:empty { display: none; }
-.col-meta > span:not(:first-child)::before { content: '· '; }
 
 /* Skeleton */
 .skeleton-card { pointer-events: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; }
@@ -171,8 +195,8 @@
   border-radius: 999px;
   background-color: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
 }
-.skeleton-line-destination { width: 80%; height: 13px; border-radius: 7px; }
-.skeleton-line-time { width: 50%; height: 10px; border-radius: 5px; }
+.skeleton-line-destination { width: 80%; height: 13px; }
+.skeleton-line-time { width: 50%; height: 10px; }
 .skeleton-surface { position: relative; overflow: hidden; }
 .skeleton-surface::after {
   content: '';
@@ -185,7 +209,7 @@
     transparent 100%
   );
   transform: translateX(-100%);
-  animation: skeletonShimmer 1.25s ease-in-out infinite;
+  animation: shimmer 1.25s ease-in-out infinite;
 }
 
 .loading .col-link::before {
@@ -199,5 +223,4 @@
 
 @keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-@keyframes skeletonShimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }

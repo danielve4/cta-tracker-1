@@ -87,6 +87,13 @@ cta-tracker-1/
 - **Zoneless change detection**: Uses `provideZonelessChangeDetection()`; Zone.js is not installed and `polyfills` is empty.
 - **Signals**: Components expose `signal()`/`computed()` state, with `toSignal`, `rxResource` and `httpResource` bridging async sources. `FavoritesService` is the one remaining Observable-based service.
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
+- **Train arrivals layout**: The train arrivals screen renders either a stacked list (the default)
+  or side-by-side direction columns, chosen in Settings and stored under `train-arrivals-layout`.
+  The Split Board layout lives in `train-arrivals/train-arrival-columns.component.*`; the list
+  markup stays in the parent template. Grouping and ordering are Angular-free and unit-tested in
+  `train-arrivals/train-arrival-groups.ts` — the two layouts order the same groups differently
+  (A-Z for the list, CTA's `trDr` for the columns, so a direction keeps the same side at every
+  station on a line).
 
 ### Stop Prediction (on-device)
 
@@ -167,8 +174,9 @@ Things to know before changing any of it:
 ### Testing
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
-dependency-free logic under `services/prediction/` — those modules import nothing from Angular, so
-the runner needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
+dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts` and
+`train-arrivals/train-arrival-groups.ts`. Those modules import nothing from Angular, so the runner
+needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
 reach the bundle.
 
