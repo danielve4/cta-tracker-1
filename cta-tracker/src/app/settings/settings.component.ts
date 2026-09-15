@@ -2,7 +2,8 @@ import { Component, inject, injectAsync, onIdle, afterNextRender, ChangeDetectio
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ToggleSwitchComponent } from '../toggle-switch/toggle-switch.component';
 import { ThemeService } from '../services/theme.service';
-import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY } from '../services/display-preferences.service';
+import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY } from '../services/display-preferences.service';
+import { COLUMN_STYLES } from '../services/arrivals-layout';
 import { COLLECT_STOP_HISTORY_KEY, PredictionPreferencesService, USE_LOCATION_KEY } from '../services/prediction/prediction-preferences.service';
 import { EventLogStore } from '../services/prediction/event-log.store';
 import { LocationService } from '../services/prediction/location.service';
@@ -33,8 +34,8 @@ const SUPPRESSION_TEXT: Record<SuppressionReason, string> = {
 /** Keys that survive "Clear Cache" — user preferences and data, not cached API payloads. */
 const PRESERVED_KEYS = [
   'favorites', 'theme-preference', SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY,
-  TRAIN_ARRIVALS_LAYOUT_KEY, COLLECT_STOP_HISTORY_KEY, USE_LOCATION_KEY, LAST_ACTIVITY_KEY,
-  SESSION_KEY
+  TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, COLLECT_STOP_HISTORY_KEY,
+  USE_LOCATION_KEY, LAST_ACTIVITY_KEY, SESSION_KEY
 ];
 
 @Component({
@@ -64,6 +65,7 @@ export class SettingsComponent {
   suggestionState = signal('');
 
   readonly appVersion = '1.0.0';
+  readonly columnStyles = COLUMN_STYLES;
 
   constructor() {
     // Deferred to after the first render for the same reason as everywhere else in the app: this

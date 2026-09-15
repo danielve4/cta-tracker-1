@@ -174,3 +174,44 @@
   color: var(--text-tertiary);
   letter-spacing: 0.02em;
 }
+
+/* ── Column style picker ── */
+.settings-subrow {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.style-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+/* Global button styles force height:56px and font-weight:900; a chip needs neither. */
+.style-chip {
+  height: auto;
+  min-height: 56px;
+  padding: 10px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--glass-btn-border);
+  border-radius: 14px;
+  background: var(--glass-btn-bg);
+  box-shadow: var(--glass-btn-shadow);
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.style-chip.selected {
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus-color) 35%, transparent), var(--glass-btn-shadow);
+}
+
+.style-chip-title { font-size: 14px; font-weight: 700; }
+.style-chip-blurb { font-size: 11px; font-weight: 500; line-height: 1.3; color: var(--text-tertiary); }

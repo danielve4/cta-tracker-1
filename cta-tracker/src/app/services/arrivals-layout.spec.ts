@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_ARRIVALS_LAYOUT, parseArrivalsLayout } from './arrivals-layout';
+import {
+  COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, parseArrivalsLayout, parseColumnStyle
+} from './arrivals-layout';
 
 describe('parseArrivalsLayout', () => {
   it('opts in on an exact "columns"', () => {
@@ -24,5 +26,26 @@ describe('parseArrivalsLayout', () => {
   it('ignores garbage', () => {
     expect(parseArrivalsLayout('true')).toBe('list');
     expect(parseArrivalsLayout('{"layout":"columns"}')).toBe('list');
+  });
+});
+
+describe('parseColumnStyle', () => {
+  it('round-trips every style the picker offers', () => {
+    for (const style of COLUMN_STYLES) {
+      expect(parseColumnStyle(style.id)).toBe(style.id);
+    }
+  });
+
+  it('offers six distinct styles', () => {
+    expect(new Set(COLUMN_STYLES.map(style => style.id)).size).toBe(6);
+  });
+
+  it('falls back to the default for an unknown or missing style', () => {
+    expect(parseColumnStyle(null)).toBe(DEFAULT_COLUMN_STYLE);
+    expect(parseColumnStyle(undefined)).toBe(DEFAULT_COLUMN_STYLE);
+    expect(parseColumnStyle('')).toBe(DEFAULT_COLUMN_STYLE);
+    // A value written by a build that offered a style this one does not.
+    expect(parseColumnStyle('departure-board-v2')).toBe(DEFAULT_COLUMN_STYLE);
+    expect(parseColumnStyle('Split-Board')).toBe(DEFAULT_COLUMN_STYLE);
   });
 });
