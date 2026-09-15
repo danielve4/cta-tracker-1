@@ -2,26 +2,26 @@
   <div class="columns" aria-hidden="true">
     @for (column of skeletonColumns; track $index) {
       <section class="column">
-        <div class="column-header skeleton-header skeleton-surface"></div>
+        <div class="column-header skeleton-line skeleton-surface skeleton-header"></div>
         @for (card of column; track card) {
           <div class="col-card skeleton-card">
-            <div class="col-countdown skeleton-countdown skeleton-surface"></div>
-            <span class="skeleton-line skeleton-line-destination skeleton-surface"></span>
-            <span class="skeleton-line skeleton-line-time skeleton-surface"></span>
+            <div class="col-countdown skeleton-block skeleton-surface"></div>
+            <span class="skeleton-line skeleton-surface skeleton-line-destination"></span>
+            <span class="skeleton-line skeleton-surface skeleton-line-time"></span>
           </div>
         }
       </section>
     }
   </div>
 } @else if (groups(); as groups) {
-  <div class="columns" [class.single]="groups.length === 1">
+  <div class="columns" [class.single]="isSingle(groups)">
     @for (group of groups; track group.key; let i = $index) {
       <section class="column"
                [class.fill]="variantFor(i) === 'fill'"
                [class.outline]="variantFor(i) === 'outline'"
-               [style.--col-color]="group.arrivals[0].lineColor"
-               [style.--col-text]="textColorFor(group.arrivals[0].rt)">
-        <h3 class="column-header">{{ group.directionLabel }}</h3>
+               [style.--col-color]="colorFor(group)"
+               [style.--col-text]="textColorFor(group)">
+        <h3 class="column-header pill">{{ group.directionLabel }}</h3>
         <ul class="column-list">
           @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
             <li class="col-card" [class.loading]="refreshing()">
@@ -29,7 +29,7 @@
                  [queryParams]="{from: stationId(), rt: arrival.rt}"
                  class="col-link">
                 @if (arrival.isDly === '1') {
-                  <span class="status-chip status-delayed">
+                  <span class="status-chip delayed">
                     <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                       <line x1="12" y1="9" x2="12" y2="13"></line>
@@ -39,7 +39,7 @@
                   </span>
                 }
                 @if (arrival.isSch === '1') {
-                  <span class="status-chip status-scheduled">
+                  <span class="status-chip scheduled">
                     <svg class="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="10"></circle>
                       <polyline points="12 6 12 12 16 14"></polyline>
@@ -47,7 +47,7 @@
                     Scheduled
                   </span>
                 }
-                <div class="col-countdown"
+                <div class="col-countdown pill"
                      [class.countdown-due]="arrival.countdown === 'DUE'"
                      [class.countdown-delayed]="arrival.isDly === '1'"
                      [class.countdown-scheduled]="arrival.isSch === '1'">

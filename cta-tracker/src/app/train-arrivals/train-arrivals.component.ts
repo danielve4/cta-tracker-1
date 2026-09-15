@@ -14,7 +14,7 @@ import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
 import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
-import { TrainArrivalColumnsComponent } from './train-arrival-columns.component';
+import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
 
 @Component({
   selector: 'app-train-arrivals',

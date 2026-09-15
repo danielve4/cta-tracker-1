@@ -1,0 +1,6 @@
+@switch (prefs.columnStyle()) {
+  @default {
+    <app-split-board [groups]="groups()" [loading]="loading()"
+                     [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+}
