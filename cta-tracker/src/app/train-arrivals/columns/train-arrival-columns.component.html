@@ -3,6 +3,10 @@
     <app-mirror-timeline [groups]="groups()" [loading]="loading()"
                          [stationId]="stationId()" [refreshing]="refreshing()" />
   }
+  @case ('departure-board') {
+    <app-departure-board [groups]="groups()" [loading]="loading()"
+                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
   @default {
     <app-split-board [groups]="groups()" [loading]="loading()"
                      [stationId]="stationId()" [refreshing]="refreshing()" />
