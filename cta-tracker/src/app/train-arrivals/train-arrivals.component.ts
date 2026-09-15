@@ -84,6 +84,7 @@ export class TrainArrivalsComponent {
         return {
           ...eta,
           countdown,
+          arrivalEpochMs,
           apiArrivalTime: formatClockTime(arrivalTime),
           distance: trainDistanceLabel(station, eta.lat, eta.lon),
           lineColor
