@@ -29,7 +29,7 @@
       <p class="cols-4 error-message">{{ errorMsg }}</p>
     }
     @if (arrivalGroups(); as groups) {
-      @for (group of groups; track group.directionLabel) {
+      @for (group of groups; track group.key) {
         <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
         <ul class="cols-4 arrivals-list">
           @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
