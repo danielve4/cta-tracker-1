@@ -14,13 +14,14 @@ import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
 import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
+import { TrainArrivalColumnsComponent } from './train-arrival-columns.component';
 
 @Component({
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent]
 })
 export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -89,7 +90,10 @@ export class TrainArrivalsComponent {
         };
       });
 
-      return { groups: groupTrainArrivals(displays, 'label'), error: undefined };
+      // Read inside the callback so flipping the setting re-orders the groups live: the column
+      // layout needs a direction on the same side at every station, the list keeps its A-Z order.
+      const order = this.prefs.arrivalsLayout() === 'columns' ? 'direction' : 'label';
+      return { groups: groupTrainArrivals(displays, order), error: undefined };
     }
     return { groups: null, error: 'No arrivals found' };
   });

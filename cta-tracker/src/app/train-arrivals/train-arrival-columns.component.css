@@ -1,0 +1,203 @@
+/* Angular scopes component styles, so the shimmer classes and keyframes the list layout uses are
+   redeclared here rather than shared. */
+
+:host { display: block; }
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-bottom: calc(56px + 24px);
+}
+/* One direction (a terminal, a Loop stop, a late-night gap) spans the width instead of leaving a
+   permanently empty half-screen. */
+.columns.single { grid-template-columns: minmax(0, 1fr); }
+
+.column {
+  /* Pulled toward the text colour so dark Brown and Purple stay legible on a dark surface and
+     still read as the line's colour in light mode. */
+  --col-ink: color-mix(in srgb, var(--col-color) 72%, var(--text-primary));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* Header: filled on the left, the same pill inverted on the right. Both carry the 2px border so
+   the two headers are the same height when one of them wraps. */
+.column-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  margin: 0;
+}
+.fill .column-header { background: var(--col-color); color: var(--col-text, #fff); }
+.outline .column-header {
+  background: var(--surface-card);
+  color: var(--col-ink);
+  border-color: var(--col-color);
+}
+
+.column-list { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* Card */
+.col-card {
+  border-radius: 16px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform var(--duration-short) var(--ease-standard),
+              background-color var(--duration-medium) var(--ease-standard);
+  animation: cardEnter var(--duration-long) var(--ease-decelerate) backwards;
+}
+.col-card:active { transform: scale(0.975); background-color: var(--surface-card-hover); }
+.col-card:nth-child(2) { animation-delay: 50ms; }
+.col-card:nth-child(3) { animation-delay: 100ms; }
+.col-card:nth-child(4) { animation-delay: 150ms; }
+.col-card:nth-child(5) { animation-delay: 200ms; }
+.col-card:nth-child(6) { animation-delay: 250ms; }
+.col-link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Status: a chip rather than the list layout's full-width banner, which would eat a card's width. */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.status-icon { width: 12px; height: 12px; flex-shrink: 0; }
+.status-delayed { background: var(--pink-opacity); color: var(--pink); }
+.status-scheduled { background: var(--yellow-opacity); color: var(--yellow); }
+
+/* Countdown pill: echoes the column's treatment, so the number alone says which direction it is.
+   A status colour replaces the colour but never the fill/outline treatment. */
+.col-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 56px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+}
+.fill .col-countdown { background: var(--col-color); color: var(--col-text, #fff); }
+.outline .col-countdown {
+  background: transparent;
+  color: var(--col-ink);
+  border-color: var(--col-color);
+}
+.countdown-value {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: inherit;
+}
+.countdown-due .countdown-value { font-size: 18px; }
+.countdown-unit {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.fill .countdown-due { background: var(--bus-due); color: #fff; animation: duePulse 2.5s ease infinite; }
+.outline .countdown-due { color: var(--bus-due); border-color: var(--bus-due); animation: duePulse 2.5s ease infinite; }
+.fill .countdown-delayed { background: var(--pink); color: #fff; }
+.outline .countdown-delayed { color: var(--pink); border-color: var(--pink); }
+.fill .countdown-scheduled { background: var(--yellow); color: #000; }
+.outline .countdown-scheduled { color: var(--yellow); border-color: var(--yellow); }
+
+/* Destination stays on every card: the Green Line's trDr 5 mixes Ashland/63rd and Cottage Grove
+   trains in one column, and the Blue Line short-turns. */
+.col-destination {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.col-time { color: var(--text-tertiary); font-size: 12px; font-weight: 500; }
+.col-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.col-meta:empty { display: none; }
+.col-meta > span:not(:first-child)::before { content: '· '; }
+
+/* Skeleton */
+.skeleton-card { pointer-events: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.skeleton-header { height: 25px; border-radius: 999px; }
+.skeleton-countdown {
+  background-color: color-mix(in srgb, var(--bus-countdown-bg) 75%, var(--surface-card));
+}
+.skeleton-line {
+  display: block;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
+}
+.skeleton-line-destination { width: 80%; height: 13px; border-radius: 7px; }
+.skeleton-line-time { width: 50%; height: 10px; border-radius: 5px; }
+.skeleton-surface { position: relative; overflow: hidden; }
+.skeleton-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--shimmer-highlight) 80%, white 20%) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: skeletonShimmer 1.25s ease-in-out infinite;
+}
+
+.loading .col-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer-highlight) 50%, transparent);
+  animation: shimmer 0.8s ease 1;
+  pointer-events: none;
+}
+
+@keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+@keyframes skeletonShimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
