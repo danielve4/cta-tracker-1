@@ -1,0 +1,62 @@
+/* The hero is the whole point: readable from further down the platform than any other style. */
+.hero { display: block; text-decoration: none; color: inherit; padding: 12px; position: relative; overflow: hidden; }
+.hero > * + * { margin-top: 8px; }
+.hero .status-chip { display: inline-flex; }
+
+.hero-countdown { height: 84px; border-radius: 18px; }
+.hero-countdown .countdown-value { font-size: 40px; }
+.hero-countdown.countdown-due .countdown-value { font-size: 28px; }
+
+.later-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin: 2px 0 -4px 4px;
+}
+.later { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-decoration: none;
+}
+.chip-value { font-size: 15px; font-weight: 900; line-height: 1; white-space: nowrap; }
+.chip-value small { font-size: 8px; font-weight: 700; margin-left: 2px; text-transform: uppercase; opacity: 0.8; }
+.chip-dest {
+  font-size: 9px;
+  font-weight: 600;
+  max-width: 80px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+/* Chips take the column's treatment, muted so the hero keeps the eye. */
+.fill .chip { background: color-mix(in srgb, var(--col-color) 80%, var(--surface-card)); }
+.outline .chip { border-width: 1.5px; }
+/* The pulse belongs to the hero; a row of pulsing chips is noise. */
+.chip.countdown-due { animation: none; }
+
+.loading.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer-highlight) 50%, transparent);
+  animation: shimmer 0.8s ease 1;
+  pointer-events: none;
+}
+
+.skeleton-card .hero-countdown { height: 84px; }
+.skeleton-card .skeleton-line-destination { width: 70%; }
+.later .chip.skeleton-block { min-width: 56px; min-height: 44px; }
+
+/* Full width: an 84px-tall pill spanning 343px is a slab rather than a number. */
+.columns.single .hero-countdown { max-width: 200px; }

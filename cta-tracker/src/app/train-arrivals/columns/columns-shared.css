@@ -55,13 +55,18 @@
    side by side read as a bug. Subgrid shares one header row; without it the flex layout stands. */
 @supports (grid-template-rows: subgrid) {
   .columns:not(.single) { grid-template-rows: auto auto; }
+  /* Two rows, so a column must be a header plus exactly one body element — a third child would
+     land back in the body's cell and paint over it. Styles with more to show wrap it in
+     .column-body. */
   .columns:not(.single) .column {
     display: grid;
     grid-template-rows: subgrid;
     grid-row: span 2;
   }
-  .columns:not(.single) .column-list { align-self: start; }
+  .columns:not(.single) .column-list,
+  .columns:not(.single) .column-body { align-self: start; }
 }
+.column-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 
 /* ── Compact card ── */
 .col-card {

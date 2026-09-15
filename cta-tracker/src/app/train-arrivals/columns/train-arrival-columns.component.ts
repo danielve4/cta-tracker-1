@@ -3,6 +3,7 @@ import { DisplayPreferencesService } from '../../services/display-preferences.se
 import { ArrivalGroup } from '../train-arrival-groups';
 import { DepartureBoardComponent } from './departure-board.component';
 import { MirrorTimelineComponent } from './mirror-timeline.component';
+import { NextUpComponent } from './next-up.component';
 import { SplitBoardComponent } from './split-board.component';
 
 /**
@@ -16,7 +17,7 @@ import { SplitBoardComponent } from './split-board.component';
   selector: 'app-train-arrival-columns',
   templateUrl: './train-arrival-columns.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DepartureBoardComponent, MirrorTimelineComponent, SplitBoardComponent]
+  imports: [DepartureBoardComponent, MirrorTimelineComponent, NextUpComponent, SplitBoardComponent]
 })
 export class TrainArrivalColumnsComponent {
   protected readonly prefs = inject(DisplayPreferencesService);
