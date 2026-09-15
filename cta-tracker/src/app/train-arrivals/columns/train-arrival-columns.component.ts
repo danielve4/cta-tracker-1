@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core
 import { DisplayPreferencesService } from '../../services/display-preferences.service';
 import { ArrivalGroup } from '../train-arrival-groups';
 import { DepartureBoardComponent } from './departure-board.component';
+import { InvertedCardsComponent } from './inverted-cards.component';
 import { MirrorTimelineComponent } from './mirror-timeline.component';
 import { NextUpComponent } from './next-up.component';
 import { SpineRailsComponent } from './spine-rails.component';
@@ -18,7 +19,7 @@ import { SplitBoardComponent } from './split-board.component';
   selector: 'app-train-arrival-columns',
   templateUrl: './train-arrival-columns.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DepartureBoardComponent, MirrorTimelineComponent, NextUpComponent, SpineRailsComponent, SplitBoardComponent]
+  imports: [DepartureBoardComponent, InvertedCardsComponent, MirrorTimelineComponent, NextUpComponent, SpineRailsComponent, SplitBoardComponent]
 })
 export class TrainArrivalColumnsComponent {
   protected readonly prefs = inject(DisplayPreferencesService);

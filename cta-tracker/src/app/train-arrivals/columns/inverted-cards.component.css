@@ -1,0 +1,58 @@
+/* The whole card carries the treatment, so everything inside it has to survive on line colour. */
+.inv-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform var(--duration-short) var(--ease-standard), filter var(--duration-short) var(--ease-standard);
+  animation: cardEnter var(--duration-long) var(--ease-decelerate) backwards;
+  border: 2px solid transparent;
+}
+.inv-card:nth-child(2) { animation-delay: 50ms; }
+.inv-card:nth-child(3) { animation-delay: 100ms; }
+.inv-card:nth-child(4) { animation-delay: 150ms; }
+.inv-card:nth-child(5) { animation-delay: 200ms; }
+.inv-card:nth-child(6) { animation-delay: 250ms; }
+
+.fill .inv-card {
+  background: var(--col-color);
+  color: var(--col-text, #fff);
+  /* The tinted shadow keeps Brown and Purple from reading as black boxes in the light theme. */
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--col-color) 35%, transparent);
+}
+.outline .inv-card {
+  background: var(--surface-card);
+  color: var(--col-ink);
+  border-color: var(--col-color);
+  box-shadow: var(--card-shadow);
+}
+.fill .inv-card:active { filter: brightness(0.92); }
+.outline .inv-card:active { background: var(--surface-card-hover); }
+
+/* The countdown sits inside an already-coloured card, so it becomes a well rather than a pill. */
+.fill .inv-card .col-countdown { background: rgba(255,255,255,0.18); color: inherit; border-color: transparent; }
+.dark-text .inv-card .col-countdown { background: rgba(0,0,0,0.10); }
+.outline .inv-card .col-countdown { background: var(--col-tint); color: var(--col-ink); border-color: transparent; }
+
+/* A white well with coloured figures is the one status treatment that reads on every line colour.
+   Scheduled uses the darker amber, which white cannot wash out the way CTA yellow does. */
+.fill .inv-card .countdown-due { background: #fff; color: var(--bus-due); }
+.fill .inv-card .countdown-delayed { background: #fff; color: var(--pink); }
+.fill .inv-card .countdown-scheduled { background: #fff; color: rgb(217,119,6); }
+.outline .inv-card .countdown-due,
+.outline .inv-card .countdown-delayed,
+.outline .inv-card .countdown-scheduled { background: transparent; border: 2px solid currentColor; }
+.outline .inv-card .countdown-due { color: var(--bus-due); }
+.outline .inv-card .countdown-delayed { color: var(--pink); }
+.outline .inv-card .countdown-scheduled { color: var(--yellow); }
+
+.fill .inv-card .col-time,
+.fill .inv-card .col-meta { color: inherit; opacity: 0.8; }
+/* The chip keeps its own pink or amber text, on a plate solid enough to carry it. */
+.fill .inv-card .status-chip { background: rgba(255,255,255,0.92); }
+.fill .inv-card .scheduled { color: rgb(217,119,6); }
+
+/* --shimmer-highlight is tuned for the card surface and disappears on a saturated one. */
+.fill .inv-card.loading .col-link::before {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20) 50%, transparent);
+}
+
+.columns.single .col-countdown { max-width: 160px; }

@@ -15,6 +15,10 @@
     <app-spine-rails [groups]="groups()" [loading]="loading()"
                      [stationId]="stationId()" [refreshing]="refreshing()" />
   }
+  @case ('inverted-cards') {
+    <app-inverted-cards [groups]="groups()" [loading]="loading()"
+                        [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
   @default {
     <app-split-board [groups]="groups()" [loading]="loading()"
                      [stationId]="stationId()" [refreshing]="refreshing()" />

@@ -5,7 +5,7 @@
         <div class="column-header skeleton-line skeleton-surface skeleton-header"></div>
         <div class="column-body">
         @for (card of column; track card) {
-          <div class="col-card skeleton-card">
+          <div class="inv-card skeleton-card">
             <div class="col-countdown skeleton-block skeleton-surface"></div>
             <span class="skeleton-line skeleton-surface skeleton-line-destination"></span>
             <span class="skeleton-line skeleton-surface skeleton-line-time"></span>
@@ -21,12 +21,13 @@
       <section class="column"
                [class.fill]="variantFor(i) === 'fill'"
                [class.outline]="variantFor(i) === 'outline'"
+               [class.dark-text]="hasDarkText(group)"
                [style.--col-color]="colorFor(group)"
                [style.--col-text]="textColorFor(group)">
         <h3 class="column-header pill">{{ group.directionLabel }}</h3>
         <ul class="column-list">
           @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
-            <li class="col-card" [class.loading]="refreshing()">
+            <li class="inv-card" [class.loading]="refreshing()">
               <a [routerLink]="['/train-follow', arrival.rn]"
                  [queryParams]="{from: stationId(), rt: arrival.rt}"
                  class="col-link">
