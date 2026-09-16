@@ -4,7 +4,7 @@ import { httpResource } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { TrainService } from '../services/train.service';
-import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP, TRAIN_DIRECTION_MAP } from '../trainResponse';
+import { TrainApiResponse, TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { FavoritesService } from '../services/favorites.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
@@ -13,25 +13,15 @@ import { trainDistanceLabel } from '../services/distance';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
-
-interface TrainArrivalDisplay extends TrainEta {
-  countdown: string;
-  apiArrivalTime: string;
-  distance: string;
-  lineColor: string;
-}
-
-interface ArrivalGroup {
-  directionLabel: string;
-  arrivals: TrainArrivalDisplay[];
-}
+import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
+import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
 
 @Component({
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent]
 })
 export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -94,27 +84,17 @@ export class TrainArrivalsComponent {
         return {
           ...eta,
           countdown,
+          arrivalEpochMs,
           apiArrivalTime: formatClockTime(arrivalTime),
           distance: trainDistanceLabel(station, eta.lat, eta.lon),
           lineColor
         };
       });
 
-      // Group by direction using rt + trDr
-      const groupMap = new Map<string, ArrivalGroup>();
-      for (const arrival of displays) {
-        const directionLabel = TRAIN_DIRECTION_MAP[arrival.rt]?.[arrival.trDr] ?? arrival.stpDe;
-        const key = `${arrival.rt}_${arrival.trDr}`;
-        if (!groupMap.has(key)) {
-          groupMap.set(key, { directionLabel, arrivals: [] });
-        }
-        groupMap.get(key)!.arrivals.push(arrival);
-      }
-
-      const groups = Array.from(groupMap.values()).sort((a, b) =>
-        a.directionLabel.localeCompare(b.directionLabel)
-      );
-      return { groups, error: undefined };
+      // Read inside the callback so flipping the setting re-orders the groups live: the column
+      // layout needs a direction on the same side at every station, the list keeps its A-Z order.
+      const order = this.prefs.arrivalsLayout() === 'columns' ? 'direction' : 'label';
+      return { groups: groupTrainArrivals(displays, order), error: undefined };
     }
     return { groups: null, error: 'No arrivals found' };
   });

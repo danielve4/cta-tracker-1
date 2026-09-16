@@ -1,0 +1,83 @@
+/* One panel per direction, hairlines instead of gaps between rows. */
+.panel {
+  gap: 0;
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  animation: cardEnter var(--duration-long) var(--ease-decelerate) backwards;
+}
+
+.panel-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  text-align: center;
+  padding: 8px 10px;
+  margin: 0;
+  border-radius: 0;
+}
+/* No pill per row to carry the treatment, so the header does it: solid on one side, underlined on
+   the other, with the ETA ink following suit below. */
+.outline .panel-header { border-width: 0 0 2px 0; }
+
+.panel-rows { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.panel-row + .panel-row { border-top: 1px solid var(--card-border); }
+.row-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 10px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.panel-row:active { background-color: var(--surface-card-hover); }
+
+.row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.row-dest { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 12px; font-weight: 600; }
+/* The ellipsis has to live on the text itself: a flex container never truncates its own children. */
+.row-dest-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-icon { width: 12px; height: 12px; flex-shrink: 0; }
+.delayed-icon { color: var(--pink); }
+.scheduled-icon { color: var(--yellow); }
+/* A 165px panel cannot hold "API 11:40 PM · ~0.3 mi" on one line, and wrapping it broke values
+   across lines ("API 11:40" / "PM"), so the meta stays stacked and each line stays whole. */
+.row-main .col-meta > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.row-eta { display: flex; align-items: baseline; gap: 2px; font-variant-numeric: tabular-nums; }
+.row-eta-value { font-size: 18px; font-weight: 900; letter-spacing: -0.02em; }
+.row-eta-unit { font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary); }
+.fill .row-eta-value { color: var(--col-ink); }
+.outline .row-eta-value { color: var(--text-primary); }
+.row-eta.eta-due .row-eta-value { color: var(--bus-due); font-size: 14px; }
+.row-eta.eta-delayed .row-eta-value { color: var(--pink); }
+.row-eta.eta-scheduled .row-eta-value { color: var(--yellow); }
+
+.loading .row-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer-highlight) 50%, transparent);
+  animation: shimmer 0.8s ease 1;
+  pointer-events: none;
+}
+
+.panel .skeleton-block { height: 30px; }
+.panel .skeleton-line-eta { width: 28px; height: 14px; }
+
+/* At 320px a panel is 138px wide. Dropping the ETA onto its own line fits, but a four-line row is
+   the opposite of what this style is for, so the ETA stays on the right and loses its unit
+   instead — on a board where every figure is minutes, the bare number still reads as minutes, and
+   the destination ellipsises the way a real platform sign abbreviates. */
+@media (max-width: 340px) {
+  .row-eta-unit { display: none; }
+  .row-eta-value { font-size: 16px; }
+  .row-eta.eta-due .row-eta-value { font-size: 13px; }
+}

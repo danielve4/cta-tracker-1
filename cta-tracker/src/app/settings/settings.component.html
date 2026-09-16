@@ -15,7 +15,7 @@
 <!-- Arrivals -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Arrivals</h2>
-  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~.</p>
+  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~. Column layout shows each direction of a train line side by side; pick a style below.</p>
   <div class="settings-row">
     <div class="settings-row-label">
       <span class="settings-row-title">Show API Timestamp</span>
@@ -36,6 +36,32 @@
       label="Show distance"
       (toggled)="prefs.toggleDistance()" />
   </div>
+  <div class="settings-row">
+    <div class="settings-row-label">
+      <span class="settings-row-title">Column Layout</span>
+      <span class="settings-row-subtitle">{{ prefs.arrivalsLayout() === 'columns' ? 'Side by side' : 'Stacked' }}</span>
+    </div>
+    <app-toggle-switch
+      [checked]="prefs.arrivalsLayout() === 'columns'"
+      label="Column layout"
+      (toggled)="prefs.toggleArrivalsLayout()" />
+  </div>
+  @if (prefs.arrivalsLayout() === 'columns') {
+    <div class="settings-subrow">
+      <span class="settings-row-title">Column Style</span>
+      <div class="style-picker" role="radiogroup" aria-label="Column style">
+        @for (style of columnStyles; track style.id) {
+          <button type="button" role="radio" class="style-chip"
+                  [attr.aria-checked]="prefs.columnStyle() === style.id"
+                  [class.selected]="prefs.columnStyle() === style.id"
+                  (click)="prefs.setColumnStyle(style.id)">
+            <span class="style-chip-title">{{ style.title }}</span>
+            <span class="style-chip-blurb">{{ style.blurb }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
 </section>
 
 <!-- Sync Favorites -->

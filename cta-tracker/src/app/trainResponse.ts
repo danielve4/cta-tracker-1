@@ -77,6 +77,15 @@ export const TRAIN_LINE_CSS_MAP: Record<string, string> = {
   'Y': '--cta-yellow'
 };
 
+/**
+ * Text colour for anything painted on a line's own colour. Only the Yellow Line needs one: white
+ * on rgb(249,227,0) is unreadable. Taken from CTA's published palette rather than the
+ * comprehensive-data CTALine.text_color, which is only there once 'traindata' has been fetched.
+ */
+export const TRAIN_LINE_TEXT_COLOR_MAP: Record<string, string> = {
+  'Y': '#000000'
+};
+
 export const TRAIN_ROUTE_ID_TO_LINE_NAME: Record<string, string> = {
   'Red': 'Red Line',
   'Blue': 'Blue Line',

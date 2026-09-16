@@ -1,0 +1,203 @@
+/* Shared by every column style. Angular scopes component CSS per component, so nothing in
+   train-arrivals.component.css is reachable from here — the keyframes and skeleton classes are
+   redeclared rather than referenced. Each variant lists this file first in styleUrls. */
+
+:host { display: block; }
+
+/* ── Layout ── */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 10px;
+  /* Clears the FABs, mirroring .arrivals-list:last-of-type. */
+  padding-bottom: calc(56px + 24px);
+}
+.columns.single { grid-template-columns: minmax(0, 1fr); }
+
+.column {
+  /* Pulled toward the text colour so dark Brown and Purple stay legible on a dark surface and
+     still read as the line's colour in light mode. */
+  --col-ink: color-mix(in srgb, var(--col-color) 72%, var(--text-primary));
+  --col-tint: color-mix(in srgb, var(--col-color) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.column-list { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* ── Treatments ──
+   Every pill carries the 2px border (transparent when filled) so a filled and an outlined pill
+   side by side are the same height. */
+.pill { border: 2px solid transparent; }
+/* The compound form is for pills that carry the treatment themselves — the timeline's two headers
+   sit in one row rather than inside a per-direction column. */
+.fill .pill, .pill.fill { background: var(--col-color); color: var(--col-text, #fff); border-color: transparent; }
+.outline .pill, .pill.outline { background: var(--surface-card); color: var(--col-ink); border-color: var(--col-color); }
+
+.column-header {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  margin: 0;
+}
+/* Direction labels differ in length — "Harlem/Lake-bound" wraps to two lines where
+   "Ashland/63rd & Cottage Grove-bound" takes three — and headers of visibly different heights
+   side by side read as a bug. Subgrid shares one header row; without it the flex layout stands. */
+@supports (grid-template-rows: subgrid) {
+  .columns:not(.single) { grid-template-rows: auto auto; }
+  /* Two rows, so a column must be a header plus exactly one body element — a third child would
+     land back in the body's cell and paint over it. Styles with more to show wrap it in
+     .column-body. */
+  .columns:not(.single) .column {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 2;
+  }
+  .columns:not(.single) .column-list,
+  .columns:not(.single) .column-body { align-self: start; }
+}
+.column-body { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* ── Compact card ── */
+.col-card {
+  border-radius: 16px;
+  background-color: var(--surface-card);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform var(--duration-short) var(--ease-standard),
+              background-color var(--duration-medium) var(--ease-standard);
+  animation: cardEnter var(--duration-long) var(--ease-decelerate) backwards;
+}
+.col-card:active { transform: scale(0.975); background-color: var(--surface-card-hover); }
+.col-card:nth-child(2) { animation-delay: 50ms; }
+.col-card:nth-child(3) { animation-delay: 100ms; }
+.col-card:nth-child(4) { animation-delay: 150ms; }
+.col-card:nth-child(5) { animation-delay: 200ms; }
+.col-card:nth-child(6) { animation-delay: 250ms; }
+.col-link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Countdown pill ──
+   Echoes the column's treatment, so the number alone says which direction it is. A status colour
+   replaces the colour but never the treatment. */
+.col-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 56px;
+  border-radius: 14px;
+}
+.outline .col-countdown { background: transparent; }
+.countdown-value { font-size: 24px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; color: inherit; }
+.countdown-due .countdown-value { font-size: 18px; }
+.countdown-unit {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: inherit;
+  opacity: 0.8;
+}
+.countdown-due { animation: duePulse 2.5s ease infinite; }
+.fill .countdown-due { background: var(--bus-due); color: #fff; }
+.outline .countdown-due { color: var(--bus-due); border-color: var(--bus-due); }
+.fill .countdown-delayed { background: var(--pink); color: #fff; }
+.outline .countdown-delayed { color: var(--pink); border-color: var(--pink); }
+.fill .countdown-scheduled { background: var(--yellow); color: #000; }
+.outline .countdown-scheduled { color: var(--yellow); border-color: var(--yellow); }
+
+/* ── Text ──
+   The destination stays on every card: the Green Line's trDr 5 mixes Ashland/63rd and Cottage
+   Grove trains in one column, and the Blue Line short-turns. */
+.col-destination {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.col-time { color: var(--text-tertiary); font-size: 12px; font-weight: 500; }
+/* Stacked rather than the list layout's '·'-separated row: a column is too narrow to hold the API
+   time and the distance on one line, and wrapping leaves the separator starting the second line. */
+.col-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+.col-meta:empty { display: none; }
+
+/* ── Status chip ── replaces the list layout's full-width banner, which would eat a card's width */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.status-icon { width: 12px; height: 12px; flex-shrink: 0; }
+.delayed { background: var(--pink-opacity); color: var(--pink); }
+.scheduled { background: var(--yellow-opacity); color: var(--yellow); }
+
+/* ── Skeleton and motion ── */
+.skeleton-card { pointer-events: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.skeleton-line { display: block; border-radius: 999px; background-color: color-mix(in srgb, var(--text-tertiary) 20%, transparent); }
+.skeleton-block { background-color: color-mix(in srgb, var(--bus-countdown-bg) 75%, var(--surface-card)); }
+.skeleton-header { height: 26px; border-radius: 999px; }
+.skeleton-line-destination { width: 80%; height: 13px; }
+.skeleton-line-time { width: 50%; height: 10px; }
+.skeleton-surface { position: relative; overflow: hidden; }
+.skeleton-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--shimmer-highlight) 80%, white 20%) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: shimmer 1.25s ease-in-out infinite;
+}
+.loading .col-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--shimmer-highlight) 50%, transparent);
+  animation: shimmer 0.8s ease 1;
+  pointer-events: none;
+}
+
+@keyframes cardEnter { from { opacity: 0; transform: translateY(12px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes duePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }

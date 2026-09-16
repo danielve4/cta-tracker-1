@@ -1,0 +1,88 @@
+@if (loading()) {
+  <div class="columns" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column">
+        <div class="column-header skeleton-line skeleton-surface skeleton-header"></div>
+        <div class="column-body">
+        <div class="hero col-card skeleton-card">
+          <div class="col-countdown hero-countdown skeleton-block skeleton-surface"></div>
+          <span class="skeleton-line skeleton-surface skeleton-line-destination"></span>
+        </div>
+        <ul class="later">
+          @for (chip of column; track chip) {
+            <li><span class="chip skeleton-block skeleton-surface"></span></li>
+          }
+        </ul>
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)">
+    @for (group of groups; track group.key; let i = $index) {
+      @let split = splitNextUp(group);
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(group)"
+               [style.--col-text]="textColorFor(group)">
+        <h3 class="column-header pill">{{ group.directionLabel }}</h3>
+        <div class="column-body">
+        @if (split.hero; as hero) {
+          <a class="hero col-card" [class.loading]="refreshing()"
+             [routerLink]="['/train-follow', hero.rn]"
+             [queryParams]="{from: stationId(), rt: hero.rt}">
+            @if (hero.isDly === '1') {
+              <span class="status-chip delayed">Delayed</span>
+            }
+            @if (hero.isSch === '1') {
+              <span class="status-chip scheduled">Scheduled</span>
+            }
+            <div class="col-countdown hero-countdown pill"
+                 [class.countdown-due]="hero.countdown === 'DUE'"
+                 [class.countdown-delayed]="hero.isDly === '1'"
+                 [class.countdown-scheduled]="hero.isSch === '1'">
+              <span class="countdown-value">{{ hero.countdown }}</span>
+              <span class="countdown-unit">{{ hero.countdown | timeuntil:'minutes' }}</span>
+            </div>
+            <span class="col-destination">To {{ hero.destNm }}</span>
+            <span class="col-time">{{ hero.countdown | timeuntil:'time' }}</span>
+            <span class="col-meta">
+              @if (prefs.showApiTimestamp()) {
+                <span>API {{ hero.apiArrivalTime }}</span>
+              }
+              @if (prefs.showDistance() && hero.distance) {
+                <span>{{ hero.distance }}</span>
+              }
+            </span>
+          </a>
+        }
+        @if (split.later.length) {
+          <p class="later-label">Then</p>
+          <ul class="later">
+            @for (arrival of split.later; track arrival.rn + arrival.stpId) {
+              <li>
+                <a class="chip pill"
+                   [routerLink]="['/train-follow', arrival.rn]"
+                   [queryParams]="{from: stationId(), rt: arrival.rt}"
+                   [attr.aria-label]="groupLabel(group) + ': ' + arrival.countdown + ' to ' + arrival.destNm"
+                   [title]="'To ' + arrival.destNm"
+                   [class.countdown-due]="arrival.countdown === 'DUE'"
+                   [class.countdown-delayed]="arrival.isDly === '1'"
+                   [class.countdown-scheduled]="arrival.isSch === '1'">
+                  <span class="chip-value">
+                    {{ arrival.countdown }}<small>{{ arrival.countdown | timeuntil:'minutes' }}</small>
+                  </span>
+                  @if (chipDestination(arrival, split.hero); as chipDest) {
+                    <span class="chip-dest">{{ chipDest }}</span>
+                  }
+                </a>
+              </li>
+            }
+          </ul>
+        }
+        </div>
+      </section>
+    }
+  </div>
+}

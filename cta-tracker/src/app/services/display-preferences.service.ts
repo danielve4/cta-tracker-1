@@ -1,16 +1,24 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import {
+  ArrivalsLayout, ColumnStyle, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE,
+  TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, parseArrivalsLayout, parseColumnStyle
+} from './arrivals-layout';
 
 export const SHOW_API_TIMESTAMP_KEY = 'show-api-timestamp';
 export const SHOW_DISTANCE_KEY = 'show-distance';
+export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY };
+export type { ArrivalsLayout, ColumnStyle };
 
 @Injectable({ providedIn: 'root' })
 export class DisplayPreferencesService {
-  // Must be initialized before the signal below, which reads localStorage.
+  // Must be initialized before the signals below, which read localStorage.
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   readonly showApiTimestamp = signal<boolean>(this.load(SHOW_API_TIMESTAMP_KEY));
   readonly showDistance = signal<boolean>(this.load(SHOW_DISTANCE_KEY));
+  readonly arrivalsLayout = signal<ArrivalsLayout>(this.loadLayout());
+  readonly columnStyle = signal<ColumnStyle>(this.loadColumnStyle());
 
   setShowApiTimestamp(show: boolean): void {
     this.showApiTimestamp.set(show);
@@ -30,9 +38,29 @@ export class DisplayPreferencesService {
     this.setShowDistance(!this.showDistance());
   }
 
+  setArrivalsLayout(layout: ArrivalsLayout): void {
+    this.arrivalsLayout.set(layout);
+    this.storeString(TRAIN_ARRIVALS_LAYOUT_KEY, layout);
+  }
+
+  toggleArrivalsLayout(): void {
+    this.setArrivalsLayout(this.arrivalsLayout() === 'columns' ? 'list' : 'columns');
+  }
+
+  setColumnStyle(style: ColumnStyle): void {
+    this.columnStyle.set(style);
+    this.storeString(TRAIN_ARRIVALS_COLUMN_STYLE_KEY, style);
+  }
+
   private store(key: string, show: boolean): void {
     if (this.isBrowser) {
       localStorage.setItem(key, String(show));
+    }
+  }
+
+  private storeString(key: string, value: string): void {
+    if (this.isBrowser) {
+      localStorage.setItem(key, value);
     }
   }
 
@@ -42,5 +70,21 @@ export class DisplayPreferencesService {
     }
     // Defaults to on, so only an explicit opt-out sticks.
     return localStorage.getItem(key) !== 'false';
+  }
+
+  private loadLayout(): ArrivalsLayout {
+    // The server render has no stored preference, so it draws the default layout; the browser
+    // picks the stored one up on hydration.
+    if (!this.isBrowser) {
+      return DEFAULT_ARRIVALS_LAYOUT;
+    }
+    return parseArrivalsLayout(localStorage.getItem(TRAIN_ARRIVALS_LAYOUT_KEY));
+  }
+
+  private loadColumnStyle(): ColumnStyle {
+    if (!this.isBrowser) {
+      return DEFAULT_COLUMN_STYLE;
+    }
+    return parseColumnStyle(localStorage.getItem(TRAIN_ARRIVALS_COLUMN_STYLE_KEY));
   }
 }

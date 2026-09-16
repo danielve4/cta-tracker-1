@@ -1,0 +1,26 @@
+@switch (prefs.columnStyle()) {
+  @case ('mirror-timeline') {
+    <app-mirror-timeline [groups]="groups()" [loading]="loading()"
+                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @case ('departure-board') {
+    <app-departure-board [groups]="groups()" [loading]="loading()"
+                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @case ('next-up') {
+    <app-next-up [groups]="groups()" [loading]="loading()"
+                 [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @case ('spine-rails') {
+    <app-spine-rails [groups]="groups()" [loading]="loading()"
+                     [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @case ('inverted-cards') {
+    <app-inverted-cards [groups]="groups()" [loading]="loading()"
+                        [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @default {
+    <app-split-board [groups]="groups()" [loading]="loading()"
+                     [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+}
