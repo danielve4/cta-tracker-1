@@ -54,5 +54,3 @@
 .fill .inv-card.loading .col-link::before {
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.20) 50%, transparent);
 }
-
-.columns.single .col-countdown { max-width: 160px; }

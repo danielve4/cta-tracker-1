@@ -57,15 +57,17 @@
                   <span class="countdown-value">{{ arrival.countdown }}</span>
                   <span class="countdown-unit">{{ arrival.countdown | timeuntil:'minutes' }}</span>
                 </div>
-                <span class="col-destination">To {{ arrival.destNm }}</span>
-                <span class="col-time">{{ arrival.countdown | timeuntil:'time' }}</span>
-                <span class="col-meta">
-                  @if (prefs.showApiTimestamp()) {
-                    <span>API {{ arrival.apiArrivalTime }}</span>
-                  }
-                  @if (prefs.showDistance() && arrival.distance) {
-                    <span>{{ arrival.distance }}</span>
-                  }
+                <span class="col-text">
+                  <span class="col-destination">To {{ arrival.destNm }}</span>
+                  <span class="col-time">{{ arrival.countdown | timeuntil:'time' }}</span>
+                  <span class="col-meta">
+                    @if (prefs.showApiTimestamp()) {
+                      <span>API {{ arrival.apiArrivalTime }}</span>
+                    }
+                    @if (prefs.showDistance() && arrival.distance) {
+                      <span>{{ arrival.distance }}</span>
+                    }
+                  </span>
                 </span>
               </a>
             </li>

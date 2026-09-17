@@ -2,6 +2,11 @@
 .hero { display: block; text-decoration: none; color: inherit; padding: 12px; position: relative; overflow: hidden; }
 .hero > * + * { margin-top: 8px; }
 .hero .status-chip { display: inline-flex; }
+/* .col-time is a bare span, and the lobotomy above cannot give an inline box a top margin — so in
+   the hero the time has always sat tight under the destination, with only the meta spaced off it.
+   The .col-text wrapper makes the time a flex item, which would open a gap it never had. */
+.hero .col-text { gap: 0; }
+.hero .col-text .col-meta { margin-top: 8px; }
 
 .hero-countdown { height: 84px; border-radius: 18px; }
 .hero-countdown .countdown-value { font-size: 40px; }
@@ -62,5 +67,16 @@
 .skeleton-card .skeleton-line-destination { width: 70%; }
 .later .chip.skeleton-block { min-width: 56px; min-height: 44px; }
 
-/* Full width: an 84px-tall pill spanning 343px is a slab rather than a number. */
-.columns.single .hero-countdown { max-width: 200px; }
+/* One direction. The hero is a block with a margin-top lobotomy rather than a .col-link flex
+   column, so the shared row rule does not reach it. The number keeps its size — it is the whole
+   point of this style — and the text moves up beside it instead of sitting under a 343px slab. */
+.columns.single .hero {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  column-gap: 16px;
+}
+.columns.single .hero > * + * { margin-top: 0; }
+.columns.single .hero > .status-chip { flex-basis: 100%; margin-bottom: 8px; }
+.columns.single .hero-countdown { flex: 0 0 clamp(96px, 34%, 132px); max-width: none; }
+.columns.single .hero .col-text { flex: 1 1 0; }
