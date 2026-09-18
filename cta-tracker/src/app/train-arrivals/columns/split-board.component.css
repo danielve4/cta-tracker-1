@@ -1,3 +1,1 @@
-/* Everything Split Board needs is in columns-shared.css; only the full-width case differs.
-   A 343px slab of solid line colour per card is far louder than the same pill at column width. */
-.columns.single .col-countdown { max-width: 160px; }
+/* Everything Split Board needs is in columns-shared.css, the one-direction row included. */

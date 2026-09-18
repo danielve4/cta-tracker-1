@@ -13,6 +13,7 @@
   /* Clears the FABs, mirroring .arrivals-list:last-of-type. */
   padding-bottom: calc(56px + 24px);
 }
+/* One group takes the whole width; "One direction" below reflows the card to use it. */
 .columns.single { grid-template-columns: minmax(0, 1fr); }
 
 .column {
@@ -88,13 +89,18 @@
 .col-link {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  /* A custom property rather than a plain gap: .col-text has to match whatever the card sets, and
+     Spine Rails tightens it to 6px. Hardcoding 8px in both silently respaced its cards. */
+  gap: var(--card-gap, 8px);
   padding: 12px;
   text-decoration: none;
   color: inherit;
   position: relative;
   overflow: hidden;
 }
+/* The text half of a card, wrapped so the one-direction layout has something to set beside the
+   countdown. The gap matches .col-link's own, so at column width the wrapper changes nothing. */
+.col-text { display: flex; flex-direction: column; gap: var(--card-gap, 8px); min-width: 0; }
 
 /* ── Countdown pill ──
    Echoes the column's treatment, so the number alone says which direction it is. A status colour
@@ -172,6 +178,32 @@
 .status-icon { width: 12px; height: 12px; flex-shrink: 0; }
 .delayed { background: var(--pink-opacity); color: var(--pink); }
 .scheduled { background: var(--yellow-opacity); color: var(--yellow); }
+
+/* ── One direction ──
+   A terminal, a Loop stop, or a late-night gap leaves one group, and .columns.single hands it the
+   full width. The card was drawn for a 165px column though — stacked, left-aligned, its countdown
+   capped — so at 343px the right half of every card is empty. It becomes a row instead, countdown
+   beside the text: the shape Mirror Timeline's .single and the list layout's .arrival-content
+   already take. Departure Board's rows are a row to begin with and need none of this. */
+.columns.single .col-link {
+  flex-flow: row wrap;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 8px;
+  padding: 14px 16px;
+}
+/* A chip keeps a line to itself above the row rather than eating into the destination. */
+.columns.single .col-link > .status-chip { flex-basis: 100%; }
+.columns.single .col-countdown { flex: 0 0 72px; max-width: none; }
+.columns.single .col-text { flex: 1 1 0; gap: 4px; }
+/* The width is the list layout's now, so the type can be too, and a destination that needed two
+   clamped lines in a column fits on one. */
+.columns.single .col-destination { font-size: 15px; -webkit-line-clamp: 1; }
+.columns.single .col-time { font-size: 13px; }
+/* The meta stacks because 165px cannot hold "API 11:40 PM · ~0.3 mi" on one line — the reason the
+   column styles dropped the list's '·' separator. At full width it fits, so the row comes back. */
+.columns.single .col-meta { flex-direction: row; flex-wrap: wrap; gap: 2px 8px; font-size: 11px; }
+.columns.single .col-meta > span:not(:first-child)::before { content: '· '; }
 
 /* ── Skeleton and motion ── */
 .skeleton-card { pointer-events: none; display: flex; flex-direction: column; gap: 8px; padding: 12px; }

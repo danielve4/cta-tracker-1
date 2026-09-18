@@ -103,6 +103,14 @@ cta-tracker-1/
     timeline's two headers sit in one row rather than inside a per-direction column.
   - Reusing the shared `countdown-*` class names pulls in the pill background rules; a style that
     is not drawing a pill (the departure board's rows) needs its own names.
+  - A card's destination/time/meta sit in a `.col-text` wrapper so `.columns.single` can lay them
+    out beside the countdown. At a one-direction stop the group spans the screen, and without the
+    wrapper the card keeps its column-width stack and leaves the right half empty. A new style
+    should use the wrapper, and should set `--card-gap` rather than `gap` on `.col-link` so the
+    wrapper matches its spacing.
+  - Anything that exists because a column is narrow — a sub-340px media query, a hidden meta line —
+    belongs behind `:not(.single)`. At one direction the card has the full width, and those rules
+    otherwise undo the row.
   - Grouping and ordering are Angular-free and unit-tested in
     `train-arrivals/train-arrival-groups.ts`, along with `mergeTimeline`, `splitNextUp` and
     `shortDestination`. The two layouts order the same groups differently (A-Z for the list, CTA's

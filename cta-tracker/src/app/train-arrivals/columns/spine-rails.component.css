@@ -35,7 +35,7 @@
 .railed .countdown-value { font-size: 22px; }
 .railed .countdown-due .countdown-value { font-size: 16px; }
 .railed .col-destination { font-size: 12px; overflow-wrap: anywhere; }
-.railed .col-link { padding: 10px; gap: 6px; }
+.railed .col-link { padding: 10px; --card-gap: 6px; }
 
 /* The subgrid rule that levels header pills has nothing to level here — there is no header row —
    and it would put the rail and the cards in separate rows rather than side by side. */
@@ -47,8 +47,9 @@
 .columns:not(.single) { align-items: start; }
 .columns.single .railed { grid-template-columns: 28px minmax(0, 1fr); }
 
-/* At 320px a card is 102px wide before its 20px of padding. The meta is the first thing to go. */
+/* At 320px a card is 102px wide before its 20px of padding. The meta is the first thing to go —
+   but only in a column: at one direction the card has the whole width and the room for it. */
 @media (max-width: 340px) {
-  .railed .col-meta { display: none; }
+  .columns:not(.single) .railed .col-meta { display: none; }
   .railed .countdown-value { font-size: 20px; }
 }

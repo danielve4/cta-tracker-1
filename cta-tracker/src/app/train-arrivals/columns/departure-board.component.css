@@ -77,7 +77,7 @@
    instead — on a board where every figure is minutes, the bare number still reads as minutes, and
    the destination ellipsises the way a real platform sign abbreviates. */
 @media (max-width: 340px) {
-  .row-eta-unit { display: none; }
-  .row-eta-value { font-size: 16px; }
-  .row-eta.eta-due .row-eta-value { font-size: 13px; }
+  .columns:not(.single) .row-eta-unit { display: none; }
+  .columns:not(.single) .row-eta-value { font-size: 16px; }
+  .columns:not(.single) .row-eta.eta-due .row-eta-value { font-size: 13px; }
 }

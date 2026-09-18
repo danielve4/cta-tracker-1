@@ -85,6 +85,10 @@
 .timeline.single .timeline-card { flex-direction: row; }
 .timeline.single .timeline-rows::before { left: 14px; }
 .timeline.single .timeline-text { text-align: left; align-items: flex-start; }
+/* The same room the other styles get at one direction, and this wrapper is .timeline.single
+   rather than .columns.single, so the shared rule does not reach it. */
+.timeline.single .col-meta { flex-direction: row; flex-wrap: wrap; gap: 2px 8px; }
+.timeline.single .col-meta > span:not(:first-child)::before { content: '· '; }
 
 .skeleton-spine::before { background: color-mix(in srgb, var(--text-tertiary) 20%, transparent); }
 .skeleton-spine .spine-dot { border-color: color-mix(in srgb, var(--text-tertiary) 20%, transparent); }
@@ -98,11 +102,14 @@
    whole card. The card still sits on its own side of the spine, so the side still tells you the
    direction; only the pill stops touching the spine. The clock time goes too — the countdown
    directly above it already says the same thing. */
+/* Under 340px a card in a two-direction timeline is ~136px wide, too narrow to keep the pill and
+   the text side by side. Every rule here is a concession to that width, so none of them applies at
+   one direction, where the card spans the screen and the row is the whole point. */
 @media (max-width: 340px) {
-  .timeline .col-time { display: none; }
-  .timeline-card,
-  .timeline-row.left .timeline-card { flex-direction: column; align-items: stretch; }
-  .timeline-card .col-countdown { width: 100%; height: 44px; }
-  .timeline-card .countdown-value { font-size: 18px; }
-  .timeline-card .countdown-due .countdown-value { font-size: 14px; }
+  .timeline:not(.single) .col-time { display: none; }
+  .timeline:not(.single) .timeline-card,
+  .timeline:not(.single) .timeline-row.left .timeline-card { flex-direction: column; align-items: stretch; }
+  .timeline:not(.single) .timeline-card .col-countdown { width: 100%; height: 44px; }
+  .timeline:not(.single) .timeline-card .countdown-value { font-size: 18px; }
+  .timeline:not(.single) .timeline-card .countdown-due .countdown-value { font-size: 14px; }
 }
