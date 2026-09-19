@@ -5,7 +5,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 
 import { routes } from './app.routes';
 import { ThemeService } from './services/theme.service';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideClientHydration, withEventReplay, withIncrementalHydration } from '@angular/platform-browser';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -19,6 +19,6 @@ export const appConfig: ApplicationConfig = {
     provideAppInitializer(() => {
       inject(ThemeService);
     }),
-    provideClientHydration(withEventReplay())
+    provideClientHydration(withEventReplay(), withIncrementalHydration())
   ]
 };
