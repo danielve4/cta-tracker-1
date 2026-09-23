@@ -26,6 +26,7 @@ export interface ArrivalGroup {
  * `'label'` is the list layout's alphabetical order. `'columns'` needs `'direction'`: the column a
  * direction lands in has to be the same at every station on a line, and alphabetical order flips
  * left and right between lines (Red's "95th/Dan Ryan-bound" sorts first, Blue's does not).
+ * A rider can swap the two sides per line; see `groupTrainArrivals`.
  */
 export type GroupOrder = 'label' | 'direction';
 
@@ -41,10 +42,15 @@ export function directionSortKey(trDr: string): number {
  * Groups arrivals by route and direction, preserving the API's order within each group (which is
  * soonest-first). The label comes from TRAIN_DIRECTION_MAP, falling back to the API's own stop
  * description for a route the map does not know.
+ *
+ * `swapped` puts trDr '5' before '1' under `'direction'`, for a rider who has flipped this line's
+ * columns. It is applied in the sort rather than by reversing the result, so an unknown direction
+ * still sorts last. The list layout's `'label'` order ignores it.
  */
 export function groupTrainArrivals(
   arrivals: TrainArrivalDisplay[],
-  order: GroupOrder
+  order: GroupOrder,
+  swapped = false
 ): ArrivalGroup[] {
   const groupMap = new Map<string, ArrivalGroup>();
   for (const arrival of arrivals) {
@@ -63,8 +69,12 @@ export function groupTrainArrivals(
   }
 
   const groups = Array.from(groupMap.values());
+  const rank = (trDr: string) => {
+    const key = directionSortKey(trDr);
+    return swapped && key !== Number.MAX_SAFE_INTEGER ? -key : key;
+  };
   return order === 'direction'
-    ? groups.sort((a, b) => directionSortKey(a.trDr) - directionSortKey(b.trDr))
+    ? groups.sort((a, b) => rank(a.trDr) - rank(b.trDr))
     : groups.sort((a, b) => a.directionLabel.localeCompare(b.directionLabel));
 }
 

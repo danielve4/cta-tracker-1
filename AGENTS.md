@@ -89,7 +89,8 @@ cta-tracker-1/
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
 - **Train arrivals layout**: The train arrivals screen renders either a stacked list (the default)
   or side-by-side direction columns, chosen in Settings and stored under `train-arrivals-layout`,
-  with one of six column styles under `train-arrivals-column-style`. The list markup stays in the
+  with one of six column styles under `train-arrivals-column-style`. A Swap chip in the stop
+  header flips a line's two columns, stored per line under `train-arrivals-swapped-lines`. The list markup stays in the
   parent template; everything else lives in `train-arrivals/columns/`, where
   `train-arrival-columns.component` switches on the style and each style is its own standalone
   component extending `ColumnVariantBase` and listing `columns-shared.css` first in `styleUrls`.

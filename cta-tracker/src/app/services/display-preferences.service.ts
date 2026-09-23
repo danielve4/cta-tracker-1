@@ -2,12 +2,13 @@ import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
   ArrivalsLayout, ColumnStyle, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE,
-  TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, parseArrivalsLayout, parseColumnStyle
+  TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY,
+  parseArrivalsLayout, parseColumnStyle, parseSwappedLines
 } from './arrivals-layout';
 
 export const SHOW_API_TIMESTAMP_KEY = 'show-api-timestamp';
 export const SHOW_DISTANCE_KEY = 'show-distance';
-export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY };
+export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY };
 export type { ArrivalsLayout, ColumnStyle };
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +20,8 @@ export class DisplayPreferencesService {
   readonly showDistance = signal<boolean>(this.load(SHOW_DISTANCE_KEY));
   readonly arrivalsLayout = signal<ArrivalsLayout>(this.loadLayout());
   readonly columnStyle = signal<ColumnStyle>(this.loadColumnStyle());
+  /** Route ids whose columns show trDr '5' on the left instead of '1'. */
+  readonly swappedLines = signal<ReadonlySet<string>>(this.loadSwappedLines());
 
   setShowApiTimestamp(show: boolean): void {
     this.showApiTimestamp.set(show);
@@ -50,6 +53,19 @@ export class DisplayPreferencesService {
   setColumnStyle(style: ColumnStyle): void {
     this.columnStyle.set(style);
     this.storeString(TRAIN_ARRIVALS_COLUMN_STYLE_KEY, style);
+  }
+
+  isLineSwapped(route: string): boolean {
+    return this.swappedLines().has(route);
+  }
+
+  toggleLineSwapped(route: string): void {
+    const next = new Set(this.swappedLines());
+    if (!next.delete(route)) {
+      next.add(route);
+    }
+    this.swappedLines.set(next);
+    this.storeString(TRAIN_ARRIVALS_SWAPPED_LINES_KEY, JSON.stringify([...next]));
   }
 
   private store(key: string, show: boolean): void {
@@ -86,5 +102,12 @@ export class DisplayPreferencesService {
       return DEFAULT_COLUMN_STYLE;
     }
     return parseColumnStyle(localStorage.getItem(TRAIN_ARRIVALS_COLUMN_STYLE_KEY));
+  }
+
+  private loadSwappedLines(): ReadonlySet<string> {
+    if (!this.isBrowser) {
+      return new Set();
+    }
+    return parseSwappedLines(localStorage.getItem(TRAIN_ARRIVALS_SWAPPED_LINES_KEY));
   }
 }
