@@ -93,14 +93,21 @@ export class TrainArrivalsComponent {
 
       // Read inside the callback so flipping the setting re-orders the groups live: the column
       // layout needs a direction on the same side at every station, the list keeps its A-Z order.
+      // The swap is per line, so it holds at every station on this line and no other.
       const order = this.prefs.arrivalsLayout() === 'columns' ? 'direction' : 'label';
-      return { groups: groupTrainArrivals(displays, order), error: undefined };
+      const swapped = order === 'direction' && this.prefs.isLineSwapped(this.routeId());
+      return { groups: groupTrainArrivals(displays, order, swapped), error: undefined };
     }
     return { groups: null, error: 'No arrivals found' };
   });
 
   arrivalGroups = computed(() => this.processed().groups);
   errorMsg = computed(() => this.processed().error);
+
+  /** Only two columns can trade places; a single direction already spans the full width. */
+  canSwap = computed(() =>
+    this.prefs.arrivalsLayout() === 'columns' && this.arrivalGroups()?.length === 2);
+  isSwapped = computed(() => this.prefs.isLineSwapped(this.routeId()));
 
   isInitialLoading = computed(() => this.arrivalsResource.status() === 'loading');
   refreshing = computed(() => this.arrivalsResource.isLoading());
@@ -143,6 +150,10 @@ export class TrainArrivalsComponent {
     // doesn't distinguish from a screen left open in a pocket.
     this.tracker.noteRefresh();
     this.arrivalsResource.reload();
+  }
+
+  swapColumns(): void {
+    this.prefs.toggleLineSwapped(this.routeId());
   }
 
   private lineColorFor(rt: string): string {

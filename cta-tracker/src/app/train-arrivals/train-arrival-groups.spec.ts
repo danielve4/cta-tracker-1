@@ -100,6 +100,34 @@ describe('groupTrainArrivals', () => {
     expect(groups.map(group => group.trDr)).toEqual(['1', '5', '']);
   });
 
+  it("puts trDr 5 before trDr 1 under 'direction' when the line is swapped", () => {
+    const groups = groupTrainArrivals([
+      eta({ rt: 'Blue', trDr: '1' }),
+      eta({ rt: 'Blue', trDr: '5' })
+    ], 'direction', true);
+
+    expect(labels(groups)).toEqual(['Forest Park-bound', "O'Hare-bound"]);
+  });
+
+  it('still sorts an unknown direction last when swapped', () => {
+    const groups = groupTrainArrivals([
+      eta({ rt: 'G', trDr: '', stpDe: 'A yard move' }),
+      eta({ rt: 'G', trDr: '1' }),
+      eta({ rt: 'G', trDr: '5' })
+    ], 'direction', true);
+
+    expect(groups.map(group => group.trDr)).toEqual(['5', '1', '']);
+  });
+
+  it("ignores the swap under 'label'", () => {
+    const groups = groupTrainArrivals([
+      eta({ rt: 'Red', trDr: '1' }),
+      eta({ rt: 'Red', trDr: '5' })
+    ], 'label', true);
+
+    expect(labels(groups)).toEqual(['95th/Dan Ryan-bound', 'Howard-bound']);
+  });
+
   it("keeps the alphabetical order the list layout already has under 'label'", () => {
     const groups = groupTrainArrivals([
       eta({ rt: 'Red', trDr: '1' }),
@@ -168,6 +196,16 @@ describe('mergeTimeline', () => {
 
     expect(rows.map(row => row.arrival.rn)).toEqual(['801', '803', '802', '804']);
     expect(rows.map(row => row.side)).toEqual(['left', 'right', 'left', 'right']);
+  });
+
+  it('puts a swapped line\'s trDr 5 on the left', () => {
+    const groups = groupTrainArrivals([
+      eta({ rt: 'Blue', trDr: '1', rn: '101', arrivalEpochMs: at(2) }),
+      eta({ rt: 'Blue', trDr: '5', rn: '102', arrivalEpochMs: at(5) })
+    ], 'direction', true);
+
+    const rows = mergeTimeline(groups);
+    expect(rows.map(row => [row.arrival.trDr, row.side])).toEqual([['1', 'right'], ['5', 'left']]);
   });
 
   it('sorts arrivals with no readable time last, not first', () => {

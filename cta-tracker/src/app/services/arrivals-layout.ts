@@ -7,6 +7,8 @@
 
 export const TRAIN_ARRIVALS_LAYOUT_KEY = 'train-arrivals-layout';
 export const TRAIN_ARRIVALS_COLUMN_STYLE_KEY = 'train-arrivals-column-style';
+/** The lines whose two columns the rider has swapped, as a JSON array of route ids. */
+export const TRAIN_ARRIVALS_SWAPPED_LINES_KEY = 'train-arrivals-swapped-lines';
 
 /** `'list'` is today's stacked cards; `'columns'` puts each direction in its own column. */
 export type ArrivalsLayout = 'list' | 'columns';
@@ -43,4 +45,22 @@ export function parseColumnStyle(raw: string | null | undefined): ColumnStyle {
   return COLUMN_STYLES.some(style => style.id === raw)
     ? raw as ColumnStyle
     : DEFAULT_COLUMN_STYLE;
+}
+
+/**
+ * Only a JSON array counts, and only its string entries: a corrupt value swaps nothing, so every
+ * line falls back to the default `'1'`-left order.
+ */
+export function parseSwappedLines(raw: string | null | undefined): ReadonlySet<string> {
+  if (!raw) {
+    return new Set();
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? new Set(parsed.filter((route): route is string => typeof route === 'string'))
+      : new Set();
+  } catch {
+    return new Set();
+  }
 }

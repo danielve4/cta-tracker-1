@@ -1,8 +1,22 @@
 <div class="stop-header cols-4">
   <h2>{{ stationName() }}</h2>
-  @if (lastRefreshed(); as lastRefreshed) {
-    <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
-  }
+  <div class="stop-subheader">
+    @if (lastRefreshed(); as lastRefreshed) {
+      <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
+    }
+    @if (canSwap()) {
+      <button class="swap-columns" type="button" (click)="swapColumns()"
+              [attr.aria-pressed]="isSwapped()" aria-label="Swap direction columns">
+        <svg class="swap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="17 3 21 7 17 11"></polyline>
+          <line x1="21" y1="7" x2="3" y2="7"></line>
+          <polyline points="7 21 3 17 7 13"></polyline>
+          <line x1="3" y1="17" x2="21" y2="17"></line>
+        </svg>
+        Swap
+      </button>
+    }
+  </div>
 </div>
 @defer (on idle) {
   @if (isInitialLoading()) {

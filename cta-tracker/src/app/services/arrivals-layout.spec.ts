@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, parseArrivalsLayout, parseColumnStyle
+  COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, parseArrivalsLayout, parseColumnStyle,
+  parseSwappedLines
 } from './arrivals-layout';
 
 describe('parseArrivalsLayout', () => {
@@ -47,5 +48,28 @@ describe('parseColumnStyle', () => {
     // A value written by a build that offered a style this one does not.
     expect(parseColumnStyle('departure-board-v2')).toBe(DEFAULT_COLUMN_STYLE);
     expect(parseColumnStyle('Split-Board')).toBe(DEFAULT_COLUMN_STYLE);
+  });
+});
+
+describe('parseSwappedLines', () => {
+  it('round-trips a stored array of route ids', () => {
+    expect([...parseSwappedLines(JSON.stringify(['Blue', 'Red']))]).toEqual(['Blue', 'Red']);
+  });
+
+  it('swaps nothing when nothing is stored', () => {
+    expect(parseSwappedLines(null).size).toBe(0);
+    expect(parseSwappedLines(undefined).size).toBe(0);
+    expect(parseSwappedLines('').size).toBe(0);
+  });
+
+  it('swaps nothing for a value that is not a JSON array', () => {
+    expect(parseSwappedLines('Blue').size).toBe(0);
+    expect(parseSwappedLines('"Blue"').size).toBe(0);
+    expect(parseSwappedLines('{"Blue":true}').size).toBe(0);
+    expect(parseSwappedLines('[Blue').size).toBe(0);
+  });
+
+  it('keeps only the string entries of a mixed array', () => {
+    expect([...parseSwappedLines('["Blue", 1, null, {"rt":"Red"}, "G"]')]).toEqual(['Blue', 'G']);
   });
 });
