@@ -1,8 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
+import {
+  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, afterNextRender, computed, inject, signal
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TimeuntilPipe } from '../../timeuntil.pipe';
 import {
-  STRIP_WINDOW_MIN, TRACK_STATION_PERCENT, hasMixedDestinations, minutesAway, placeName, trackPercent
+  STRIP_WINDOW_MIN, TRACK_STATION_PERCENT, assignLanes, hasMixedDestinations, minutesAway, placeName,
+  trackPercent
 } from '../arrival-visuals';
 import { ColumnVariantBase } from '../columns/column-variant.base';
 import { ArrivalGroup, TrainArrivalDisplay } from '../train-arrival-groups';
@@ -11,8 +14,8 @@ interface TrackMarker {
   arrival: TrainArrivalDisplay;
   group: ArrivalGroup;
   percent: number;
-  /** Markers alternate above and below the line so neighbours on the same side do not collide. */
-  above: boolean;
+  /** 0 and 2 above the line, 1 and 3 below; see `assignLanes`. */
+  lane: number;
   /** The destination's initial, on a direction whose trains split between two destinations. */
   tag: string;
 }
@@ -28,6 +31,17 @@ interface Track {
 }
 
 const SCALE_MINUTES = [10, 20, STRIP_WINDOW_MIN];
+
+/** The track's width before it has been measured: the most common phone width. */
+const DEFAULT_TRACK_WIDTH = 375;
+
+/**
+ * A pill's rendered width, estimated from its text rather than measured, so lanes can be assigned
+ * in the same pass that places them. Errs wide: an estimate that is too small lets pills touch.
+ */
+function pillWidthPx(label: string): number {
+  return label.length * 8.5 + 18;
+}
 
 /**
  * A layout rather than a column style: the line itself, drawn edge to edge, with the station as a
@@ -45,6 +59,21 @@ const SCALE_MINUTES = [10, 20, STRIP_WINDOW_MIN];
   imports: [RouterLink, TimeuntilPipe]
 })
 export class ApproachComponent extends ColumnVariantBase {
+  /** The track runs edge to edge, so its width is the host's plus the page padding it breaks out of. */
+  private readonly trackWidth = signal(DEFAULT_TRACK_WIDTH);
+
+  constructor() {
+    super();
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    const destroyRef = inject(DestroyRef);
+    // Browser-only: ResizeObserver does not exist during prerendering.
+    afterNextRender(() => {
+      const observer = new ResizeObserver(([entry]) => this.trackWidth.set(entry.contentRect.width + 32));
+      observer.observe(host);
+      destroyRef.onDestroy(() => observer.disconnect());
+    });
+  }
+
   readonly track = computed<Track | null>(() => {
     const groups = this.groups();
     if (!groups?.length) {
@@ -62,43 +91,57 @@ export class ApproachComponent extends ColumnVariantBase {
       }
     }
 
+    const placed: Omit<TrackMarker, 'lane'>[] = [];
     groups.slice(0, 2).forEach((group, index) => {
       const mixed = hasMixedDestinations(group.arrivals);
-      let placed = 0;
       for (const arrival of group.arrivals) {
         const minutes = minutesAway(arrival.countdown);
-        if (minutes === null) {
+        // A due train sits on the station ring; an unreadable one has nowhere to go.
+        if (minutes === null || minutes === 0) {
           continue;
         }
-        if (minutes === 0) {
-          continue;
-        }
-        markers.push({
+        placed.push({
           arrival,
           group,
           percent: trackPercent(minutes, sideFor(index)),
-          // A due train's pill sits above the station, so each side's nearest train starts below.
-          above: placed++ % 2 === (due ? 1 : 0),
           tag: mixed ? arrival.destNm.charAt(0).toUpperCase() : ''
         });
       }
     });
 
+    const width = this.trackWidth();
+    const widthPercent = (label: string) => pillWidthPx(label) / width * 100;
+    const station = single ? TRACK_STATION_PERCENT.single : TRACK_STATION_PERCENT.double;
+    const lanes = assignLanes(
+      placed.map(marker => ({
+        percent: marker.percent,
+        widthPercent: widthPercent(this.pillText(marker.arrival, marker.tag))
+      })),
+      // The Due pill sits over the station in the nearest lane above; the others keep clear of it.
+      due ? [{ percent: station, widthPercent: widthPercent('Due'), lane: 0 }] : []
+    );
+    markers.push(...placed.map((marker, i) => ({ ...marker, lane: lanes[i] })));
+
     const sides = single ? ['single' as const] : ['left' as const, 'right' as const];
     return {
-      station: single ? TRACK_STATION_PERCENT.single : TRACK_STATION_PERCENT.double,
+      station,
       single,
       markers,
       due,
       scale: sides.flatMap(side => SCALE_MINUTES.map(minutes => ({ minutes, percent: trackPercent(minutes, side) }))),
       ends: single
-        ? [{ label: `${groups[0].directionLabel} →`, side: 'left' }]
+        ? [{ label: groups[0].directionLabel, side: 'left' }]
         : [
-            { label: `← ${placeName(groups[0].directionLabel)}`, side: 'left' },
-            { label: `${placeName(groups[1].directionLabel)} →`, side: 'right' }
+            { label: placeName(groups[0].directionLabel), side: 'left' },
+            { label: placeName(groups[1].directionLabel), side: 'right' }
           ]
     };
   });
+
+  /** What a pill says, which is also what its width is estimated from. */
+  pillText(arrival: TrainArrivalDisplay, tag: string): string {
+    return `${arrival.countdown}m${tag ? ' ' + tag : ''}`;
+  }
 
   readonly mixedByGroup = computed(() =>
     new Map((this.groups() ?? []).map(group => [group.key, hasMixedDestinations(group.arrivals)])));

@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { DisplayPreferencesService } from '../../services/display-preferences.service';
 import { ArrivalGroup } from '../train-arrival-groups';
+import { FlipClockComponent } from './flip-clock.component';
 import { HeadwayComponent } from './headway.component';
 import { PlatformLedComponent } from './platform-led.component';
 import { PocketLcdComponent } from './pocket-lcd.component';
-import { SentenceComponent } from './sentence.component';
 import { SolariComponent } from './solari.component';
 import { TypographicComponent } from './typographic.component';
 
@@ -19,7 +19,7 @@ import { TypographicComponent } from './typographic.component';
   selector: 'app-train-arrival-columns',
   templateUrl: './train-arrival-columns.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [HeadwayComponent, PlatformLedComponent, PocketLcdComponent, SentenceComponent, SolariComponent, TypographicComponent]
+  imports: [FlipClockComponent, HeadwayComponent, PlatformLedComponent, PocketLcdComponent, SolariComponent, TypographicComponent]
 })
 export class TrainArrivalColumnsComponent {
   protected readonly prefs = inject(DisplayPreferencesService);

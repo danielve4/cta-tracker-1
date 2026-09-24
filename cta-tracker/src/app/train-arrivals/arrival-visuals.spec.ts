@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  STRIP_WINDOW_MIN, TRACK_STATION_PERCENT, WIDE_GAP_MIN, clock24, hasMixedDestinations, headwayBefore,
-  headwayStrip, listSeparator, litSegments, minutesAway, placeName, readoutChars, snakeLabel, stripPercent,
+  STRIP_WINDOW_MIN, TRACK_LANES, assignLanes, TRACK_STATION_PERCENT, WIDE_GAP_MIN, clock24, hasMixedDestinations, headwayBefore,
+  headwayStrip, flipChars, litSegments, minutesAway, placeName, readoutChars, snakeLabel, stripPercent,
   trackPercent
 } from './arrival-visuals';
 import { TrainArrivalDisplay } from './train-arrival-groups';
@@ -172,11 +172,57 @@ describe('labels', () => {
     expect(hasMixedDestinations([eta('1'), eta('7')])).toBe(false);
     expect(hasMixedDestinations([])).toBe(false);
   });
+});
 
-  it('writes a list the way a sentence would', () => {
-    const joined = (items: string[]) => items.map((item, i) => item + listSeparator(i, items.length)).join('');
-    expect(joined(['9'])).toBe('9');
-    expect(joined(['9', '15'])).toBe('9 and 15');
-    expect(joined(['9', '15', '23'])).toBe('9, 15 and 23');
+describe('assignLanes', () => {
+  const pill = (percent: number, widthPercent = 14) => ({ percent, widthPercent });
+
+  it('keeps trains that are far apart in the lane nearest the line', () => {
+    expect(assignLanes([pill(10), pill(40), pill(70)])).toEqual([0, 0, 0]);
+  });
+
+  it('puts two close trains, like 20 and 22 minutes, in different lanes', () => {
+    const [a, b] = assignLanes([pill(trackPercent(20, 'right')), pill(trackPercent(22, 'right'))]);
+    expect(a).not.toBe(b);
+  });
+
+  it('uses every lane before doubling up', () => {
+    const lanes = assignLanes([pill(50), pill(51), pill(52), pill(53)]);
+    expect(new Set(lanes).size).toBe(TRACK_LANES);
+  });
+
+  it('doubles up where the overlap is smallest once every lane is taken', () => {
+    const lanes = assignLanes([pill(40), pill(50), pill(51), pill(52), pill(60)]);
+    // 40 and 60 overlap each other less than anything near 50, so they end up sharing a lane.
+    expect(lanes[0]).toBe(lanes[4]);
+  });
+
+  it('works left to right whatever order the items come in', () => {
+    expect(assignLanes([pill(52), pill(50)])).toEqual([1, 0]);
+  });
+
+  it('keeps clear of a seeded pill', () => {
+    const [lane] = assignLanes([pill(52)], [{ ...pill(50), lane: 0 }]);
+    expect(lane).toBe(1);
+  });
+
+  it('ignores a seed that does not overlap', () => {
+    expect(assignLanes([pill(80)], [{ ...pill(50), lane: 0 }])).toEqual([0]);
+  });
+});
+
+describe('flipChars', () => {
+  it('keeps two cards for minutes, blank in front of a single digit', () => {
+    expect(flipChars('4')).toEqual([' ', '4']);
+    expect(flipChars('17')).toEqual(['1', '7']);
+  });
+
+  it('spells DUE across three cards and caps at 99', () => {
+    expect(flipChars('DUE')).toEqual(['D', 'U', 'E']);
+    expect(flipChars('120')).toEqual(['9', '9']);
+  });
+
+  it('shows dashes for a countdown it cannot read', () => {
+    expect(flipChars('--')).toEqual(['-', '-']);
   });
 });

@@ -56,7 +56,7 @@ describe('parseColumnStyle', () => {
   });
 
   it('sends a style from an earlier build to the default', () => {
-    for (const retired of ['split-board', 'mirror-timeline', 'departure-board', 'next-up', 'spine-rails', 'inverted-cards']) {
+    for (const retired of ['split-board', 'mirror-timeline', 'departure-board', 'next-up', 'spine-rails', 'inverted-cards', 'sentence']) {
       expect(parseColumnStyle(retired)).toBe(DEFAULT_COLUMN_STYLE);
     }
   });

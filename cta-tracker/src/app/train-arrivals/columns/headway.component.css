@@ -51,7 +51,8 @@
 .hw-hero[data-status="scheduled"] .hw-box { color: var(--status-scheduled); }
 
 /* ── The strip: NOW to +30, a tick per train, the headway under each gap ── */
-.hw-strip { position: relative; height: 58px; margin: 22px 6px 0; font-family: var(--mono-font); }
+/* The top margin leaves room for a second row of tick labels, for trains too close to label on one. */
+.hw-strip { position: relative; height: 58px; margin: 32px 6px 0; font-family: var(--mono-font); }
 .hw-strip::before {
   content: '';
   position: absolute;
@@ -74,6 +75,17 @@
   font-weight: 700;
   color: var(--text-primary);
 }
+/* The second row, on a hairline stem down to its tick. */
+.hw-tick[data-lane="1"] .hw-tick-label { top: -26px; }
+.hw-tick[data-lane="1"]::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: -14px;
+  width: 1px;
+  height: 14px;
+  background: color-mix(in srgb, var(--text-tertiary) 60%, transparent);
+}
 .hw-gap { position: absolute; top: 30px; height: 12px; }
 .hw-gap-label { position: absolute; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--text-tertiary); white-space: nowrap; }
 /* A long gap is hatched across the line, so a long wait is the first thing seen. */
@@ -95,7 +107,7 @@
 .hw-table-head,
 .hw-row {
   display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: baseline;
   column-gap: 8px;
 }
@@ -104,20 +116,22 @@
   padding: 5px 0;
   border-block: 1px solid var(--card-border);
   font-family: var(--mono-font);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--text-tertiary);
 }
-.hw-row { padding: 8px 0; border-bottom: 1px solid var(--card-border); }
-.hw-row-eta { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.hw-row-arr { font-family: var(--mono-font); font-size: 10px; color: var(--text-tertiary); }
-.hw-row-gap { font-family: var(--mono-font); font-size: 10px; color: var(--text-secondary); text-align: right; }
+/* The table's type matches Solari's board rows: at 17px/10px the three columns sat far apart
+   in a 165px column with nothing between them. */
+.hw-row { padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.hw-row-eta { font-size: 26px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.hw-row-arr { font-family: var(--mono-font); font-size: 13px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.hw-row-gap { font-family: var(--mono-font); font-size: 13px; color: var(--text-secondary); text-align: right; }
 .hw-row-gap.wide { color: var(--text-primary); font-weight: 800; }
 .hw-row-alt {
   grid-column: 1 / -1;
-  margin-top: 3px;
+  margin-top: 4px;
   font-family: var(--mono-font);
-  font-size: 9.5px;
+  font-size: 11px;
   text-transform: uppercase;
   color: var(--text-secondary);
 }

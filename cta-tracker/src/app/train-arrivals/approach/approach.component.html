@@ -30,8 +30,7 @@
       @for (marker of track.markers; track marker.arrival.rn + marker.arrival.stpId) {
         <span class="train-dot" [attr.data-status]="statusOf(marker.arrival)" [style.left.%]="marker.percent" aria-hidden="true"></span>
         <a class="train-pill"
-           [class.above]="marker.above"
-           [class.below]="!marker.above"
+           [attr.data-lane]="marker.lane"
            [attr.data-status]="statusOf(marker.arrival)"
            [attr.aria-label]="arrivalLabel(marker.group, marker.arrival)"
            [style.left.%]="marker.percent"
@@ -40,7 +39,8 @@
       }
       <span class="station" [class.due]="!!track.due" [style.left.%]="track.station" aria-hidden="true"></span>
       @if (track.due; as due) {
-        <a class="train-pill above"
+        <a class="train-pill"
+           data-lane="0"
            data-status="due"
            [attr.aria-label]="arrivalLabel(due.group, due.arrival)"
            [style.left.%]="track.station"

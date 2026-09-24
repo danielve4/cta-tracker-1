@@ -1,8 +1,8 @@
-/* ── The track: edge to edge, 172px tall, the line through the middle ── */
+/* ── The track: edge to edge, the line through the middle, two lanes of pills each side ── */
 .track {
-  --track-y: 86px;
+  --track-y: 118px;
   position: relative;
-  height: 172px;
+  height: 236px;
   margin-inline: -16px;
   overflow: hidden;
   background: color-mix(in srgb, var(--col-color) 7%, transparent);
@@ -69,13 +69,28 @@
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
 }
-/* The tap target reaches past the pill's edges without growing the pill. */
-.train-pill::before { content: ''; position: absolute; inset: -8px -4px; }
-.train-pill::after { content: ''; position: absolute; left: 50%; width: 2px; height: 8px; margin-left: -1px; background: var(--stem); }
-.train-pill.above { bottom: calc(100% - var(--track-y) + 14px); }
-.train-pill.below { top: calc(var(--track-y) + 14px); }
-.train-pill.above::after { top: 100%; }
-.train-pill.below::after { bottom: 100%; }
+/* The tap target reaches past the pill's edges without growing the pill; not so far that it
+   covers a pill in the next lane, 8px away. */
+.train-pill::before { content: ''; position: absolute; inset: -4px; }
+.train-pill::after { content: ''; position: absolute; left: 50%; width: 2px; margin-left: -1px; background: var(--stem); }
+/* Lanes 0 and 1 sit just above and below the line; 2 and 3 a pill's height further out, on
+   longer stems. See assignLanes. */
+.train-pill[data-lane="0"],
+.train-pill[data-lane="2"] { bottom: calc(100% - var(--track-y) + var(--lift)); }
+.train-pill[data-lane="1"],
+.train-pill[data-lane="3"] { top: calc(var(--track-y) + var(--lift)); }
+.train-pill[data-lane="0"],
+.train-pill[data-lane="1"] { --lift: 14px; }
+.train-pill[data-lane="2"],
+.train-pill[data-lane="3"] { --lift: 50px; }
+/* A far pill's long stem passes the near lane; the near pills paint over it. */
+.train-pill[data-lane="0"],
+.train-pill[data-lane="1"] { z-index: 4; }
+.train-pill::after { height: calc(var(--lift) - 6px); }
+.train-pill[data-lane="0"]::after,
+.train-pill[data-lane="2"]::after { top: 100%; }
+.train-pill[data-lane="1"]::after,
+.train-pill[data-lane="3"]::after { bottom: 100%; }
 .train-pill small { margin-left: 1px; font-size: 10px; font-weight: 600; opacity: 0.85; }
 .train-pill .pill-tag { margin-left: 4px; }
 .train-pill[data-status="delayed"] { --stem: var(--pink); background: var(--pink); color: #fff; }

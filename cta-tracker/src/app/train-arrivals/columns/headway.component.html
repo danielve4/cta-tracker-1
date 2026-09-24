@@ -48,12 +48,14 @@
           <div class="hw-strip" aria-hidden="true">
             @for (gap of panel.gaps; track $index) {
               <span class="hw-gap" [class.wide]="gap.wide" [style.left.%]="gap.left" [style.width.%]="gap.width">
-                <span class="hw-gap-label">{{ gap.wide ? 'GAP ' : '' }}+{{ gap.minutes }}</span>
+                @if (gap.labelled) {
+                  <span class="hw-gap-label">{{ gapLabel(gap) }}</span>
+                }
               </span>
             }
             @for (tick of panel.ticks; track tick.arrival.rn + tick.arrival.stpId) {
-              <span class="hw-tick" [attr.data-status]="statusOf(tick.arrival)" [style.left.%]="tick.percent">
-                <span class="hw-tick-label">{{ tick.overflow ? '▸' : tick.minutes }}</span>
+              <span class="hw-tick" [attr.data-status]="statusOf(tick.arrival)" [attr.data-lane]="tick.lane" [style.left.%]="tick.percent">
+                <span class="hw-tick-label">{{ tickLabel(tick) }}</span>
               </span>
             }
             <span class="hw-axis hw-axis-start">NOW</span>

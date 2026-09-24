@@ -1,14 +1,16 @@
-.columns { column-gap: 12px; }
+/* One watch strip per direction, stacked. Side by side, each glass was half the width and the
+   later trains wrapped into a tall panel that left the rest of the screen empty. */
+.lcd-stack { display: flex; flex-direction: column; gap: 12px; transition: opacity var(--duration-medium) var(--ease-standard); }
+.lcd-stack.refreshing { opacity: 0.72; }
 
-/* The bezel is split across the header and body rows so the shared subgrid still levels the
-   labels; the two halves meet with no gap between them. */
-.lcd-bezel-top {
+.lcd-strip { padding: 0 7px 8px; border-radius: 14px; background: #26262a; }
+
+/* The direction, printed on the bezel the way a watch prints its model name. */
+.lcd-label {
   display: flex;
   align-items: flex-start;
   gap: 7px;
-  padding: 10px 11px 7px;
-  border-radius: 14px 14px 0 0;
-  background: #26262a;
+  padding: 10px 4px 7px;
   color: #ececec;
   font-size: 9.5px;
   font-weight: 800;
@@ -17,22 +19,19 @@
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
-/* The line colour, printed on the bezel the way a watch prints its model name in colour. */
+/* The line colour: filled for one direction, hollow for the other. */
 .lcd-stripe { flex: 0 0 14px; height: 4px; margin-top: 4px; border-radius: 1px; background: var(--col-color); }
 .outline .lcd-stripe { background: transparent; box-shadow: inset 0 0 0 1.5px var(--col-color); }
 
-/* Stretch, unlike the other styles' bodies, so both glasses end level. */
-.lcd-bezel { align-self: stretch; padding: 2px 7px 8px; border-radius: 0 0 14px 14px; background: #26262a; }
-
 /* The dark theme's glass is the default: backlit, the Indiglo. */
 .lcd-glass {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  height: 100%;
-  padding: 7px 9px 9px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 16px;
+  padding: 9px 12px 11px;
   border-radius: 6px;
-  background: radial-gradient(120% 90% at 50% 35%, #86f6ea, #3cc4b8 60%, #1f8e85);
+  background: radial-gradient(120% 140% at 30% 35%, #86f6ea, #3cc4b8 60%, #1f8e85);
   color: #0a2230;
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4), 0 0 18px rgba(63, 211, 198, 0.35);
 }
@@ -43,23 +42,26 @@
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.35);
 }
 
-.lcd-main { display: flex; flex-direction: column; gap: 5px; }
+.lcd-main { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .lcd-annunciators { display: flex; gap: 9px; font-family: var(--mono-font); font-size: 8.5px; font-weight: 800; letter-spacing: 0.06em; }
 .lcd-annunciators b { opacity: 0.14; }
 .lcd-annunciators b.on { opacity: 1; }
 .lcd-readout { display: flex; align-items: flex-end; gap: 2px; }
 .lcd-unit { padding: 0 0 4px 4px; font-family: var(--mono-font); font-size: 10px; font-weight: 800; }
-.lcd-dest { font-family: 'Doto', var(--mono-font); font-size: 13px; font-weight: 900; line-height: 1.1; text-transform: uppercase; overflow-wrap: anywhere; }
+.lcd-dest { max-width: 150px; font-family: var(--mono-font); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; line-height: 1.2; text-transform: uppercase; overflow-wrap: anywhere; }
 
+/* The later trains, to the right of the main readout and divided from it like a watch's
+   secondary display. */
 .lcd-minis {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 12px;
-  margin-top: 4px;
-  padding-top: 7px;
-  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  align-content: flex-start;
+  gap: 10px 14px;
+  min-height: 100%;
+  padding: 16px 0 0 14px;
+  border-left: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
-.lcd-mini { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.lcd-mini-label { min-height: 9px; font-family: var(--mono-font); font-size: 7.5px; font-weight: 800; letter-spacing: 0.06em; }
+.lcd-mini { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.lcd-mini-label { min-height: 9px; font-family: var(--mono-font); font-size: 8px; font-weight: 800; letter-spacing: 0.06em; }
 
-.sk-label { width: 70%; height: 9px; background-color: rgba(255, 255, 255, 0.15); }
+.sk-label { width: 40%; height: 9px; background-color: rgba(255, 255, 255, 0.15); }

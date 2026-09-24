@@ -7,9 +7,9 @@
     <app-solari [groups]="groups()" [loading]="loading()"
                 [stationId]="stationId()" [refreshing]="refreshing()" />
   }
-  @case ('sentence') {
-    <app-sentence [groups]="groups()" [loading]="loading()"
-                  [stationId]="stationId()" [refreshing]="refreshing()" />
+  @case ('flip-clock') {
+    <app-flip-clock [groups]="groups()" [loading]="loading()"
+                    [stationId]="stationId()" [refreshing]="refreshing()" />
   }
   @case ('headway') {
     <app-headway [groups]="groups()" [loading]="loading()"

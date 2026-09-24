@@ -103,6 +103,54 @@ export function trackPercent(minutes: number, side: 'left' | 'right' | 'single')
     : TRACK_STATION_PERCENT[layout] - offset;
 }
 
+/**
+ * The rows a pill can sit in around the Approach track, nearest the line first: above, below,
+ * then a second row above and below. Alternating above and below was not enough — trains at 20
+ * and 22 minutes land a few pixels apart on the square-root scale, and a third close one lands
+ * back on top of the first.
+ */
+export const TRACK_LANES = 4;
+
+export interface LaneItem {
+  /** Centre of the pill along the track, 0–100. */
+  percent: number;
+  /** The pill's width as a percentage of the track. */
+  widthPercent: number;
+}
+
+/**
+ * Gives each pill the nearest lane where it does not overlap a pill already placed there,
+ * working left to right. `seeded` pills are placed first and never move — the Approach layout
+ * seeds the Due pill over the station. When every lane is taken, a pill goes where it overlaps
+ * least: four trains within one pill's width is rare enough to accept.
+ *
+ * Returns a lane per item, in the order the items were given.
+ */
+export function assignLanes(items: LaneItem[], seeded: Array<LaneItem & { lane: number }> = [],
+                            lanes = TRACK_LANES, gapPercent = 1): number[] {
+  const occupied: Array<Array<[number, number]>> = Array.from({ length: lanes }, () => []);
+  const span = (item: LaneItem): [number, number] =>
+    [item.percent - item.widthPercent / 2, item.percent + item.widthPercent / 2];
+  const overlap = ([a0, a1]: [number, number], [b0, b1]: [number, number]) =>
+    Math.max(0, Math.min(a1, b1) - Math.max(a0, b0) + gapPercent);
+
+  for (const seed of seeded) {
+    occupied[Math.min(Math.max(seed.lane, 0), lanes - 1)].push(span(seed));
+  }
+
+  const result = new Array<number>(items.length);
+  const order = items.map((_, index) => index).sort((a, b) => items[a].percent - items[b].percent);
+  for (const index of order) {
+    const box = span(items[index]);
+    const cost = occupied.map(taken => taken.reduce((sum, other) => sum + overlap(box, other), 0));
+    const free = cost.findIndex(value => value === 0);
+    const lane = free >= 0 ? free : cost.indexOf(Math.min(...cost));
+    occupied[lane].push(box);
+    result[index] = lane;
+  }
+  return result;
+}
+
 // ── Seven-segment readout ──
 
 export type Segment = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g';
@@ -142,6 +190,20 @@ export function readoutChars(countdown: string): string[] {
   return minutes === null ? ['-', '-'] : [...String(Math.min(minutes, 99)).padStart(2, ' ')];
 }
 
+// ── Flip clock ──
+
+/**
+ * The cards a split-flap readout shows: two for minutes, with a blank card in front of a single
+ * digit so the number does not jump sideways when it drops from 10 to 9; three for `DUE`.
+ */
+export function flipChars(countdown: string): string[] {
+  if (countdown === 'DUE') {
+    return ['D', 'U', 'E'];
+  }
+  const minutes = minutesAway(countdown);
+  return minutes === null ? ['-', '-'] : [...String(Math.min(minutes, 99)).padStart(2, ' ')];
+}
+
 // ── Labels ──
 
 /** `HH:MM` on the device clock, for the styles that read like a departure board. */
@@ -170,12 +232,4 @@ export function placeName(label: string): string {
  */
 export function hasMixedDestinations(arrivals: TrainArrivalDisplay[]): boolean {
   return new Set(arrivals.map(arrival => arrival.destNm)).size > 1;
-}
-
-/** The separator after item `index` of `count` in a written list: `9, 15 and 23`. */
-export function listSeparator(index: number, count: number): string {
-  if (index >= count - 1) {
-    return '';
-  }
-  return index === count - 2 ? ' and ' : ', ';
 }
