@@ -6,7 +6,7 @@ export interface TrainArrivalDisplay extends TrainEta {
   countdown: string;
   /**
    * The instant on this device's clock the countdown is derived from, or NaN when unknown. The
-   * timeline needs to order arrivals across both directions, which the countdown string cannot do.
+   * board styles print it as a 24-hour time, which the countdown string cannot give them.
    */
   arrivalEpochMs: number;
   apiArrivalTime: string;
@@ -87,46 +87,4 @@ export function splitNextUp(group: ArrivalGroup): {
   later: TrainArrivalDisplay[];
 } {
   return { hero: group.arrivals[0] ?? null, later: group.arrivals.slice(1) };
-}
-
-export interface TimelineRow {
-  side: 'left' | 'right';
-  arrival: TrainArrivalDisplay;
-}
-
-/**
- * Merges the groups into one arrival-time-ordered list, tagging each row with the side of the
- * spine it belongs on. Reading top to bottom is then reading "what comes next at this station",
- * and the side says which direction it is going.
- *
- * Arrivals with no readable time sort last rather than to the top, which is where NaN would put
- * them in a naive comparison. The sort is stable, so equal instants keep API order and a tie
- * between the two directions puts the left one first.
- */
-export function mergeTimeline(groups: ArrivalGroup[]): TimelineRow[] {
-  const rows: TimelineRow[] = [];
-  groups.forEach((group, index) => {
-    const side = index === 0 ? 'left' : 'right';
-    for (const arrival of group.arrivals) {
-      rows.push({ side, arrival });
-    }
-  });
-  return rows.sort((a, b) => {
-    const [at, bt] = [a.arrival.arrivalEpochMs, b.arrival.arrivalEpochMs];
-    const aUnknown = !Number.isFinite(at);
-    const bUnknown = !Number.isFinite(bt);
-    if (aUnknown || bUnknown) {
-      return aUnknown === bUnknown ? 0 : aUnknown ? 1 : -1;
-    }
-    return at - bt;
-  });
-}
-
-/**
- * A destination short enough for a chip: the part before the first branch separator, truncated.
- * "Ashland/63rd" reads as "Ashland", "Cottage Grove" is already short enough to keep whole.
- */
-export function shortDestination(destNm: string): string {
-  const head = destNm.split(' & ')[0].split('/')[0].trim();
-  return head.length > 14 ? head.slice(0, 14).trimEnd() + '…' : head;
 }

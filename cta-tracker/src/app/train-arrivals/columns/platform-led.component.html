@@ -1,0 +1,51 @@
+@if (loading()) {
+  <div class="led-panel" aria-hidden="true">
+    <div class="columns">
+      @for (column of skeletonColumns; track $index) {
+        <section class="column">
+          <div class="led-header"><span class="led-skeleton led-skeleton-header"></span></div>
+          <div class="column-body">
+            @for (row of column; track row) {
+              <div class="led-row">
+                <span class="led-skeleton led-skeleton-dest"></span>
+                <span class="led-skeleton led-skeleton-eta"></span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  </div>
+} @else if (groups(); as groups) {
+  <div class="led-panel">
+    <div class="columns" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+      @for (group of groups; track group.key; let i = $index) {
+        <section class="column"
+                 [class.fill]="variantFor(i) === 'fill'"
+                 [class.outline]="variantFor(i) === 'outline'"
+                 [style.--col-color]="colorFor(group)">
+          <h3 class="led-header"><i class="led-square" aria-hidden="true"></i>{{ placeName(group.directionLabel) }}</h3>
+          <ol class="column-body">
+            @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+              <li>
+                <a class="arrival-link led-row"
+                   [attr.data-status]="statusOf(arrival)"
+                   [attr.aria-label]="arrivalLabel(group, arrival)"
+                   [routerLink]="['/train-follow', arrival.rn]"
+                   [queryParams]="{from: stationId(), rt: arrival.rt}">
+                  <span class="led-dest">{{ arrival.destNm }}</span>
+                  <span class="led-eta">{{ arrival.countdown === 'DUE' ? 'Due' : arrival.countdown + ' min' }}</span>
+                  @if (arrival.isDly === '1') {
+                    <span class="led-flag">Delayed</span>
+                  } @else if (arrival.isSch === '1') {
+                    <span class="led-flag">Scheduled</span>
+                  }
+                </a>
+              </li>
+            }
+          </ol>
+        </section>
+      }
+    </div>
+  </div>
+}

@@ -46,10 +46,6 @@ export class DisplayPreferencesService {
     this.storeString(TRAIN_ARRIVALS_LAYOUT_KEY, layout);
   }
 
-  toggleArrivalsLayout(): void {
-    this.setArrivalsLayout(this.arrivalsLayout() === 'columns' ? 'list' : 'columns');
-  }
-
   setColumnStyle(style: ColumnStyle): void {
     this.columnStyle.set(style);
     this.storeString(TRAIN_ARRIVALS_COLUMN_STYLE_KEY, style);

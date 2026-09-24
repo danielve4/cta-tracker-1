@@ -1,0 +1,93 @@
+@if (loading()) {
+  <div class="track track-skeleton" aria-hidden="true">
+    <span class="track-line" [style.right.%]="0"></span>
+    <span class="station" [style.left.%]="50"></span>
+  </div>
+  <div class="columns list" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column">
+        <div class="list-header"><span class="skeleton-line sk-label"></span></div>
+        <div class="column-body">
+          @for (row of column; track row) {
+            <span class="skeleton-line sk-row"></span>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  @if (track(); as track) {
+    <div class="track" [style.--col-color]="colorFor(groups[0])" [style.--col-text]="textColorFor(groups[0])"
+         [class.refreshing]="refreshing()">
+      <span class="track-line" [style.right.%]="track.single ? 100 - track.station : 0"></span>
+      @for (mark of track.scale; track $index) {
+        <span class="notch" [style.left.%]="mark.percent" aria-hidden="true"></span>
+        <span class="scale-label" [style.left.%]="mark.percent" aria-hidden="true">{{ mark.minutes }}</span>
+      }
+      @for (end of track.ends; track end.side) {
+        <span class="end" [class.end-left]="end.side === 'left'" [class.end-right]="end.side === 'right'">{{ end.label }}</span>
+      }
+      @for (marker of track.markers; track marker.arrival.rn + marker.arrival.stpId) {
+        <span class="train-dot" [attr.data-status]="statusOf(marker.arrival)" [style.left.%]="marker.percent" aria-hidden="true"></span>
+        <a class="train-pill"
+           [class.above]="marker.above"
+           [class.below]="!marker.above"
+           [attr.data-status]="statusOf(marker.arrival)"
+           [attr.aria-label]="arrivalLabel(marker.group, marker.arrival)"
+           [style.left.%]="marker.percent"
+           [routerLink]="['/train-follow', marker.arrival.rn]"
+           [queryParams]="{from: stationId(), rt: marker.arrival.rt}">{{ marker.arrival.countdown }}<small>m</small>@if (marker.tag) {<small class="pill-tag">{{ marker.tag }}</small>}</a>
+      }
+      <span class="station" [class.due]="!!track.due" [style.left.%]="track.station" aria-hidden="true"></span>
+      @if (track.due; as due) {
+        <a class="train-pill above"
+           data-status="due"
+           [attr.aria-label]="arrivalLabel(due.group, due.arrival)"
+           [style.left.%]="track.station"
+           [routerLink]="['/train-follow', due.arrival.rn]"
+           [queryParams]="{from: stationId(), rt: due.arrival.rt}">Due</a>
+      }
+    </div>
+  }
+
+  <div class="columns list" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (group of groups; track group.key; let i = $index) {
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(group)">
+        <h3 class="list-header">{{ group.directionLabel }}</h3>
+        <ol class="column-body">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li>
+              <a class="arrival-link list-row"
+                 [attr.data-status]="statusOf(arrival)"
+                 [routerLink]="['/train-follow', arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: arrival.rt}">
+                <span class="list-count">
+                  @if (arrival.countdown === 'DUE') {
+                    <span class="num">Due</span>
+                  } @else {
+                    <span class="num">{{ arrival.countdown }}</span><span class="unit">min</span>
+                  }
+                </span>
+                <span class="list-text">
+                  <span class="list-dest">@if (mixedByGroup().get(group.key)) {<b>{{ arrival.destNm.charAt(0) }}</b>}{{ arrival.destNm }}</span>
+                  <span class="meta">
+                    {{ arrival.countdown | timeuntil:'time' }}
+                    @if (arrival.isDly === '1') {
+                      <span class="flag flag-delayed"> · Delayed</span>
+                    } @else if (arrival.isSch === '1') {
+                      <span class="flag flag-scheduled"> · Scheduled</span>
+                    }
+                    <span class="meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ arrival.apiArrivalTime }}</span>}@if (prefs.showDistance() && arrival.distance) {<span>{{ arrival.distance }}</span>}</span>
+                  </span>
+                </span>
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

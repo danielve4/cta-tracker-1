@@ -1,0 +1,51 @@
+@if (loading()) {
+  <div class="columns" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column">
+        <div class="so-header"><span class="skeleton-line sk-label"></span></div>
+        <div class="column-body">
+          @for (row of column; track row) {
+            <div class="so-row">
+              <span class="skeleton-line sk-dest"></span>
+              <span class="skeleton-line sk-eta"></span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (group of groups; track group.key; let i = $index) {
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(group)">
+        <h3 class="so-header">{{ group.directionLabel }}</h3>
+        <ol class="column-body">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li>
+              <a class="arrival-link so-row"
+                 [attr.data-status]="statusOf(arrival)"
+                 [attr.aria-label]="arrivalLabel(group, arrival)"
+                 [routerLink]="['/train-follow', arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: arrival.rt}">
+                <span class="so-dest">{{ arrival.destNm }}</span>
+                <span class="so-eta">{{ arrival.countdown }}</span>
+                <span class="so-meta">
+                  {{ clock24(arrival.arrivalEpochMs) }}
+                  @if (arrival.isDly === '1') {
+                    <b class="so-code">DLY</b>
+                  } @else if (arrival.isSch === '1') {
+                    <b class="so-code">SCH</b>
+                  }
+                  <span class="meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ arrival.apiArrivalTime }}</span>}@if (prefs.showDistance() && arrival.distance) {<span>{{ arrival.distance }}</span>}</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

@@ -22,6 +22,8 @@
   @if (isInitialLoading()) {
     @if (prefs.arrivalsLayout() === 'columns') {
       <app-train-arrival-columns class="cols-4" [loading]="true" [stationId]="stationId()" />
+    } @else if (prefs.arrivalsLayout() === 'approach') {
+      <app-train-arrival-approach class="cols-4" [loading]="true" [stationId]="stationId()" />
     } @else {
       <ul class="cols-4 arrivals-list">
         @for (card of skeletonCards; track card) {
@@ -50,6 +52,9 @@
       @if (prefs.arrivalsLayout() === 'columns') {
         <app-train-arrival-columns class="cols-4" [groups]="groups"
                                    [stationId]="stationId()" [refreshing]="refreshing()" />
+      } @else if (prefs.arrivalsLayout() === 'approach') {
+        <app-train-arrival-approach class="cols-4" [groups]="groups"
+                                    [stationId]="stationId()" [refreshing]="refreshing()" />
       } @else {
         @for (group of groups; track group.key) {
           <h3 class="cols-4 direction-label">{{ group.directionLabel }}</h3>
