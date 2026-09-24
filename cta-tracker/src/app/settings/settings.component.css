@@ -190,6 +190,8 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
+/* Three layouts: one per row reads better than a 2 + 1 grid with an orphan. */
+.layout-picker { grid-template-columns: minmax(0, 1fr); }
 
 /* Global button styles force height:56px and font-weight:900; a chip needs neither. */
 .style-chip {

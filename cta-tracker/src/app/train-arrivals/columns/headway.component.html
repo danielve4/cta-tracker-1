@@ -1,0 +1,92 @@
+@if (loading()) {
+  <div class="columns" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column">
+        <div class="hw-header"><span class="skeleton-line sk-label"></span></div>
+        <div class="column-body">
+          <span class="skeleton-line sk-hero"></span>
+          <span class="skeleton-line sk-strip"></span>
+          @for (row of column; track row) {
+            <span class="skeleton-line sk-row"></span>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (panel of panels(); track panel.group.key; let i = $index) {
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(panel.group)"
+               [style.--col-text]="textColorFor(panel.group)">
+        <h3 class="hw-header" [attr.aria-label]="panel.group.directionLabel">
+          <span class="hw-label">@for (part of snakeParts(panel.group.directionLabel); track $index; let last = $last) {<span>{{ part }}</span>@if (!last) {_<wbr>}}</span>
+          <span class="hw-code">DIR_{{ panel.group.trDr }}</span>
+        </h3>
+        <div class="column-body">
+          @if (panel.hero; as hero) {
+            <a class="arrival-link hw-hero"
+               [attr.data-status]="statusOf(hero)"
+               [attr.aria-label]="arrivalLabel(panel.group, hero)"
+               [routerLink]="['/train-follow', hero.rn]"
+               [queryParams]="{from: stationId(), rt: hero.rt}">
+              <span class="hw-t">T–</span><span class="hw-big">{{ countdownDigits(hero) }}</span><span class="hw-unit">MIN</span>
+              <span class="hw-dest">{{ hero.destNm }} · {{ clock24(hero.arrivalEpochMs) }}</span>
+              <span class="hw-box">
+                @switch (statusOf(hero)) {
+                  @case ('due') { [ ARRIVING ] }
+                  @case ('delayed') { [ DELAYED ] }
+                  @case ('scheduled') { [ SCHEDULED ] }
+                  @default { [ LIVE ] }
+                }
+              </span>
+            </a>
+          }
+
+          <div class="hw-strip" aria-hidden="true">
+            @for (gap of panel.gaps; track $index) {
+              <span class="hw-gap" [class.wide]="gap.wide" [style.left.%]="gap.left" [style.width.%]="gap.width">
+                @if (gap.labelled) {
+                  <span class="hw-gap-label">{{ gapLabel(gap) }}</span>
+                }
+              </span>
+            }
+            @for (tick of panel.ticks; track tick.arrival.rn + tick.arrival.stpId) {
+              <span class="hw-tick" [attr.data-status]="statusOf(tick.arrival)" [attr.data-lane]="tick.lane" [style.left.%]="tick.percent">
+                <span class="hw-tick-label">{{ tickLabel(tick) }}</span>
+              </span>
+            }
+            <span class="hw-axis hw-axis-start">NOW</span>
+            <span class="hw-axis hw-axis-end">+30</span>
+          </div>
+
+          @if (panel.later.length) {
+            <div class="hw-table-head" aria-hidden="true"><span>ETA</span><span>ARR</span><span>Δ</span></div>
+            <ol>
+              @for (arrival of panel.later; track arrival.rn + arrival.stpId; let j = $index) {
+                @let gap = gapBefore(panel, j);
+                <li>
+                  <a class="arrival-link hw-row"
+                     [attr.data-status]="statusOf(arrival)"
+                     [attr.aria-label]="arrivalLabel(panel.group, arrival)"
+                     [routerLink]="['/train-follow', arrival.rn]"
+                     [queryParams]="{from: stationId(), rt: arrival.rt}">
+                    <span class="hw-row-eta">{{ arrival.countdown }}</span>
+                    <span class="hw-row-arr">{{ clock24(arrival.arrivalEpochMs) }}@if (arrival.isDly === '1') { DLY}@if (arrival.isSch === '1') { SCH}</span>
+                    <span class="hw-row-gap" [class.wide]="gap !== null && gap >= wideGapMin">{{ gap === null ? '' : '+' + gap }}</span>
+                    @if (panel.mixed && arrival.destNm !== panel.hero?.destNm) {
+                      <span class="hw-row-alt">To {{ arrival.destNm }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ol>
+          }
+        </div>
+      </section>
+    }
+  </div>
+  <p class="hw-foot">* Δ = minutes after the train before · SRC: CTA_TRAIN_TRACKER_API</p>
+}

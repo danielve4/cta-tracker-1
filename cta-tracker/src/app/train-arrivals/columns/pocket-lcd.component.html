@@ -1,0 +1,61 @@
+@if (loading()) {
+  <div class="lcd-stack" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="lcd-strip">
+        <div class="lcd-label"><span class="skeleton-line sk-label"></span></div>
+        <div class="lcd-glass">
+          <div class="lcd-main">
+            <app-seven-segment [chars]="[' ', ' ']" [height]="44" />
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="lcd-stack" [class.refreshing]="refreshing()">
+    @for (panel of panels(); track panel.group.key; let i = $index) {
+      <section class="lcd-strip"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(panel.group)">
+        <h3 class="lcd-label"><i class="lcd-stripe" aria-hidden="true"></i><span>{{ panel.group.directionLabel }}</span></h3>
+        <div class="lcd-glass">
+          @if (panel.hero; as hero) {
+            <a class="arrival-link lcd-main"
+               [attr.aria-label]="arrivalLabel(panel.group, hero)"
+               [routerLink]="['/train-follow', hero.rn]"
+               [queryParams]="{from: stationId(), rt: hero.rt}">
+              <span class="lcd-annunciators" aria-hidden="true">
+                <b [class.on]="hero.countdown === 'DUE'">DUE</b>
+                <b [class.on]="hero.isDly === '1'">DLY</b>
+                <b [class.on]="hero.isSch === '1'">SCH</b>
+              </span>
+              <span class="lcd-readout">
+                <app-seven-segment [chars]="readoutChars(hero.countdown)" [height]="44" />
+                @if (hero.countdown !== 'DUE') {
+                  <span class="lcd-unit" aria-hidden="true">MIN</span>
+                }
+              </span>
+              <span class="lcd-dest">{{ hero.destNm }}</span>
+            </a>
+          }
+          @if (panel.later.length) {
+            <ol class="lcd-minis">
+              @for (arrival of panel.later; track arrival.rn + arrival.stpId) {
+                <li>
+                  <a class="arrival-link lcd-mini"
+                     [attr.aria-label]="arrivalLabel(panel.group, arrival)"
+                     [routerLink]="['/train-follow', arrival.rn]"
+                     [queryParams]="{from: stationId(), rt: arrival.rt}">
+                    <app-seven-segment [chars]="readoutChars(arrival.countdown)" [height]="22" />
+                    <span class="lcd-mini-label" aria-hidden="true">{{ miniLabel(arrival, panel.mixed) }}</span>
+                  </a>
+                </li>
+              }
+            </ol>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}

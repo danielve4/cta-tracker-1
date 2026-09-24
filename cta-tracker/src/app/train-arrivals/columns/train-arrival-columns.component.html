@@ -1,26 +1,26 @@
 @switch (prefs.columnStyle()) {
-  @case ('mirror-timeline') {
-    <app-mirror-timeline [groups]="groups()" [loading]="loading()"
-                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  @case ('typographic') {
+    <app-typographic [groups]="groups()" [loading]="loading()"
+                     [stationId]="stationId()" [refreshing]="refreshing()" />
   }
-  @case ('departure-board') {
-    <app-departure-board [groups]="groups()" [loading]="loading()"
-                         [stationId]="stationId()" [refreshing]="refreshing()" />
+  @case ('solari') {
+    <app-solari [groups]="groups()" [loading]="loading()"
+                [stationId]="stationId()" [refreshing]="refreshing()" />
   }
-  @case ('next-up') {
-    <app-next-up [groups]="groups()" [loading]="loading()"
+  @case ('flip-clock') {
+    <app-flip-clock [groups]="groups()" [loading]="loading()"
+                    [stationId]="stationId()" [refreshing]="refreshing()" />
+  }
+  @case ('headway') {
+    <app-headway [groups]="groups()" [loading]="loading()"
                  [stationId]="stationId()" [refreshing]="refreshing()" />
   }
-  @case ('spine-rails') {
-    <app-spine-rails [groups]="groups()" [loading]="loading()"
-                     [stationId]="stationId()" [refreshing]="refreshing()" />
-  }
-  @case ('inverted-cards') {
-    <app-inverted-cards [groups]="groups()" [loading]="loading()"
-                        [stationId]="stationId()" [refreshing]="refreshing()" />
+  @case ('pocket-lcd') {
+    <app-pocket-lcd [groups]="groups()" [loading]="loading()"
+                    [stationId]="stationId()" [refreshing]="refreshing()" />
   }
   @default {
-    <app-split-board [groups]="groups()" [loading]="loading()"
-                     [stationId]="stationId()" [refreshing]="refreshing()" />
+    <app-platform-led [groups]="groups()" [loading]="loading()"
+                      [stationId]="stationId()" [refreshing]="refreshing()" />
   }
 }

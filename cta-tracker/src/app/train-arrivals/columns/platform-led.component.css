@@ -1,0 +1,27 @@
+/* The sign runs edge to edge and stays dark in both themes. Everything on it is painted on the
+   canvas; this box only holds it and the invisible tap targets over each train. */
+.led-panel {
+  position: relative;
+  margin-inline: -16px;
+  background: #070605;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+.led-panel.refreshing { opacity: 0.72; }
+.led-canvas { display: block; }
+
+.led-tap {
+  position: absolute;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+.led-tap:active { background: rgba(255, 255, 255, 0.06); }
+.led-tap:focus-visible { outline: 2px solid var(--focus-color); outline-offset: -2px; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

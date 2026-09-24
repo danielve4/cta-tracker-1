@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ArrivalGroup, TrainArrivalDisplay, directionSortKey, groupTrainArrivals, mergeTimeline,
-  shortDestination, splitNextUp
+  ArrivalGroup, TrainArrivalDisplay, directionSortKey, groupTrainArrivals, splitNextUp
 } from './train-arrival-groups';
 
 /** An arrival with sane defaults, so each test states only the fields it is actually about. */
@@ -180,82 +179,5 @@ describe('splitNextUp', () => {
     const split = splitNextUp(group([eta({ rn: '801' })]));
     expect(split.hero?.rn).toBe('801');
     expect(split.later).toEqual([]);
-  });
-});
-
-describe('mergeTimeline', () => {
-  const at = (minutes: number) => Date.UTC(2026, 8, 15, 13, minutes, 0);
-  const group = (key: string, trDr: string, arrivals: TrainArrivalDisplay[]): ArrivalGroup =>
-    ({ key, trDr, directionLabel: key, arrivals });
-
-  it('interleaves both directions by arrival time and tags the side', () => {
-    const rows = mergeTimeline([
-      group('G_1', '1', [eta({ rn: '801', arrivalEpochMs: at(1) }), eta({ rn: '802', arrivalEpochMs: at(12) })]),
-      group('G_5', '5', [eta({ rn: '803', arrivalEpochMs: at(4) }), eta({ rn: '804', arrivalEpochMs: at(19) })])
-    ]);
-
-    expect(rows.map(row => row.arrival.rn)).toEqual(['801', '803', '802', '804']);
-    expect(rows.map(row => row.side)).toEqual(['left', 'right', 'left', 'right']);
-  });
-
-  it('puts a swapped line\'s trDr 5 on the left', () => {
-    const groups = groupTrainArrivals([
-      eta({ rt: 'Blue', trDr: '1', rn: '101', arrivalEpochMs: at(2) }),
-      eta({ rt: 'Blue', trDr: '5', rn: '102', arrivalEpochMs: at(5) })
-    ], 'direction', true);
-
-    const rows = mergeTimeline(groups);
-    expect(rows.map(row => [row.arrival.trDr, row.side])).toEqual([['1', 'right'], ['5', 'left']]);
-  });
-
-  it('sorts arrivals with no readable time last, not first', () => {
-    const rows = mergeTimeline([
-      group('G_1', '1', [eta({ rn: '801', arrivalEpochMs: NaN }), eta({ rn: '802', arrivalEpochMs: at(12) })]),
-      group('G_5', '5', [eta({ rn: '803', arrivalEpochMs: at(4) })])
-    ]);
-
-    expect(rows.map(row => row.arrival.rn)).toEqual(['803', '802', '801']);
-  });
-
-  it('keeps the left direction first when two trains share an instant', () => {
-    const rows = mergeTimeline([
-      group('G_1', '1', [eta({ rn: '801', arrivalEpochMs: at(5) })]),
-      group('G_5', '5', [eta({ rn: '803', arrivalEpochMs: at(5) })])
-    ]);
-
-    expect(rows.map(row => row.arrival.rn)).toEqual(['801', '803']);
-  });
-
-  it('keeps API order within a direction when instants are equal', () => {
-    const rows = mergeTimeline([
-      group('G_1', '1', [eta({ rn: '801', arrivalEpochMs: at(5) }), eta({ rn: '802', arrivalEpochMs: at(5) })])
-    ]);
-
-    expect(rows.map(row => row.arrival.rn)).toEqual(['801', '802']);
-  });
-
-  it('handles a single group and no groups at all', () => {
-    expect(mergeTimeline([]).length).toBe(0);
-    const rows = mergeTimeline([group('G_5', '5', [eta({ rn: '803', arrivalEpochMs: at(4) })])]);
-    expect(rows.map(row => row.side)).toEqual(['left']);
-  });
-});
-
-describe('shortDestination', () => {
-  it('keeps the part before a branch separator', () => {
-    expect(shortDestination('Ashland/63rd')).toBe('Ashland');
-    expect(shortDestination('Harlem/Lake')).toBe('Harlem');
-    expect(shortDestination('95th/Dan Ryan')).toBe('95th');
-    expect(shortDestination('Howard & Loop')).toBe('Howard');
-  });
-
-  it('leaves a short single-word destination alone', () => {
-    expect(shortDestination('Cottage Grove')).toBe('Cottage Grove');
-    expect(shortDestination('Midway')).toBe('Midway');
-  });
-
-  it('truncates anything still too long for a chip', () => {
-    expect(shortDestination('Dempster-Skokie Yard')).toBe('Dempster-Skoki…');
-    expect(shortDestination('Dempster-Skokie Yard').length).toBeLessThanOrEqual(15);
   });
 });

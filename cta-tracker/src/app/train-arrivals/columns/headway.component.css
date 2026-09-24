@@ -1,0 +1,149 @@
+.columns { column-gap: 16px; }
+
+/* An inverted band: the loudest thing on screen, so each direction reads as its own panel. */
+.hw-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 8px;
+  background: var(--text-primary);
+  color: var(--background);
+  font-family: var(--mono-font);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.35;
+}
+.hw-label { min-width: 0; }
+.hw-code { flex-shrink: 0; padding: 0 4px; background: var(--col-color); color: var(--col-text, #fff); }
+/* The second direction's code is outlined rather than filled. */
+.outline .hw-code { background: transparent; box-shadow: inset 0 0 0 1.5px var(--col-color); color: var(--background); }
+
+/* ── The countdown ── */
+.hw-hero { margin-top: 14px; }
+.hw-t { font-family: var(--mono-font); font-size: 12px; font-weight: 700; color: var(--text-tertiary); vertical-align: top; }
+.hw-big { font-size: 80px; font-weight: 500; letter-spacing: -0.06em; line-height: 0.85; font-variant-numeric: tabular-nums; }
+.hw-unit { font-family: var(--mono-font); font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-left: 4px; }
+.hw-dest {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--mono-font);
+  font-size: 10.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.hw-box {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 6px;
+  border: 1px solid currentColor;
+  font-family: var(--mono-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+.hw-hero[data-status="due"] .hw-big,
+.hw-hero[data-status="due"] .hw-box { color: var(--bus-due); }
+.hw-hero[data-status="delayed"] .hw-big,
+.hw-hero[data-status="delayed"] .hw-box { color: var(--pink); }
+.hw-hero[data-status="scheduled"] .hw-box { color: var(--status-scheduled); }
+
+/* ── The strip: NOW to +30, a tick per train, the headway under each gap ── */
+/* The top margin leaves room for a second row of tick labels, for trains too close to label on one. */
+.hw-strip { position: relative; height: 58px; margin: 32px 6px 0; font-family: var(--mono-font); }
+.hw-strip::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 18px;
+  height: 2px;
+  background: color-mix(in srgb, var(--text-tertiary) 60%, transparent);
+}
+.hw-tick { position: absolute; top: 11px; width: 3px; height: 16px; margin-left: -1.5px; background: var(--col-color); }
+.hw-tick[data-status="due"] { background: var(--bus-due); }
+.hw-tick[data-status="delayed"] { background: var(--pink); }
+.hw-tick[data-status="scheduled"] { width: 5px; margin-left: -2.5px; background: var(--background); box-shadow: inset 0 0 0 1.5px var(--status-scheduled); }
+.hw-tick-label {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+/* The second row, on a hairline stem down to its tick. */
+.hw-tick[data-lane="1"] .hw-tick-label { top: -26px; }
+.hw-tick[data-lane="1"]::before {
+  content: '';
+  position: absolute;
+  left: 1px;
+  top: -14px;
+  width: 1px;
+  height: 14px;
+  background: color-mix(in srgb, var(--text-tertiary) 60%, transparent);
+}
+.hw-gap { position: absolute; top: 30px; height: 12px; }
+.hw-gap-label { position: absolute; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--text-tertiary); white-space: nowrap; }
+/* A long gap is hatched across the line, so a long wait is the first thing seen. */
+.hw-gap.wide::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: -15px;
+  height: 8px;
+  background: repeating-linear-gradient(-45deg, var(--col-color) 0 2px, transparent 2px 5px);
+}
+.hw-gap.wide .hw-gap-label { color: var(--text-primary); font-weight: 800; }
+.hw-axis { position: absolute; top: 46px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-tertiary); }
+.hw-axis-start { left: -6px; }
+.hw-axis-end { right: -6px; }
+
+/* ── The table ── */
+.hw-table-head,
+.hw-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 8px;
+}
+.hw-table-head {
+  margin-top: 12px;
+  padding: 5px 0;
+  border-block: 1px solid var(--card-border);
+  font-family: var(--mono-font);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+/* The table's type matches Solari's board rows: at 17px/10px the three columns sat far apart
+   in a 165px column with nothing between them. */
+.hw-row { padding: 10px 0; border-bottom: 1px solid var(--card-border); }
+.hw-row-eta { font-size: 26px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.hw-row-arr { font-family: var(--mono-font); font-size: 13px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.hw-row-gap { font-family: var(--mono-font); font-size: 13px; color: var(--text-secondary); text-align: right; }
+.hw-row-gap.wide { color: var(--text-primary); font-weight: 800; }
+.hw-row-alt {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  font-family: var(--mono-font);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.hw-row[data-status="delayed"] .hw-row-eta { color: var(--pink); }
+.hw-row[data-status="scheduled"] .hw-row-eta { color: var(--status-scheduled); }
+
+.hw-foot { margin-top: 14px; font-family: var(--mono-font); font-size: 9.5px; color: var(--text-tertiary); text-transform: uppercase; }
+
+.columns.single .hw-big { font-size: 104px; }
+
+.column-body .skeleton-line { margin-top: 12px; }
+.sk-label { width: 70%; height: 10px; background-color: color-mix(in srgb, var(--background) 30%, transparent); }
+.sk-hero { width: 60%; height: 64px; border-radius: 6px; }
+.sk-strip { width: 100%; height: 6px; margin-block: 28px 18px; }
+.sk-row { width: 100%; height: 14px; }

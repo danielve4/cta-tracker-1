@@ -7,6 +7,12 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
 /* stylelint-enable */
 
 :root {
+  /* Countdown numerals: SF Pro Rounded on Apple devices, the system face elsewhere. Tabular
+     figures are set wherever this is used, so a refresh from 11 to 9 does not shift the column. */
+  --numeral-font: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif;
+  --mono-font: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --serif-font: ui-serif, "New York", Georgia, "Times New Roman", serif;
+
   /* CTA brand colors (shared across themes) */
   --cta-blue: rgb(0,161,222);
   --cta-blue-opacity: rgba(0,161,222,0.17);
@@ -89,6 +95,10 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --bus-due-bg: rgba(52,211,153,0.14);
   --bus-due-glow: rgba(52,211,153,0.06);
   --shimmer-highlight: rgba(255,255,255,0.04);
+  /* Scheduled trains (not tracked live) in text. CTA yellow reads on the dark theme only. */
+  --status-scheduled: var(--yellow);
+  /* Text on a --bus-due fill: the dark theme's due green is too light for white. */
+  --status-due-ink: #052e1c;
 
   /* Pill nav – Liquid Glass (dark) */
   --pill-nav-bg: hsla(240, 6%, 12%, 0.92);
@@ -231,6 +241,9 @@ a,abbr,acronym,address,applet,article,aside,audio,b,big,blockquote,body,canvas,c
   --bus-due-bg: rgba(16,140,80,0.10);
   --bus-due-glow: rgba(16,140,80,0.04);
   --shimmer-highlight: rgba(0,0,0,0.06);
+  /* CTA yellow on white is about 1.2:1, so light mode moves scheduled to amber. */
+  --status-scheduled: rgb(196,110,0);
+  --status-due-ink: #FFFFFF;
 }
 
 * {

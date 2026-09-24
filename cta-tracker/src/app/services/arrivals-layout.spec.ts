@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
-  COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, parseArrivalsLayout, parseColumnStyle,
-  parseSwappedLines
+  ARRIVALS_LAYOUTS, COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, isSideBySide,
+  parseArrivalsLayout, parseColumnStyle, parseSwappedLines
 } from './arrivals-layout';
 
 describe('parseArrivalsLayout', () => {
-  it('opts in on an exact "columns"', () => {
-    expect(parseArrivalsLayout('columns')).toBe('columns');
+  it('round-trips every layout the picker offers', () => {
+    for (const layout of ARRIVALS_LAYOUTS) {
+      expect(parseArrivalsLayout(layout.id)).toBe(layout.id);
+    }
   });
 
-  it('keeps the list layout for a stored "list"', () => {
-    expect(parseArrivalsLayout('list')).toBe('list');
+  it('offers the list, columns and approach layouts', () => {
+    expect(ARRIVALS_LAYOUTS.map(layout => layout.id)).toEqual(['list', 'columns', 'approach']);
   });
 
   it('falls back to the default when nothing is stored', () => {
@@ -21,12 +23,20 @@ describe('parseArrivalsLayout', () => {
 
   it('is case-sensitive, so a mis-cased value does not opt in', () => {
     expect(parseArrivalsLayout('COLUMNS')).toBe('list');
-    expect(parseArrivalsLayout('Columns')).toBe('list');
+    expect(parseArrivalsLayout('Approach')).toBe('list');
   });
 
   it('ignores garbage', () => {
     expect(parseArrivalsLayout('true')).toBe('list');
     expect(parseArrivalsLayout('{"layout":"columns"}')).toBe('list');
+  });
+});
+
+describe('isSideBySide', () => {
+  it('fixes each direction to a side everywhere but the list', () => {
+    expect(isSideBySide('list')).toBe(false);
+    expect(isSideBySide('columns')).toBe(true);
+    expect(isSideBySide('approach')).toBe(true);
   });
 });
 
@@ -39,6 +49,16 @@ describe('parseColumnStyle', () => {
 
   it('offers six distinct styles', () => {
     expect(new Set(COLUMN_STYLES.map(style => style.id)).size).toBe(6);
+  });
+
+  it('defaults to a style the picker offers', () => {
+    expect(COLUMN_STYLES.some(style => style.id === DEFAULT_COLUMN_STYLE)).toBe(true);
+  });
+
+  it('sends a style from an earlier build to the default', () => {
+    for (const retired of ['split-board', 'mirror-timeline', 'departure-board', 'next-up', 'spine-rails', 'inverted-cards', 'sentence']) {
+      expect(parseColumnStyle(retired)).toBe(DEFAULT_COLUMN_STYLE);
+    }
   });
 
   it('falls back to the default for an unknown or missing style', () => {

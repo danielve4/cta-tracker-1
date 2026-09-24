@@ -1,0 +1,87 @@
+@if (loading()) {
+  <div class="columns" aria-hidden="true">
+    @for (column of skeletonColumns; track $index) {
+      <section class="column">
+        <div class="fc-header"><span class="skeleton-line sk-label"></span></div>
+        <div class="column-body">
+          <div class="fc-cards fc-big">
+            <app-flip-card char=" " /><app-flip-card char=" " />
+          </div>
+          @for (row of column; track row) {
+            <span class="skeleton-line sk-row"></span>
+          }
+        </div>
+      </section>
+    }
+  </div>
+} @else if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (panel of panels(); track panel.group.key; let i = $index) {
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(panel.group)">
+        <h3 class="fc-header"><i class="fc-tab" aria-hidden="true"></i><span>{{ panel.group.directionLabel }}</span></h3>
+        <div class="column-body">
+          @if (panel.hero; as hero) {
+            <a class="arrival-link fc-hero"
+               [attr.data-status]="statusOf(hero)"
+               [attr.aria-label]="arrivalLabel(panel.group, hero)"
+               [routerLink]="['/train-follow', hero.rn]"
+               [queryParams]="{from: stationId(), rt: hero.rt}">
+              <span class="fc-cards fc-big">
+                @for (char of flipChars(hero.countdown); track $index) {
+                  <app-flip-card [char]="char" />
+                }
+                @if (hero.countdown !== 'DUE') {
+                  <span class="fc-unit">min</span>
+                }
+              </span>
+              <span class="fc-dest">{{ hero.destNm }}</span>
+              <span class="meta">
+                {{ hero.countdown | timeuntil:'time' }}
+                @if (hero.isDly === '1') {
+                  <span class="flag flag-delayed"> · Delayed</span>
+                } @else if (hero.isSch === '1') {
+                  <span class="flag flag-scheduled"> · Scheduled</span>
+                }
+              </span>
+            </a>
+          }
+          @if (panel.later.length) {
+            <ol class="fc-later">
+              @for (arrival of panel.later; track arrival.rn + arrival.stpId) {
+                <li>
+                  <a class="arrival-link fc-row"
+                     [attr.data-status]="statusOf(arrival)"
+                     [attr.aria-label]="arrivalLabel(panel.group, arrival)"
+                     [routerLink]="['/train-follow', arrival.rn]"
+                     [queryParams]="{from: stationId(), rt: arrival.rt}">
+                    <span class="fc-cards fc-small">
+                      @for (char of flipChars(arrival.countdown); track $index) {
+                        <app-flip-card [char]="char" />
+                      }
+                    </span>
+                    <span class="fc-row-text">
+                      @if (panel.mixed) {
+                        <span class="fc-row-dest">{{ arrival.destNm }}</span>
+                      }
+                      <span class="meta">
+                        {{ arrival.countdown | timeuntil:'time' }}
+                        @if (arrival.isDly === '1') {
+                          <span class="flag flag-delayed"> · Delayed</span>
+                        } @else if (arrival.isSch === '1') {
+                          <span class="flag flag-scheduled"> · Sched</span>
+                        }
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              }
+            </ol>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}

@@ -15,7 +15,7 @@
 <!-- Arrivals -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Arrivals</h2>
-  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~. Column layout shows each direction of a train line side by side; pick a style below.</p>
+  <p class="section-description">Extra detail beneath each arrival: the raw time reported by the CTA API, and how far the vehicle still is from the stop. Train distances are straight-line estimates, shown with a ~. The train layout sets how a station's two directions are shown: stacked, side by side in columns (pick a style below), or drawn on the line as trains approach.</p>
   <div class="settings-row">
     <div class="settings-row-label">
       <span class="settings-row-title">Show API Timestamp</span>
@@ -36,15 +36,19 @@
       label="Show distance"
       (toggled)="prefs.toggleDistance()" />
   </div>
-  <div class="settings-row">
-    <div class="settings-row-label">
-      <span class="settings-row-title">Column Layout</span>
-      <span class="settings-row-subtitle">{{ prefs.arrivalsLayout() === 'columns' ? 'Side by side' : 'Stacked' }}</span>
+  <div class="settings-subrow">
+    <span class="settings-row-title">Train Layout</span>
+    <div class="style-picker layout-picker" role="radiogroup" aria-label="Train arrivals layout">
+      @for (layout of arrivalsLayouts; track layout.id) {
+        <button type="button" role="radio" class="style-chip"
+                [attr.aria-checked]="prefs.arrivalsLayout() === layout.id"
+                [class.selected]="prefs.arrivalsLayout() === layout.id"
+                (click)="prefs.setArrivalsLayout(layout.id)">
+          <span class="style-chip-title">{{ layout.title }}</span>
+          <span class="style-chip-blurb">{{ layout.blurb }}</span>
+        </button>
+      }
     </div>
-    <app-toggle-switch
-      [checked]="prefs.arrivalsLayout() === 'columns'"
-      label="Column layout"
-      (toggled)="prefs.toggleArrivalsLayout()" />
   </div>
   @if (prefs.arrivalsLayout() === 'columns') {
     <div class="settings-subrow">

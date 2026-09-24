@@ -15,13 +15,15 @@ import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
 import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
 import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
+import { ApproachComponent } from './approach/approach.component';
+import { isSideBySide } from '../services/arrivals-layout';
 
 @Component({
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent, ApproachComponent]
 })
 export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -91,10 +93,10 @@ export class TrainArrivalsComponent {
         };
       });
 
-      // Read inside the callback so flipping the setting re-orders the groups live: the column
-      // layout needs a direction on the same side at every station, the list keeps its A-Z order.
-      // The swap is per line, so it holds at every station on this line and no other.
-      const order = this.prefs.arrivalsLayout() === 'columns' ? 'direction' : 'label';
+      // Read inside the callback so flipping the setting re-orders the groups live: the column and
+      // approach layouts need a direction on the same side at every station, the list keeps its
+      // A-Z order. The swap is per line, so it holds at every station on this line and no other.
+      const order = isSideBySide(this.prefs.arrivalsLayout()) ? 'direction' : 'label';
       const swapped = order === 'direction' && this.prefs.isLineSwapped(this.routeId());
       return { groups: groupTrainArrivals(displays, order, swapped), error: undefined };
     }
@@ -104,9 +106,9 @@ export class TrainArrivalsComponent {
   arrivalGroups = computed(() => this.processed().groups);
   errorMsg = computed(() => this.processed().error);
 
-  /** Only two columns can trade places; a single direction already spans the full width. */
+  /** Only two sides can trade places; a single direction already spans the full width. */
   canSwap = computed(() =>
-    this.prefs.arrivalsLayout() === 'columns' && this.arrivalGroups()?.length === 2);
+    isSideBySide(this.prefs.arrivalsLayout()) && this.arrivalGroups()?.length === 2);
   isSwapped = computed(() => this.prefs.isLineSwapped(this.routeId()));
 
   isInitialLoading = computed(() => this.arrivalsResource.status() === 'loading');

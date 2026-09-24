@@ -1,0 +1,18 @@
+<div class="led-panel" [class.refreshing]="refreshing()" [style.height.px]="(sign()?.rows ?? 60) * pitch">
+  <canvas #canvas class="led-canvas" aria-hidden="true"></canvas>
+  @if (!loading() && groups(); as groups) {
+    @for (group of groups; track group.key) {
+      <h3 class="visually-hidden">{{ group.directionLabel }}</h3>
+    }
+  }
+  @for (tap of taps(); track tap.key) {
+    <a class="led-tap"
+       [style.left.px]="tap.left"
+       [style.top.px]="tap.top"
+       [style.width.px]="tap.width"
+       [style.height.px]="tap.height"
+       [attr.aria-label]="arrivalLabel(tap.group, tap.arrival)"
+       [routerLink]="['/train-follow', tap.arrival.rn]"
+       [queryParams]="{from: stationId(), rt: tap.arrival.rt}"></a>
+  }
+</div>

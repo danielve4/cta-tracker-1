@@ -1,0 +1,46 @@
+.fc-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--col-ink);
+}
+/* A tab of the line colour, like the coloured strip along a flip clock's case: filled for one
+   direction, hollow for the other. */
+.fc-tab { flex: 0 0 12px; height: 12px; margin-top: 2px; border-radius: 3px; background: var(--col-color); }
+.outline .fc-tab { background: transparent; box-shadow: inset 0 0 0 2px var(--col-color); }
+
+.column-body { padding-top: 4px; }
+
+.fc-cards { display: flex; align-items: flex-end; gap: 3px; }
+.fc-big { --flip-h: 64px; --flip-w: 46px; }
+.fc-small { --flip-h: 30px; --flip-w: 22px; gap: 2px; }
+.fc-unit { margin-left: 5px; padding-bottom: 4px; font-size: 13px; font-weight: 700; color: var(--text-secondary); }
+
+.fc-hero { display: flex; flex-direction: column; gap: 4px; }
+.fc-dest { margin-top: 6px; font-size: 15px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+
+/* Status recolours the digits on the cards; the cards themselves stay dark. */
+[data-status="due"] { --flip-ink: var(--bus-due); }
+[data-status="delayed"] { --flip-ink: var(--pink); }
+[data-status="scheduled"] { --flip-ink: var(--status-scheduled); }
+
+.fc-later { margin-top: 16px; border-top: 1px solid var(--card-border); }
+.fc-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+.fc-row-text { display: flex; flex-direction: column; min-width: 0; }
+.fc-row-dest { font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere; }
+
+.columns.single .fc-big { --flip-h: 84px; --flip-w: 60px; }
+
+.sk-label { width: 70%; height: 11px; }
+.sk-row { width: 100%; height: 30px; margin-top: 10px; border-radius: 6px; }

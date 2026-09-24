@@ -1,0 +1,31 @@
+.ty-header {
+  border-top: 3px solid var(--col-color);
+  padding-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+  color: var(--col-ink);
+}
+/* The second direction's rule is doubled: the one mark that tells the two apart at a glance. */
+.outline .ty-header { border-top-style: double; border-top-width: 5px; }
+
+.column-body { display: flex; flex-direction: column; gap: 20px; padding-top: 14px; }
+.ty-count .num { font-size: 40px; font-weight: 500; letter-spacing: -0.045em; }
+.ty-count .unit { font-size: 14px; font-weight: 500; color: var(--text-tertiary); margin-left: 4px; }
+.ty-text { display: flex; flex-direction: column; min-width: 0; }
+.ty-dest { font-size: 14px; font-weight: 500; line-height: 1.25; margin-top: 6px; overflow-wrap: anywhere; }
+.ty-row .meta { margin-top: 1px; }
+
+.ty-row[data-status="due"] .num { color: var(--bus-due); font-size: 34px; }
+.ty-row[data-status="delayed"] .num { color: var(--pink); }
+.ty-row[data-status="scheduled"] .num { color: var(--status-scheduled); }
+
+/* One direction: the numeral moves beside the text rather than above it. */
+.columns.single .ty-row { display: grid; grid-template-columns: 116px minmax(0, 1fr); align-items: center; }
+.columns.single .ty-dest { margin-top: 0; font-size: 16px; }
+
+.sk-label { width: 70%; height: 12px; }
+.sk-num { width: 48px; height: 34px; border-radius: 8px; }
+.sk-dest { width: 75%; height: 12px; margin-top: 8px; }
