@@ -104,7 +104,9 @@ cta-tracker-1/
     way.
   - A column is a header plus **exactly one** body element. The shared subgrid rule that levels the
     two headers gives it two rows, so a third child lands back in the body's cell and paints over
-    it. Anything that must sit outside the columns (Headway's footnote) goes after the grid.
+    it. Anything that must sit outside the columns (Headway's footnote) goes after the grid. Two
+    styles opt out of the column grid entirely: Platform LED is one canvas, and Pocket LCD stacks
+    one full-width strip per direction.
   - Never put `container-type` on `.column`: size containment takes it out of the parent's subgrid
     and the two headers stop lining up. Size steps are media queries.
   - `.column-body`'s `align-self: start` applies only inside the subgrid. At one direction the
@@ -113,16 +115,26 @@ cta-tracker-1/
   - Status is bound once, as `data-status` (`due` / `delayed` / `scheduled`), from
     `ColumnVariantBase.statusOf`; each style colours those states in its own CSS. Scheduled text
     uses the global `--status-scheduled` token, since CTA yellow is unreadable on the light theme.
-  - Platform LED and Pocket LCD stay dark or backlit in both themes (they are a sign and a watch
-    face); Pocket LCD switches to its unlit glass with `:host-context([data-theme="light"])`.
-  - Platform LED is the only style that ships a font: Doto, subset to about 2 KB per weight under
-    `src/assets/fonts/` (OFL, licence alongside), declared in `styles.css`. Pocket LCD's digits are
-    SVG (`seven-segment.component.ts`), and every other style uses the system faces through the
+  - Platform LED, Pocket LCD and Flip Clock's cards stay dark or backlit in both themes (a sign, a
+    watch face, a clock); Pocket LCD switches to its unlit glass with
+    `:host-context([data-theme="light"])`.
+  - **Platform LED is a canvas, not text.** A dot-matrix web font can never line up with a dot-grid
+    background, so the sign is laid out and rasterised on one grid by `train-arrivals/led-matrix.ts`
+    (a 5×7 bitmap font, word wrap, layout in dot units) and the component only paints cells, lit in
+    the line colour with its lightness lifted in HSL so the dark lines glow. The canvas is
+    `aria-hidden`; each train is a transparent link laid over its block, and those links are what
+    screen readers and taps reach. It measures its width with a `ResizeObserver` in
+    `afterNextRender`, so nothing draws during prerendering.
+  - No style ships a font. Pocket LCD's digits are SVG (`seven-segment.component.ts`), Flip Clock's
+    cards are `flip-card.component.ts`, and everything else uses the system faces through the
     `--numeral-font`, `--mono-font` and `--serif-font` tokens.
+  - Anything placed along a line by time — Approach's pills, Headway's tick labels — goes through
+    `assignLanes` in `arrival-visuals.ts`, because trains two minutes apart land a few pixels apart.
+    Approach has four lanes (two above the line, two below) and seeds the Due pill over the station.
   - Grouping and ordering are Angular-free and unit-tested in
     `train-arrivals/train-arrival-groups.ts`; the geometry and labels the styles draw from (headway
     gaps, Approach's square-root track positions, the seven-segment map, 24-hour clock, label
-    casing) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
+    casing, lane assignment) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
     differently (A-Z for the list, CTA's `trDr` for the side-by-side layouts, so a direction keeps
     the same side at every station on a line).
 
@@ -206,7 +218,8 @@ Things to know before changing any of it:
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
 dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts`,
-`train-arrivals/train-arrival-groups.ts` and `train-arrivals/arrival-visuals.ts`. Those modules import nothing from Angular, so the runner
+`train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts` and
+`train-arrivals/led-matrix.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
 reach the bundle.
