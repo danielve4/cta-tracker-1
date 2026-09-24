@@ -1,61 +1,27 @@
-/* The sign. Its colours are fixed: it is the same amber-on-black in both themes, like the real one. */
+/* The sign runs edge to edge and stays dark in both themes. Everything on it is painted on the
+   canvas; this box only holds it and the invisible tap targets over each train. */
 .led-panel {
-  --amber: #ffb02e;
-  --amber-glow: rgba(255, 160, 40, 0.55);
-  --led-red: #ff4a30;
-  /* Break out of the page's 16px padding so the panel runs edge to edge. The notch-side inset
-     keeps the text clear of it in landscape. */
+  position: relative;
   margin-inline: -16px;
-  padding: 16px max(16px, env(safe-area-inset-right)) 18px max(16px, env(safe-area-inset-left));
-  background-color: #0b0906;
-  /* A faint grid of unlit dots, the texture that makes it read as an LED board. */
-  background-image: radial-gradient(circle, rgba(255, 176, 46, 0.08) 1px, transparent 1.6px);
-  background-size: 5px 5px;
-  color: var(--amber);
-  font-family: 'Doto', var(--mono-font);
-  text-shadow: 0 0 6px var(--amber-glow);
+  background: #070605;
+  transition: opacity var(--duration-medium) var(--ease-standard);
 }
+.led-panel.refreshing { opacity: 0.72; }
+.led-canvas { display: block; }
 
-.led-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1.15;
-  padding-bottom: 8px;
-  border-bottom: 2px dotted rgba(255, 176, 46, 0.45);
-  overflow-wrap: anywhere;
+.led-tap {
+  position: absolute;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
 }
-/* The only thing on the sign in the line's colour: filled for one direction, hollow for the other. */
-.led-square { flex: 0 0 9px; height: 9px; background: var(--col-color); box-shadow: 0 0 6px var(--col-color); }
-.outline .led-square { background: transparent; box-shadow: inset 0 0 0 2px var(--col-color), 0 0 6px var(--col-color); }
+.led-tap:active { background: rgba(255, 255, 255, 0.06); }
+.led-tap:focus-visible { outline: 2px solid var(--focus-color); outline-offset: -2px; }
 
-/* A dotted divider between the two directions, drawn inside the column gap. */
-.columns:not(.single) .column + .column { border-left: 2px dotted rgba(255, 176, 46, 0.22); padding-left: 10px; margin-left: -10px; }
-
-.column-body { padding-top: 6px; }
-.led-row { display: flex; flex-direction: column; padding: 8px 0; }
-.led-dest { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
-.led-eta { font-size: 30px; font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; }
-.led-flag { font-size: 12px; font-weight: 900; }
-
-.led-row[data-status="delayed"] .led-eta,
-.led-row[data-status="delayed"] .led-flag { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 60, 40, 0.6); }
-.led-row[data-status="scheduled"] .led-eta,
-.led-row[data-status="scheduled"] .led-flag { opacity: 0.6; }
-/* The real signs flash a train that is due. */
-.led-row[data-status="due"] .led-eta { animation: ledBlink 1.2s steps(1) infinite; }
-@keyframes ledBlink { 50% { opacity: 0.2; } }
-
-.columns.single .led-eta { font-size: 40px; }
-
-/* ── Skeleton: unlit segments where the text will be ── */
-.led-skeleton { display: block; height: 12px; border-radius: 2px; background: rgba(255, 176, 46, 0.12); }
-.led-skeleton-header { width: 60%; height: 14px; }
-.led-skeleton-dest { width: 70%; }
-.led-skeleton-eta { width: 45%; height: 26px; margin-top: 6px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .led-row[data-status="due"] .led-eta { animation: none; }
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
