@@ -87,35 +87,44 @@ cta-tracker-1/
 - **Zoneless change detection**: Uses `provideZonelessChangeDetection()`; Zone.js is not installed and `polyfills` is empty.
 - **Signals**: Components expose `signal()`/`computed()` state, with `toSignal`, `rxResource` and `httpResource` bridging async sources. `FavoritesService` is the one remaining Observable-based service.
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
-- **Train arrivals layout**: The train arrivals screen renders either a stacked list (the default)
-  or side-by-side direction columns, chosen in Settings and stored under `train-arrivals-layout`,
-  with one of six column styles under `train-arrivals-column-style`. A Swap chip in the stop
-  header flips a line's two columns, stored per line under `train-arrivals-swapped-lines`. The list markup stays in the
-  parent template; everything else lives in `train-arrivals/columns/`, where
-  `train-arrival-columns.component` switches on the style and each style is its own standalone
-  component extending `ColumnVariantBase` and listing `columns-shared.css` first in `styleUrls`.
+- **Train arrivals layout**: The train arrivals screen has three layouts, picked in Settings and
+  stored under `train-arrivals-layout`: a stacked list (the default), side-by-side direction
+  columns in one of six styles (`train-arrivals-column-style`), and Approach, which draws the line
+  with the station in the middle and each direction's trains closing in from its own side. A Swap
+  chip in the stop header flips a line's two sides in both side-by-side layouts, stored per line
+  under `train-arrivals-swapped-lines`. The list markup stays in the parent template. The column
+  styles live in `train-arrivals/columns/`, where `train-arrival-columns.component` switches on the
+  style and each style is its own standalone component extending `ColumnVariantBase` and listing
+  `columns-shared.css` first in `styleUrls`. Approach lives in `train-arrivals/approach/` and reuses
+  the same base and shared stylesheet for the list under its track.
   Things to know before changing any of it:
-  - `COLUMN_STYLES` in `services/arrivals-layout.ts` is what the Settings picker offers; a style
-    listed there but not handled by the switcher silently renders the default instead.
+  - `ARRIVALS_LAYOUTS` and `COLUMN_STYLES` in `services/arrivals-layout.ts` are what the Settings
+    pickers offer. A style listed there but not handled by the switcher silently renders the
+    default instead, and a stored value from a build that offered other styles falls back the same
+    way.
   - A column is a header plus **exactly one** body element. The shared subgrid rule that levels the
-    two header pills gives it two rows, so a third child lands back in the body's cell and paints
-    over it (`.column-body` exists for styles with more than one thing to show).
-  - The shared `.fill`/`.outline` rules match on an ancestor *and* on the pill itself, because the
-    timeline's two headers sit in one row rather than inside a per-direction column.
-  - Reusing the shared `countdown-*` class names pulls in the pill background rules; a style that
-    is not drawing a pill (the departure board's rows) needs its own names.
-  - A card's destination/time/meta sit in a `.col-text` wrapper so `.columns.single` can lay them
-    out beside the countdown. At a one-direction stop the group spans the screen, and without the
-    wrapper the card keeps its column-width stack and leaves the right half empty. A new style
-    should use the wrapper, and should set `--card-gap` rather than `gap` on `.col-link` so the
-    wrapper matches its spacing.
-  - Anything that exists because a column is narrow — a sub-340px media query, a hidden meta line —
-    belongs behind `:not(.single)`. At one direction the card has the full width, and those rules
-    otherwise undo the row.
+    two headers gives it two rows, so a third child lands back in the body's cell and paints over
+    it. Anything that must sit outside the columns (Headway's footnote) goes after the grid.
+  - Never put `container-type` on `.column`: size containment takes it out of the parent's subgrid
+    and the two headers stop lining up. Size steps are media queries.
+  - `.column-body`'s `align-self: start` applies only inside the subgrid. At one direction the
+    column is a flex column, where `start` shrinks the body to its content and leaves most of the
+    width empty.
+  - Status is bound once, as `data-status` (`due` / `delayed` / `scheduled`), from
+    `ColumnVariantBase.statusOf`; each style colours those states in its own CSS. Scheduled text
+    uses the global `--status-scheduled` token, since CTA yellow is unreadable on the light theme.
+  - Platform LED and Pocket LCD stay dark or backlit in both themes (they are a sign and a watch
+    face); Pocket LCD switches to its unlit glass with `:host-context([data-theme="light"])`.
+  - Platform LED is the only style that ships a font: Doto, subset to about 2 KB per weight under
+    `src/assets/fonts/` (OFL, licence alongside), declared in `styles.css`. Pocket LCD's digits are
+    SVG (`seven-segment.component.ts`), and every other style uses the system faces through the
+    `--numeral-font`, `--mono-font` and `--serif-font` tokens.
   - Grouping and ordering are Angular-free and unit-tested in
-    `train-arrivals/train-arrival-groups.ts`, along with `mergeTimeline`, `splitNextUp` and
-    `shortDestination`. The two layouts order the same groups differently (A-Z for the list, CTA's
-    `trDr` for the columns, so a direction keeps the same side at every station on a line).
+    `train-arrivals/train-arrival-groups.ts`; the geometry and labels the styles draw from (headway
+    gaps, Approach's square-root track positions, the seven-segment map, 24-hour clock, label
+    casing) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
+    differently (A-Z for the list, CTA's `trDr` for the side-by-side layouts, so a direction keeps
+    the same side at every station on a line).
 
 ### Stop Prediction (on-device)
 
@@ -196,8 +205,8 @@ Things to know before changing any of it:
 ### Testing
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
-dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts` and
-`train-arrivals/train-arrival-groups.ts`. Those modules import nothing from Angular, so the runner
+dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts`,
+`train-arrivals/train-arrival-groups.ts` and `train-arrivals/arrival-visuals.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
 reach the bundle.

@@ -1,5 +1,12 @@
 # Plan: direction-column layouts for train arrivals (six variants + settings)
 
+> **Superseded.** The six styles this plan describes (Split Board, Mirror Timeline, Departure
+> Board, Next Up, Spine Rails, Inverted Cards) were replaced by Platform LED, Typographic, Solari,
+> Sentence, Headway and Pocket LCD, plus a third layout, Approach. AGENTS.md ("Train arrivals
+> layout") describes what ships now. This file is kept for the reasoning behind the shared
+> foundation (the base directive, the subgrid-levelled headers, the per-line swap), which still
+> holds.
+
 **Status:** implemented on `claude/column-layout-plan-gfgg8s` · originally planned for `claude/train-arrivals-column-layout-ox4gzk`
 Deviations from this document, each with its reason in the commit that made it: the meta line stacks instead of using the list's `·` separator (wrapping left the separator starting the second line); both Spine Rails rails read top-to-bottom rather than mirroring; Mirror Timeline and Departure Board change shape under 340px beyond what §4.2/§4.3 describe. At one direction the card reflows into a row (§2, "One direction only") — spanning the width alone left the column-width stack sitting in the left half of it — and there the meta takes the `·` separator back, since the width that forced it to stack is the width it now has.
 **Audience:** the agent implementing this. Everything needed is in this file plus `AGENTS.md`;
