@@ -106,6 +106,32 @@
       label="Remember stop history"
       (toggled)="toggleHistory()" />
   </div>
+  @if (predictionPrefs.collectHistory()) {
+    <div class="settings-subrow">
+      <span class="settings-row-title">When You're Back</span>
+      <div class="style-picker layout-picker" role="radiogroup" aria-label="When you're back">
+        @for (mode of suggestionModes; track mode.id) {
+          <button type="button" role="radio" class="style-chip"
+                  [attr.aria-checked]="predictionPrefs.suggestionMode() === mode.id"
+                  [class.selected]="predictionPrefs.suggestionMode() === mode.id"
+                  (click)="predictionPrefs.setSuggestionMode(mode.id)">
+            <span class="style-chip-title">{{ mode.title }}</span>
+            <span class="style-chip-blurb">{{ mode.blurb }}</span>
+          </button>
+        }
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-label">
+        <span class="settings-row-title">Ask "Did You Mean…?"</span>
+        <span class="settings-row-subtitle">When the stop you open isn't your usual one for this time</span>
+      </div>
+      <app-toggle-switch
+        [checked]="predictionPrefs.didYouMean()"
+        label="Ask did you mean"
+        (toggled)="toggleDidYouMean()" />
+    </div>
+  }
   <div class="settings-row">
     <div class="settings-row-label">
       <span class="settings-row-title">Use My Location</span>
@@ -118,6 +144,9 @@
   </div>
   @if (accuracy(); as accuracy) {
     <p class="sync-status">{{ accuracy }}</p>
+  }
+  @if (actionStats(); as actionStats) {
+    <p class="sync-status">{{ actionStats }}</p>
   }
   @if (suggestionState(); as suggestionState) {
     <p class="sync-status">{{ suggestionState }}</p>

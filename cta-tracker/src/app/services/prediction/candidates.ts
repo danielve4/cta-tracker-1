@@ -58,10 +58,11 @@ export interface TrainingExample {
 
 /**
  * Entries the app produced rather than the user: a restore into a saved route, a document reload
- * onto a stop page, or a tap on our own suggestion. None of them is a choice, and the last one is
- * actively circular — training on it teaches the model that its own past guesses were right.
+ * onto a stop page, a tap on our own suggestion, or a stop the predictor opened itself. None of them
+ * is a choice, and the last two are actively circular — training on them teaches the model that its
+ * own past guesses were right.
  */
-const APP_DRIVEN = new Set<EntrySource>(['restored', 'reload', 'suggestion']);
+const APP_DRIVEN = new Set<EntrySource>(['restored', 'reload', 'suggestion', 'auto']);
 
 export function isUserDriven(entry: EntrySource): boolean {
   return !APP_DRIVEN.has(entry);

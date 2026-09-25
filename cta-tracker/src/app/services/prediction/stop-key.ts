@@ -34,3 +34,9 @@ export function stopViewUrl(event: Pick<StopViewEvent, 'kind' | 'stopId' | 'stop
     ? `/train-arrivals/${event.route}/${event.stopId}/${name}`
     : `/arrivals/${event.route}/${event.direction}/${event.stopId}/${name}`;
 }
+
+/** The route line under a suggested stop's name: "Red Line", or "#22 · Northbound". */
+export function stopRouteLabel(event: Pick<StopViewEvent, 'kind' | 'route' | 'direction'>): string {
+  const { route, direction, kind } = event;
+  return kind === 'train' ? `${route} Line` : `#${route}${direction ? ' · ' + direction : ''}`;
+}

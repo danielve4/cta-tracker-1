@@ -185,6 +185,11 @@
   gap: 10px;
 }
 
+/* A picker in the middle of a section, rather than closing it, needs the same break below it. */
+.settings-subrow + .settings-row {
+  margin-top: 18px;
+}
+
 .style-picker {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -52,6 +52,7 @@ cta-tracker-1/
 │   │   │   ├── services/         # BusService, FavoritesService
 │   │   │   │   └── prediction/   # On-device stop-view log and suggestion ranking
 │   │   │   ├── suggested-stop/   # "Heading here?" chip, rendered on Routes and Favorites
+│   │   │   ├── did-you-mean/     # "Did you mean…?" chip, rendered once in AppComponent
 │   │   │   ├── app.component.ts  # Root component with nav
 │   │   │   ├── app.config.ts     # Application providers config
 │   │   │   ├── app.routes.ts     # Route definitions
@@ -161,7 +162,8 @@ history already collected and needs no migration.
 | `features.ts` | Cyclic time encoding, context and per-candidate features |
 | `candidates.ts` | Candidate set and offline training-example extraction |
 | `baseline-scorer.ts` | Hand-weighted heuristic — the baseline any model must beat |
-| `predictor.service.ts` | Ranking, shadow impressions, accuracy readout |
+| `auto-open.ts` | Suggestion modes, and the auto-open and "did you mean" decisions over a ranking |
+| `predictor.service.ts` | Ranking, shadow impressions, auto-open, "did you mean", accuracy readout |
 
 Things to know before changing any of it:
 
@@ -170,8 +172,9 @@ Things to know before changing any of it:
   `circularDistance`, not a plain difference.
 - **Time-of-day uses three harmonics**, not one. A single `(cos, sin)` pair is one sinusoid per day
   and cannot represent the AM/PM rush bimodality that dominates transit use.
-- **`entry` keeps the training labels honest.** Three values mark views the *app* produced rather
-  than the user: `'suggestion'` (the model's own guess, a feedback loop if trained on), `'restored'`
+- **`entry` keeps the training labels honest.** Four values mark views the *app* produced rather
+  than the user: `'suggestion'` (the model's own guess, a feedback loop if trained on), `'auto'` (the
+  same, opened without even a tap), `'restored'`
   (`AppComponent`'s `LS_SAVED_ROUTE` auto-navigation) and `'reload'` (the document was reloaded onto
   a stop page — iOS discards a backgrounded PWA and reloads the URL it was on). `isUserDriven()` in
   `candidates.ts` is the single source of truth for that set. Any new code path that navigates to a
@@ -188,6 +191,32 @@ Things to know before changing any of it:
   `PredictorService.hasPredicted` makes the second a no-op. A launch restores `LS_SAVED_ROUTE`, so
   for anyone whose last page was Favorites the Routes screen is never seen — mounting the chip only
   there meant the feature could not fire at all, which is how it shipped and why nobody saw it.
+- **Settings → "When You're Back" picks the chip or auto-open** (`predict-suggestion-mode`). In
+  auto mode a cold launch at `/` holds the `LS_SAVED_ROUTE` restore for up to 500 ms while the
+  ranking runs, and opens the top stop instead when `pickAutoOpen` agrees. That bar is deliberately
+  stricter than the chip's: a floor above `MIN_CONFIDENT_SCORE` and a **lead over the runner-up**,
+  because a near-tie is exactly where opening one stop is a coin flip and the chip can show both.
+  When it declines, the chip is shown instead. `armAutoOpen` / `claimAutoOpen` / `disarmAutoOpen`
+  agree on a single winner between the ranking and the timeout, so a slow ranking can never redirect
+  a launch that has already restored, and the chip is held back while armed so it cannot flash up on
+  the screen being left. The launch ranking is one memoized promise, since AppComponent and both chip
+  mounts all need the same answer.
+- **An auto-open never resolves its own impression.** Resolving it with the view it caused would
+  score every auto-open as a hit. It stays open for the stop the user moves to next, and the Settings
+  readout counts those as "switched away". Records carry `action` (`chip` / `auto` / `did-you-mean`)
+  and the chip's top-1 figure is computed over chip records only.
+- **"Did you mean…?" has its own toggle** (`predict-did-you-mean`, default on) and works in either
+  mode. It judges only the **first stop view of a cold-start session**, whatever that view was, so
+  browsing afterwards never triggers it; an `auto` or `suggestion` view spends the check without
+  asking. The spent session id is persisted (`predict-did-you-mean-session`) because iOS reloads a
+  discarded PWA mid-session. `didYouMean()` asks only when the stop on screen has a low time-of-day
+  affinity *and* the top pick is a real time-of-day routine (`ROUTINE_TIME_AFFINITY`), and never
+  about a stop with no history — without those two conditions the real-world replay questioned two
+  deliberate launches. Views from the current session are excluded from the ranking, or the view
+  being judged would count as evidence that the stop is viewed at this time.
+- **The auto-open and "did you mean" thresholds are pinned by the replay** in
+  `real-world-log.spec.ts`. A weight or feature change that moves which launches auto-open, or makes
+  "did you mean" fire on that mistake-free log, fails there first.
 - **Every gate is a silent early return, so name them.** `PredictorService.suppressionReason` records
   which one fired and Settings renders it in words. Diagnosing "I have never seen a suggestion"
   without that required exporting the log and replaying it offline. `gateReason()` is shared by the

@@ -1,0 +1,14 @@
+@if (suggestion(); as suggestion) {
+  <aside class="did-you-mean" role="status" aria-live="polite">
+    <button type="button" class="did-you-mean-open" (click)="open(suggestion)">
+      <span class="did-you-mean-question">Did you mean to view arrivals for</span>
+      <span class="did-you-mean-stop">{{ suggestion.event.stopName }}?</span>
+      <span class="did-you-mean-route">{{ label(suggestion) }}</span>
+    </button>
+    <button type="button" class="did-you-mean-dismiss" (click)="dismiss()" aria-label="Dismiss">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </aside>
+}
