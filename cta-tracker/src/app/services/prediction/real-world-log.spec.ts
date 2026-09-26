@@ -12,9 +12,10 @@
 // between events, their order and their entry sources feed the features under test.
 
 import { describe, expect, it } from 'vitest';
-import { MIN_CONFIDENT_SCORE, MIN_EVENTS_FOR_SUGGESTION, rankCandidates } from './baseline-scorer';
+import { didYouMean, pickAutoOpen } from './auto-open';
+import { MIN_CONFIDENT_SCORE, MIN_EVENTS_FOR_SUGGESTION, ScoredCandidate, rankCandidates } from './baseline-scorer';
 import { buildCandidates, isUserDriven, mostRecentlyUsed } from './candidates';
-import { PredictionContext, buildHistoryIndex, candidateFeatures, distanceRanks } from './features';
+import { CandidateFeatures, PredictionContext, buildHistoryIndex, candidateFeatures, distanceRanks } from './features';
 import { COLD_START_GAP_MS, SessionState } from './session-state';
 import { EntrySource, StopKey, StopViewEvent } from './stop-view-event';
 import { memoryStorage } from './test-fixtures';
@@ -102,6 +103,8 @@ interface Replay {
   topStopKey: StopKey;
   topScore: number;
   mru: StopKey | null;
+  ranked: ScoredCandidate[];
+  features: Map<StopKey, CandidateFeatures>;
 }
 
 /** Ranks each session's opening choice using only what the log knew strictly before it. */
@@ -134,17 +137,22 @@ function replayEligibleSessions(): Replay[] {
     const index = buildHistoryIndex(history, FAVORITES);
     const keys = candidates.map(candidate => candidate.stopKey);
     const ranks = distanceRanks(keys, context, index);
-    const [top] = rankCandidates(keys.map(stopKey => ({
-      features: candidateFeatures(stopKey, context, index, ranks.get(stopKey) ?? 0.5),
+    const features = new Map<StopKey, CandidateFeatures>(keys.map(stopKey =>
+      [stopKey, candidateFeatures(stopKey, context, index, ranks.get(stopKey) ?? 0.5)]));
+    const ranked = rankCandidates(keys.map(stopKey => ({
+      features: features.get(stopKey)!,
       distanceRankNorm: ranks.get(stopKey) ?? 0.5
     })));
+    const [top] = ranked;
 
     results.push({
       sessionId: event.sessionId,
       actual: event.stopKey,
       topStopKey: top.stopKey,
       topScore: top.score,
-      mru: mostRecentlyUsed(history)
+      mru: mostRecentlyUsed(history),
+      ranked,
+      features
     });
   }
   return results;
@@ -211,5 +219,30 @@ describe('the restore that used to suppress the whole launch', () => {
 
     expect(session.takeSeq(isUserDriven('restored'))).toBe(0);
     expect(session.takeSeq(isUserDriven('browse'))).toBe(1);
+  });
+});
+
+describe('auto-open and "did you mean" against the same log', () => {
+  // These are the replay that AUTO_OPEN_MARGIN and the two affinity bars in auto-open.ts were set
+  // from. A change to the weights or the features that moves any of them should show up here first.
+
+  it('auto-opens only where the ranking is decisive, and is right on most of them', () => {
+    const opened = replayEligibleSessions()
+      .map(replay => ({ ...replay, pick: pickAutoOpen(replay.ranked) }))
+      .filter(replay => replay.pick !== null);
+
+    // s5 and s6 were near-ties (a lead of ~0.36) and fall back to the chip — one of them wrong.
+    expect(opened.map(replay => replay.sessionId)).toEqual(['s7', 's8', 's9']);
+    // s7 opened a stop the user had never viewed before, which no bar on the ranking could foresee.
+    expect(opened.filter(replay => replay.pick === replay.actual).map(r => r.sessionId)).toEqual(['s8', 's9']);
+  });
+
+  it('never asks "did you mean" in a log with no mistakes in it', () => {
+    // Every opening choice here was deliberate. Before the routine and history conditions, the check
+    // questioned s6 (top pick had no time-of-day pattern) and s7 (a stop with no history).
+    for (const replay of replayEligibleSessions()) {
+      const featuresOf = (stopKey: StopKey) => replay.features.get(stopKey);
+      expect(didYouMean(featuresOf(replay.actual), replay.ranked, featuresOf)).toBeNull();
+    }
   });
 });

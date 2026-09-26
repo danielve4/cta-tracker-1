@@ -1,14 +1,17 @@
-import { Component, inject, injectAsync, onIdle, afterNextRender, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, injectAsync, onIdle, afterNextRender, ChangeDetectionStrategy, computed, signal } from '@angular/core';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ToggleSwitchComponent } from '../toggle-switch/toggle-switch.component';
 import { ThemeService } from '../services/theme.service';
 import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY } from '../services/display-preferences.service';
 import { ARRIVALS_LAYOUTS, COLUMN_STYLES } from '../services/arrivals-layout';
-import { COLLECT_STOP_HISTORY_KEY, PredictionPreferencesService, USE_LOCATION_KEY } from '../services/prediction/prediction-preferences.service';
+import {
+  COLLECT_STOP_HISTORY_KEY, DID_YOU_MEAN_KEY, PredictionPreferencesService, SUGGESTION_MODE_KEY, USE_LOCATION_KEY
+} from '../services/prediction/prediction-preferences.service';
+import { SUGGESTION_MODES, SuggestionMode } from '../services/prediction/auto-open';
 import { EventLogStore } from '../services/prediction/event-log.store';
 import { LocationService } from '../services/prediction/location.service';
 import { LAST_ACTIVITY_KEY, SESSION_KEY } from '../services/prediction/session.service';
-import { PredictorService, SuppressionReason } from '../services/prediction/predictor.service';
+import { AccuracyStats, DID_YOU_MEAN_SESSION_KEY, PredictorService, SuppressionReason } from '../services/prediction/predictor.service';
 import type { FavoritesService } from '../services/favorites.service';
 import type { Favorite } from '../services/Favorite';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
@@ -22,6 +25,7 @@ import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
  */
 const SUPPRESSION_TEXT: Record<SuppressionReason, string> = {
   'ok': 'Ready — a suggestion will appear the next time you open the app after a few hours away.',
+  'below-auto-confidence': 'Not sure enough to open a stop automatically this visit, so it was suggested instead.',
   'not-evaluated': '',
   'collection-off': 'Suggestions are off because stop history is not being recorded.',
   'not-cold-start': 'No suggestion right now: you used the app less than 2 hours ago.',
@@ -31,11 +35,20 @@ const SUPPRESSION_TEXT: Record<SuppressionReason, string> = {
   'below-confidence': 'Nothing confident enough to suggest from this visit.'
 };
 
+/** 'ok' is the one reason whose wording depends on what the app will do about it. */
+function suppressionText(reason: SuppressionReason, mode: SuggestionMode): string {
+  if (reason === 'ok' && mode === 'auto') {
+    return 'Ready — your usual stop will open the next time you open the app after a few hours away, ' +
+      'or be suggested when it is a close call.';
+  }
+  return SUPPRESSION_TEXT[reason];
+}
+
 /** Keys that survive "Clear Cache" — user preferences and data, not cached API payloads. */
 const PRESERVED_KEYS = [
   'favorites', 'theme-preference', SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY,
   TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY, COLLECT_STOP_HISTORY_KEY,
-  USE_LOCATION_KEY, LAST_ACTIVITY_KEY, SESSION_KEY
+  USE_LOCATION_KEY, SUGGESTION_MODE_KEY, DID_YOU_MEAN_KEY, DID_YOU_MEAN_SESSION_KEY, LAST_ACTIVITY_KEY, SESSION_KEY
 ];
 
 @Component({
@@ -62,11 +75,15 @@ export class SettingsComponent {
   historyStatus = signal('');
   historyCleared = signal(false);
   accuracy = signal('');
-  suggestionState = signal('');
+  actionStats = signal('');
+  private suggestionReason = signal<SuppressionReason>('not-evaluated');
+  /** Computed so switching the mode rewords the readout without re-querying the log. */
+  suggestionState = computed(() => suppressionText(this.suggestionReason(), this.predictionPrefs.suggestionMode()));
 
   readonly appVersion = '1.0.0';
   readonly arrivalsLayouts = ARRIVALS_LAYOUTS;
   readonly columnStyles = COLUMN_STYLES;
+  readonly suggestionModes = SUGGESTION_MODES;
 
   constructor() {
     // Deferred to after the first render for the same reason as everywhere else in the app: this
@@ -85,16 +102,35 @@ export class SettingsComponent {
       this.eventLog.countEvents(),
       this.predictor.explain()
     ]);
+    this.suggestionReason.set(reason);
+    this.actionStats.set(this.describeActions(stats));
     if (!stats.resolved) {
       this.accuracy.set(`${count} stop views recorded — no suggestions scored yet`);
-      this.suggestionState.set(SUPPRESSION_TEXT[reason]);
       return;
     }
     this.accuracy.set(
       `${count} stop views · ${stats.top1}/${stats.resolved} correct ` +
       `(top-3: ${stats.top3}, most-recent-stop baseline: ${stats.mruTop1})`
     );
-    this.suggestionState.set(SUPPRESSION_TEXT[reason]);
+  }
+
+  /**
+   * Auto-open and "did you mean" are scored apart from the chip: each is resolved differently, and
+   * pooling them would flatter the chip's hit rate. See `PredictionRecord.action`.
+   */
+  private describeActions(stats: AccuracyStats): string {
+    const parts: string[] = [];
+    if (stats.autoOpened) {
+      parts.push(`Opened automatically ${stats.autoOpened}× (switched away ${stats.autoCorrected}×)`);
+    }
+    if (stats.didYouMeanShown) {
+      parts.push(`"Did you mean" asked ${stats.didYouMeanShown}× (taken ${stats.didYouMeanAccepted}×)`);
+    }
+    return parts.join(' · ');
+  }
+
+  toggleDidYouMean(): void {
+    this.predictionPrefs.setDidYouMean(!this.predictionPrefs.didYouMean());
   }
 
   toggleHistory(): void {

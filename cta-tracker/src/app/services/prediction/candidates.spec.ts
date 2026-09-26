@@ -25,7 +25,7 @@ describe('extractTrainingExamples', () => {
   });
 
   it('never labels an example with an app-driven view', () => {
-    for (const entry of ['restored', 'suggestion'] as const) {
+    for (const entry of ['restored', 'reload', 'suggestion', 'auto'] as const) {
       const events = sorted(
         history(NOW, 'bus:1001', 6, 'old'),
         history(NOW, 'bus:1002', 6, 'old2'),

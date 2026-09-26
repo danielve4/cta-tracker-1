@@ -20,7 +20,7 @@ export type StopKind = 'bus' | 'train';
 export type StopKey = `${StopKind}:${string}`;
 
 /**
- * How the user arrived at the stop view. Two of these exist purely to keep the training set honest:
+ * How the user arrived at the stop view. Several of these exist purely to keep the training set honest:
  *
  * - `suggestion` — the user tapped our own prediction, so the event was *caused by the model*.
  *   Training on it teaches the model that its past guesses were correct regardless of whether they
@@ -33,6 +33,8 @@ export type StopKey = `${StopKind}:${string}`;
  *   putting the user back where they already were is indistinguishable from them deliberately
  *   opening that stop after hours away — and it lands in exactly the cold-start situation the
  *   predictor targets.
+ * - `auto` — the predictor opened the stop itself, in the "Open automatically" suggestion mode. The
+ *   same feedback loop as `suggestion`, only without even a tap in between.
  */
 export type EntrySource =
   | 'browse'
@@ -43,6 +45,7 @@ export type EntrySource =
   | 'restored'
   | 'reload'
   | 'suggestion'
+  | 'auto'
   | 'unknown';
 
 /** Mirrors PerformanceNavigationTiming.type; 'unknown' when the API is unavailable. */
@@ -143,4 +146,13 @@ export interface PredictionRecord {
   rankOfActual: number | null;
   dismissed: boolean;
   resolvedAt: number | null;
+  /**
+   * What the ranking was used for. Absent on rows written before auto-open existed, which were all
+   * chips. Kept apart in the accuracy readout: an auto-open is never "resolved" by the view it caused,
+   * and a did-you-mean is only resolved by a tap on it, so pooling them with the chip would inflate
+   * its hit rate.
+   */
+  action?: PredictionAction;
 }
+
+export type PredictionAction = 'chip' | 'auto' | 'did-you-mean';

@@ -33,6 +33,12 @@ interface StopViewParams {
   direction: string;
 }
 
+/** A stop view as AppComponent passes it on to the predictor. */
+export interface StopView {
+  stopKey: StopKey;
+  entry: EntrySource;
+}
+
 interface PendingView {
   id: number;
   visibleSince: number | null;
@@ -92,11 +98,11 @@ export class StopViewTrackerService {
    * LS_SAVED_ROUTE. `entry` is read from navigation state where the navigating code set it
    * explicitly, and otherwise inferred from the URL we came from.
    *
-   * Resolves with the stop that was opened, so AppComponent can hand it to the predictor to close
-   * out an open impression. Returned rather than pushed so this service stays unaware of the
-   * predictor, which already depends on it.
+   * Resolves with the stop that was opened and how, so AppComponent can hand them to the predictor
+   * to close out an open impression and to check for a "did you mean". Returned rather than pushed so
+   * this service stays unaware of the predictor, which already depends on it.
    */
-  async handleNavigation(event: NavigationEnd, stateEntry: EntrySource | null): Promise<StopKey | null> {
+  async handleNavigation(event: NavigationEnd, stateEntry: EntrySource | null): Promise<StopView | null> {
     if (!this.isBrowser) {
       return null;
     }
@@ -116,8 +122,8 @@ export class StopViewTrackerService {
       return null;
     }
     const stopKey = stopKeyOf(params.kind, params.stopId);
+    const entry = stateEntry ?? this.inferEntry(from, isFirstOfDocument);
     if (this.prefs.collectHistory()) {
-      const entry = stateEntry ?? this.inferEntry(from, isFirstOfDocument);
       // Claimed synchronously, before any await: record() resolves after several IndexedDB
       // round-trips, so claiming it there would let two interleaved navigations assign sequence
       // numbers in a different order than their timestamps. `isUserDriven` keeps a restore or a
@@ -126,7 +132,7 @@ export class StopViewTrackerService {
       const seq = this.session.takeSeq(isUserDriven(entry));
       await this.record(params, entry, from, seq, token);
     }
-    return stopKey;
+    return { stopKey, entry };
   }
 
   /** Called by the arrivals components when the user taps refresh — engagement dwell alone misses. */

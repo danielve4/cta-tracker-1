@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, afterNextRender, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { PredictorService, Suggestion } from '../services/prediction/predictor.service';
-import { stopViewUrl } from '../services/prediction/stop-key';
+import { stopRouteLabel, stopViewUrl } from '../services/prediction/stop-key';
 
 /**
  * The suggestion chip on the home screen: "back after a while — heading to your usual stop?"
@@ -41,7 +41,6 @@ export class SuggestedStopComponent {
   }
 
   protected label(suggestion: Suggestion): string {
-    const { route, direction, kind } = suggestion.event;
-    return kind === 'train' ? `${route} Line` : `#${route}${direction ? ' · ' + direction : ''}`;
+    return stopRouteLabel(suggestion.event);
   }
 }
