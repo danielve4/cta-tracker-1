@@ -1,0 +1,69 @@
+@if (groups(); as groups) {
+  <div class="stage" [class.refreshing]="refreshing()">
+    <div #scene class="scene" aria-hidden="true"
+         [class.dragging]="dragging()"
+         [class.tilting]="tilting()"
+         (pointerdown)="onPointerDown($event)"
+         (pointermove)="onPointerMove($event)"
+         (pointerup)="onPointerUp()"
+         (pointercancel)="onPointerUp()">
+      <div class="camera" [style.--orbit-yaw]="orbit().yaw + 'deg'" [style.--orbit-pitch]="orbit().pitch + 'deg'"
+           [style.--line]="colorFor(groups[0])" [style.--line-text]="textColorFor(groups[0])">
+        <div class="model">
+          <div appBox class="slab"></div>
+          @for (b of buildings; track $index) {
+            <div appBox class="building"
+                 [style.left.%]="b[0]" [style.top.%]="b[1]" [style.width.px]="b[2]" [style.height.px]="b[3]" [style.--h.px]="b[4]"></div>
+          }
+          <div class="shadow"></div>
+          @for (x of pillars; track x) {
+            <div appBox class="pillar" [style.left.%]="x"></div>
+          }
+          <div appBox class="deck"></div>
+
+          <div class="station" [style.left.%]="station()">
+            <div appBox class="platform platform-far"></div>
+            <div appBox class="platform platform-near"></div>
+            <div appBox class="post post-far"></div>
+            <div appBox class="post post-near"></div>
+            <div appBox class="canopy canopy-far"></div>
+            <div appBox class="canopy canopy-near"></div>
+          </div>
+
+          @for (train of trains(); track train.arrival.rn + train.arrival.stpId) {
+            <a class="train" tabindex="-1"
+               [class.near]="train.track === 1"
+               [attr.data-status]="statusOf(train.arrival)"
+               [style.left.%]="train.percent"
+               [style.--c]="colorFor(train.group)"
+               [style.--lane]="train.lane"
+               [routerLink]="['/train-follow', train.arrival.rn]"
+               [queryParams]="{from: stationId(), rt: train.arrival.rt}">
+              <div appBox class="car"></div>
+              <span class="bill-anchor">
+                <span class="bill" [style.--line-text]="textColorFor(train.group)">{{ label(train.arrival) }}</span>
+              </span>
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="ends" aria-hidden="true">
+      @for (group of groups.slice(0, 2); track group.key; let i = $index) {
+        <span class="end" [style.--c]="colorFor(group)">{{ i === 0 ? '←' : '' }} {{ placeName(group.directionLabel) }} {{ i === 1 ? '→' : '' }}</span>
+      }
+    </div>
+    @if (canTilt()) {
+      <button type="button" class="tilt" [attr.aria-pressed]="tilting()" (click)="toggleTilt()"
+              aria-label="Look around the model by tilting your phone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="7" y="2.5" width="10" height="19" rx="2.5" transform="rotate(-18 12 12)"></rect>
+          <path d="M3 8.5a10 10 0 0 0 0 7M21 8.5a10 10 0 0 1 0 7"></path>
+        </svg>
+        Tilt
+      </button>
+    }
+  </div>
+  <app-depth-list [groups]="groups" [stationId]="stationId()" [refreshing]="refreshing()" />
+}

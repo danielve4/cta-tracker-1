@@ -88,11 +88,11 @@ cta-tracker-1/
 - **Zoneless change detection**: Uses `provideZonelessChangeDetection()`; Zone.js is not installed and `polyfills` is empty.
 - **Signals**: Components expose `signal()`/`computed()` state, with `toSignal`, `rxResource` and `httpResource` bridging async sources. `FavoritesService` is the one remaining Observable-based service.
 - **providedIn root services**: Services use `@Injectable({ providedIn: 'root' })` for tree-shakable singletons.
-- **Train arrivals layout**: The train arrivals screen has three layouts, picked in Settings and
+- **Train arrivals layout**: The train arrivals screen has four layouts, picked in Settings and
   stored under `train-arrivals-layout`: a stacked list (the default), side-by-side direction
-  columns in one of six styles (`train-arrivals-column-style`), and Approach, which draws the line
-  with the station in the middle and each direction's trains closing in from its own side. A Swap
-  chip in the stop header flips a line's two sides in both side-by-side layouts, stored per line
+  columns in one of six styles (`train-arrivals-column-style`), Approach, which draws the line
+  with the station in the middle and each direction's trains closing in from its own side, and 3D
+  (below). A Swap chip in the stop header flips a line's two sides in every side-by-side layout, stored per line
   under `train-arrivals-swapped-lines`. The list markup stays in the parent template. The column
   styles live in `train-arrivals/columns/`, where `train-arrival-columns.component` switches on the
   style and each style is its own standalone component extending `ColumnVariantBase` and listing
@@ -138,6 +138,47 @@ cta-tracker-1/
     casing, lane assignment) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
     differently (A-Z for the list, CTA's `trDr` for the side-by-side layouts, so a direction keeps
     the same side at every station on a line).
+- **3D layout**: a fourth layout, `'depth'` (titled "3D"), with its own style picker stored under
+  `train-arrivals-depth-style` (`DEPTH_STYLES` in `services/arrivals-layout.ts`, same fall-back rule
+  as the column styles). It lives in `train-arrivals/depth/`: `train-arrival-depth.component`
+  switches on the style and owns the one loading skeleton, and each style extends
+  `ColumnVariantBase`. Everything is CSS 3D and platform APIs — no WebGL, no library.
+  - **Tunnel**: first-person down a subway tunnel; each train is a box (front, sides, roof) pushed
+    into the tunnel by `depthFraction`, with its minutes lit on the windshield. **Diorama**: a
+    tabletop elevated L built from `BoxComponent` cuboids, drag to turn it, or the Tilt chip hands
+    the camera to `deviceorientation` behind iOS's permission prompt. **Cover Flow**: a scroll-snap
+    row per direction whose cards turn on a `view-timeline`, reflected with `-webkit-box-reflect`.
+    **Time Stack**: slabs pushed back by the minutes after the one in front (`timeStack`).
+    **Neon Skyline**: synthwave — neon streaks racing in along a scrolling grid toward a flat sky
+    and skyline drawn down to the horizon the floor projects to, minutes on glowing billboards.
+    **Holo Card**: the next train on a foil card that tips under a finger or the gyroscope, later
+    trains fanned below it (`cardTilt`, `tiltToCard`, `fanLayout`).
+  - Gyroscope access for Diorama and Holo Card goes through `depth/device-tilt.ts` (the
+    `(pointer: coarse)` gate, iOS's permission prompt, the baseline reading).
+  - Tunnel and Diorama are `aria-hidden` with their trains out of the tab order; `app-depth-list`
+    under them is the accessible, exact-time version. Cover Flow and Time Stack are real links.
+  - **A face's outside must face out.** `backface-visibility: hidden` culls what the eye cannot
+    see, and a face whose normal points into its box gets its depth order wrong in Chrome and paints
+    over the box's front. `BoxComponent` and the Tunnel cars are laid out that way; follow them.
+  - **No `opacity` or `filter` on a `preserve-3d` element** — both flatten it. Refresh dimming goes
+    on the stage, and fog is a background layer on each face. A filter that appears on `:active`
+    re-layers the scene mid-tap, so the pointer is released over another element and the tap never
+    becomes a click; Tunnel's pressed state brightens the lamps instead.
+  - **Animated angles and spreads are `@property`-registered** (`--yaw`, `--pitch`, `--spread`)
+    so they interpolate, and so the Diorama's counter-rotated labels stay in step with the camera.
+    `@starting-style` runs the entrances; it cannot override an inline style, which is why the
+    Diorama binds `--orbit-yaw` and derives `--yaw` from it in CSS.
+  - A `filter` also makes an element a backdrop root, so a `backdrop-filter` inside it sees nothing
+    behind — Time Stack's slabs are opaque for that reason, not frosted.
+  - **Billboards are laid out on screen, not along the track.** Neon Skyline's stems are scaled with
+    their signs, so `stackBillboards` places each sign's projected box, nearest first. Its constants
+    mirror the stage's `--P`, `--D` and `--oy`; change them together.
+  - A `preserve-3d` container's own box sits at z = 0 and takes taps meant for anything pushed back
+    behind it. Neon Skyline's world is `pointer-events: none` with only the billboards opted back in.
+  - A pressed link starts the browser's native link drag, which swallows the pointer moves a tilt
+    needs; Holo Card's cards are `draggable="false"` with `-webkit-user-drag: none`. Blend modes
+    (the foil) are safe there because the cards themselves are flat — keep them out of `preserve-3d`.
+  - Positions and camera limits are Angular-free and unit-tested in `depth/depth-geometry.ts`.
 
 ### Stop Prediction (on-device)
 
@@ -247,8 +288,8 @@ Things to know before changing any of it:
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
 dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts`,
-`train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts` and
-`train-arrivals/led-matrix.ts`. Those modules import nothing from Angular, so the runner
+`train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts`,
+`train-arrivals/led-matrix.ts` and `train-arrivals/depth/depth-geometry.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
 reach the bundle.

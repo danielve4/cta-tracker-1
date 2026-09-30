@@ -1,0 +1,42 @@
+@if (groups(); as groups) {
+  <div class="columns list" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (group of groups; track group.key; let i = $index) {
+      <section class="column"
+               [class.fill]="variantFor(i) === 'fill'"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(group)">
+        <h3 class="list-header">{{ group.directionLabel }}</h3>
+        <ol class="column-body">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li>
+              <a class="arrival-link list-row"
+                 [attr.data-status]="statusOf(arrival)"
+                 [routerLink]="['/train-follow', arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: arrival.rt}">
+                <span class="list-count">
+                  @if (arrival.countdown === 'DUE') {
+                    <span class="num">Due</span>
+                  } @else {
+                    <span class="num">{{ arrival.countdown }}</span><span class="unit">min</span>
+                  }
+                </span>
+                <span class="list-text">
+                  <span class="list-dest">@if (mixedByGroup().get(group.key)) {<b>{{ arrival.destNm.charAt(0) }}</b>}{{ arrival.destNm }}</span>
+                  <span class="meta">
+                    {{ arrival.countdown | timeuntil:'time' }}
+                    @if (arrival.isDly === '1') {
+                      <span class="flag flag-delayed"> · Delayed</span>
+                    } @else if (arrival.isSch === '1') {
+                      <span class="flag flag-scheduled"> · Scheduled</span>
+                    }
+                    <span class="meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ arrival.apiArrivalTime }}</span>}@if (prefs.showDistance() && arrival.distance) {<span>{{ arrival.distance }}</span>}</span>
+                  </span>
+                </span>
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

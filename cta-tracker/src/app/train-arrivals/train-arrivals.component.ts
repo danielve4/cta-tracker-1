@@ -16,6 +16,7 @@ import { StopViewTrackerService } from '../services/prediction/stop-view-tracker
 import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
 import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
 import { ApproachComponent } from './approach/approach.component';
+import { TrainArrivalDepthComponent } from './depth/train-arrival-depth.component';
 import { isSideBySide } from '../services/arrivals-layout';
 
 @Component({
@@ -23,7 +24,8 @@ import { isSideBySide } from '../services/arrivals-layout';
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent, ApproachComponent]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent, ApproachComponent,
+    TrainArrivalDepthComponent]
 })
 export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);

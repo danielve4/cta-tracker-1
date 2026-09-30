@@ -1,0 +1,251 @@
+/* The camera's two angles, registered so they interpolate: the model and every label that
+   counter-rotates against it read the same in-between value while the camera eases. */
+@property --yaw { syntax: '<angle>'; inherits: true; initial-value: -22deg; }
+@property --pitch { syntax: '<angle>'; inherits: true; initial-value: 56deg; }
+
+.stage {
+  --W: min(94cqi, 420px);
+  --structure: #4f5d55;
+  --ground: #161b23;
+  --street: rgba(255,255,255,0.06);
+  --building: #2b3242;
+  --window: rgba(255, 214, 128, 0.7);
+  position: relative;
+  height: 340px;
+  overflow: hidden;
+  border-radius: 22px;
+  container-type: inline-size;
+  background: radial-gradient(120% 90% at 50% 20%, #1e2638, #080a10 70%);
+  perspective: 1000px;
+  perspective-origin: 50% 36%;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+.stage.refreshing { opacity: 0.75; }
+:host-context([data-theme="light"]) .stage {
+  --structure: #5f7166;
+  --ground: #e4e1d9;
+  --street: rgba(255,255,255,0.9);
+  --building: #cfcac0;
+  --window: rgba(60, 80, 110, 0.35);
+  background: radial-gradient(120% 90% at 50% 20%, #f4f7fb, #d9e2ee 75%);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.scene.dragging { cursor: grabbing; }
+
+.camera {
+  --yaw: var(--orbit-yaw, -22deg);
+  --pitch: var(--orbit-pitch, 56deg);
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--pitch)) rotateZ(var(--yaw));
+  transition: --yaw 0.7s var(--ease-decelerate), --pitch 0.7s var(--ease-decelerate);
+}
+/* Following a finger or the gyroscope, the camera tracks it directly. */
+.dragging .camera,
+.tilting .camera { transition-duration: 0s, 0s; }
+/* On arrival the model swings round into place. */
+@starting-style {
+  .camera { --yaw: -80deg; --pitch: 24deg; }
+}
+
+.model {
+  position: absolute;
+  width: var(--W);
+  height: calc(var(--W) * 0.64);
+  left: calc(var(--W) / -2);
+  top: calc(var(--W) * -0.32);
+  transform-style: preserve-3d;
+}
+
+/* The ground is the top of a slab, so the model has an edge like one on a table. */
+.slab {
+  inset: 0;
+  --z0: -12px;
+  --h: 12px;
+  --c: color-mix(in srgb, var(--ground), black 10%);
+  --top:
+    linear-gradient(to right, transparent calc(50% - 5px), var(--street) calc(50% - 5px) calc(50% + 5px), transparent calc(50% + 5px)),
+    repeating-linear-gradient(to right, transparent 0 58px, var(--street) 58px 62px),
+    repeating-linear-gradient(to bottom, transparent 0 44px, var(--street) 44px 48px),
+    var(--ground);
+  border-radius: 4px;
+}
+
+.building {
+  --c: var(--building);
+  --front: repeating-linear-gradient(to right, transparent 0 4px, var(--window) 4px 7px, transparent 7px 10px) 0 4px / 100% calc(100% - 8px) no-repeat,
+           var(--c);
+}
+
+/* The structure: a shadow on the street, girder pillars, and the deck with its two tracks. */
+.shadow {
+  position: absolute;
+  left: 2%; right: 2%;
+  top: calc(50% - 10px);
+  height: 42px;
+  transform: translateZ(0.5px);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.28);
+  filter: blur(6px);
+}
+.pillar {
+  top: calc(50% - 15px);
+  width: 5px;
+  height: 30px;
+  margin-left: -2.5px;
+  --h: 34px;
+  --c: var(--structure);
+}
+.deck {
+  left: 0; right: 0;
+  top: calc(50% - 20px);
+  height: 40px;
+  --z0: 34px;
+  --h: 5px;
+  --c: var(--structure);
+  --top:
+    linear-gradient(to bottom,
+      transparent 8px, #c3c6cc 8px 9px, transparent 9px 16px, #c3c6cc 16px 17px,
+      transparent 17px 23px, #c3c6cc 23px 24px, transparent 24px 31px, #c3c6cc 31px 32px, transparent 32px),
+    repeating-linear-gradient(to right, rgba(40,30,22,0.8) 0 2px, transparent 2px 5px) 0 6px / 100% 13px no-repeat,
+    repeating-linear-gradient(to right, rgba(40,30,22,0.8) 0 2px, transparent 2px 5px) 0 21px / 100% 13px no-repeat,
+    color-mix(in srgb, var(--structure), white 18%);
+}
+
+/* The station: side platforms level with the deck, canopies in the line colour. */
+.station { position: absolute; top: 0; bottom: 0; width: 0; transform-style: preserve-3d; }
+.platform { left: -36px; width: 72px; height: 13px; --z0: 30px; --h: 9px; --c: #9c9ca4; }
+.platform-far { top: calc(50% - 33px); }
+.platform-near { top: calc(50% + 20px); }
+.post { left: -1.5px; width: 3px; height: 3px; --z0: 39px; --h: 21px; --c: #3c3c42; }
+.post-far { top: calc(50% - 28px); }
+.post-near { top: calc(50% + 25px); }
+.canopy { left: -32px; width: 64px; height: 16px; --z0: 60px; --h: 3px; --c: var(--line); }
+.canopy-far { top: calc(50% - 35px); }
+.canopy-near { top: calc(50% + 19px); }
+
+/* ── Trains: a two-car set on its track, its label standing up to face you ── */
+.train {
+  position: absolute;
+  top: calc(50% - 12px);
+  width: 0;
+  height: 9px;
+  transform-style: preserve-3d;
+  transition: left 1.4s var(--ease-standard);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.train.near { top: calc(50% + 3px); }
+.car {
+  left: -19px;
+  width: 38px;
+  top: 0;
+  height: 100%;
+  --z0: 39px;
+  --h: 11px;
+  --front:
+    linear-gradient(to right, transparent 18.5px, rgba(0,0,0,0.5) 18.5px 19.5px, transparent 19.5px),
+    linear-gradient(to bottom, transparent 2px, rgba(12,16,24,0.78) 2px 6px, transparent 6px),
+    var(--c);
+}
+
+.bill-anchor {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  /* Up off the roof, then undo the camera, so the label faces the screen whichever way the model
+     is turned. */
+  transform: translateZ(74px) rotateZ(calc(-1 * var(--yaw))) rotateX(calc(-1 * var(--pitch)));
+}
+.bill {
+  --stem-h: calc(6px + var(--lane) * 24px);
+  position: absolute;
+  left: 0;
+  bottom: var(--stem-h);
+  translate: -50% 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--c);
+  color: var(--line-text);
+  font-family: var(--numeral-font);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px -4px rgba(0,0,0,0.6);
+}
+.bill::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1.5px;
+  height: var(--stem-h);
+  margin-left: -0.75px;
+  background: currentColor;
+  opacity: 0.5;
+}
+.train[data-status="due"] .bill { background: var(--bus-due); color: var(--status-due-ink); }
+.train[data-status="delayed"] .bill { background: var(--pink); color: #fff; }
+.train[data-status="scheduled"] .bill { background: var(--background); color: var(--status-scheduled); box-shadow: inset 0 0 0 1.5px var(--status-scheduled); }
+.train:active .bill { filter: brightness(1.2); }
+
+/* ── 2D chrome over the scene ── */
+.ends {
+  position: absolute;
+  left: 12px; right: 12px; bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  pointer-events: none;
+}
+.end { min-width: 0; font-size: 12px; font-weight: 700; line-height: 1.2; color: color-mix(in srgb, var(--c) 60%, var(--text-primary)); }
+
+.tilt {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* The global input/button rule makes every button a full-width 56px bar. */
+  width: auto;
+  height: 30px;
+  margin: 0;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.6);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.tilt svg { width: 15px; height: 15px; }
+.tilt[aria-pressed="true"] { background: var(--text-primary); color: var(--background); }
+
+@media (prefers-reduced-motion: reduce) {
+  .camera { transition: none; }
+  .train { transition: none; }
+}

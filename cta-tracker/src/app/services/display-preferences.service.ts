@@ -1,15 +1,17 @@
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import {
-  ArrivalsLayout, ColumnStyle, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE,
-  TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY,
-  parseArrivalsLayout, parseColumnStyle, parseSwappedLines
+  ArrivalsLayout, ColumnStyle, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, DEFAULT_DEPTH_STYLE, DepthStyle,
+  TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_DEPTH_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY,
+  TRAIN_ARRIVALS_SWAPPED_LINES_KEY, parseArrivalsLayout, parseColumnStyle, parseDepthStyle, parseSwappedLines
 } from './arrivals-layout';
 
 export const SHOW_API_TIMESTAMP_KEY = 'show-api-timestamp';
 export const SHOW_DISTANCE_KEY = 'show-distance';
-export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY };
-export type { ArrivalsLayout, ColumnStyle };
+export {
+  TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_DEPTH_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY
+};
+export type { ArrivalsLayout, ColumnStyle, DepthStyle };
 
 @Injectable({ providedIn: 'root' })
 export class DisplayPreferencesService {
@@ -20,6 +22,7 @@ export class DisplayPreferencesService {
   readonly showDistance = signal<boolean>(this.load(SHOW_DISTANCE_KEY));
   readonly arrivalsLayout = signal<ArrivalsLayout>(this.loadLayout());
   readonly columnStyle = signal<ColumnStyle>(this.loadColumnStyle());
+  readonly depthStyle = signal<DepthStyle>(this.loadDepthStyle());
   /** Route ids whose columns show trDr '5' on the left instead of '1'. */
   readonly swappedLines = signal<ReadonlySet<string>>(this.loadSwappedLines());
 
@@ -49,6 +52,11 @@ export class DisplayPreferencesService {
   setColumnStyle(style: ColumnStyle): void {
     this.columnStyle.set(style);
     this.storeString(TRAIN_ARRIVALS_COLUMN_STYLE_KEY, style);
+  }
+
+  setDepthStyle(style: DepthStyle): void {
+    this.depthStyle.set(style);
+    this.storeString(TRAIN_ARRIVALS_DEPTH_STYLE_KEY, style);
   }
 
   isLineSwapped(route: string): boolean {
@@ -98,6 +106,13 @@ export class DisplayPreferencesService {
       return DEFAULT_COLUMN_STYLE;
     }
     return parseColumnStyle(localStorage.getItem(TRAIN_ARRIVALS_COLUMN_STYLE_KEY));
+  }
+
+  private loadDepthStyle(): DepthStyle {
+    if (!this.isBrowser) {
+      return DEFAULT_DEPTH_STYLE;
+    }
+    return parseDepthStyle(localStorage.getItem(TRAIN_ARRIVALS_DEPTH_STYLE_KEY));
   }
 
   private loadSwappedLines(): ReadonlySet<string> {

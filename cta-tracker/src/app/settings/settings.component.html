@@ -66,6 +66,22 @@
       </div>
     </div>
   }
+  @if (prefs.arrivalsLayout() === 'depth') {
+    <div class="settings-subrow">
+      <span class="settings-row-title">3D Style</span>
+      <div class="style-picker" role="radiogroup" aria-label="3D style">
+        @for (style of depthStyles; track style.id) {
+          <button type="button" role="radio" class="style-chip"
+                  [attr.aria-checked]="prefs.depthStyle() === style.id"
+                  [class.selected]="prefs.depthStyle() === style.id"
+                  (click)="prefs.setDepthStyle(style.id)">
+            <span class="style-chip-title">{{ style.title }}</span>
+            <span class="style-chip-blurb">{{ style.blurb }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  }
 </section>
 
 <!-- Sync Favorites -->

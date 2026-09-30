@@ -1,0 +1,202 @@
+/* ── The stage. Unitless numbers, so the horizon can be worked out from them below. ── */
+.stage {
+  --P: 520;               /* The eye's distance from the screen. */
+  --D: 1600;              /* How far the grid runs to the skyline. */
+  --H: 340;               /* The stage's height. */
+  --oy: 75;               /* The eye's height from the top: high, so far billboards clear near ones. */
+  /* Where the floor's far edge lands on screen: perspective scales its distance from the eye by
+     P / (P + D). The sky is drawn down to exactly there. */
+  --horizon: calc((var(--oy) + (var(--H) - var(--oy)) * var(--P) / (var(--P) + var(--D))) * 1px);
+  --magenta: #ff3ea5;
+  position: relative;
+  height: calc(var(--H) * 1px);
+  overflow: hidden;
+  border-radius: 22px;
+  background: #07020f;
+  perspective: calc(var(--P) * 1px);
+  perspective-origin: 50% calc(var(--oy) * 1px);
+  isolation: isolate;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+.stage.refreshing { opacity: 0.75; }
+:host-context([data-theme="light"]) .stage { box-shadow: 0 10px 30px -12px rgba(40,0,60,0.55); }
+
+/* ── Sky, sun and skyline: flat, sitting on the horizon ── */
+.sky {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: calc(var(--horizon) + 1px);
+  overflow: hidden;
+  background: linear-gradient(to bottom, #12052e, #3b0a5c 55%, #a0206e 92%, #ff5c8a);
+}
+.sky::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: var(--magenta);
+  box-shadow: 0 0 12px 2px var(--magenta);
+}
+/* The sun, its lower half cut into bands: a solid top half, unioned with stripes all the way down. */
+.sun {
+  position: absolute;
+  left: 50%;
+  bottom: -46px;
+  width: 150px;
+  height: 150px;
+  margin-left: -75px;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #ffe66b, #ff8a3d 45%, #ff3ea5 80%);
+  box-shadow: 0 0 40px 6px rgba(255, 90, 140, 0.45);
+  -webkit-mask: linear-gradient(#000 44%, transparent 44%), repeating-linear-gradient(to bottom, #000 0 7px, transparent 7px 11px);
+  mask: linear-gradient(#000 44%, transparent 44%), repeating-linear-gradient(to bottom, #000 0 7px, transparent 7px 11px);
+}
+.skyline {
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%;
+  height: 64px;
+  fill: #14082b;
+  stroke: var(--magenta);
+  stroke-width: 0.5;
+  filter: drop-shadow(0 0 3px rgba(255, 62, 165, 0.8));
+}
+
+/* ── The grid, laid into the distance and driving toward you ── */
+/* Click-through: the world's own box sits at z = 0, in front of every billboard pushed back into
+   the grid, and would take their taps. Only the billboards take pointer events. */
+.world { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+.floor {
+  --grid: rgba(255, 62, 165, 0.5);
+  position: absolute;
+  bottom: 0;
+  /* Twice the stage wide, so the grid still reaches the corners out at the horizon. */
+  left: -50%;
+  width: 200%;
+  height: calc(var(--D) * 1px);
+  transform-origin: bottom center;
+  transform: rotateX(90deg);
+  background:
+    linear-gradient(to top, transparent 30%, rgba(26, 6, 51, 0.75) 72%, #1a0633 95%),
+    repeating-linear-gradient(to right, var(--grid) 0 2px, transparent 2px 70px),
+    repeating-linear-gradient(to top, var(--grid) 0 2px, transparent 2px 70px),
+    linear-gradient(to top, #0d0420, #07020f);
+  animation: drive 0.9s linear infinite;
+}
+@keyframes drive {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 0 0, 0 0, 0 70px, 0 0; }
+}
+
+/* Every colour is lifted toward white: a neon tube is never as dark as the Brown Line. */
+.lane, .streak, .billboard { --neon: color-mix(in oklab, var(--c) 72%, white); }
+.lane {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(var(--lx) * 1% - 26px);
+  width: 52px;
+  background: linear-gradient(to right,
+    transparent 0 4px, var(--neon) 4px 7px, color-mix(in srgb, var(--c) 16%, transparent) 7px calc(100% - 7px),
+    var(--neon) calc(100% - 7px) calc(100% - 4px), transparent calc(100% - 4px));
+  -webkit-mask: linear-gradient(to top, #000 35%, transparent 95%);
+  mask: linear-gradient(to top, #000 35%, transparent 95%);
+}
+
+/* A train: a white-hot head on the near end, its tail running back toward the skyline. */
+.streak {
+  position: absolute;
+  left: calc(var(--lx) * 1% - 7px);
+  bottom: calc((30 + var(--f) * (var(--D) - 260)) * 1px);
+  width: 14px;
+  height: 190px;
+  border-radius: 7px;
+  background: linear-gradient(to top, #fff 0 10px, var(--neon) 22px, color-mix(in srgb, var(--neon) 40%, transparent) 55%, transparent);
+  box-shadow: 0 0 14px 3px var(--neon);
+  transition: bottom 1.4s var(--ease-standard);
+}
+@starting-style {
+  .streak { bottom: calc((var(--D) - 100) * 1px); }
+}
+.streak[data-status="due"] { animation: arrive 0.9s ease-in-out infinite alternate; }
+@keyframes arrive { to { box-shadow: 0 0 30px 10px var(--neon); } }
+
+/* ── Billboards: standing at the train's depth, scaled back up against the perspective ── */
+.billboard {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  bottom: 0;
+  width: 0;
+  height: 0;
+  transform-origin: 0 0;
+  transform: translateZ(calc((30 + var(--f) * (var(--D) - 260)) * -1px)) scale(calc(1 + var(--f) * 1.8));
+  transition: transform 1.4s var(--ease-standard);
+  color: #fff;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+}
+@starting-style {
+  .billboard { transform: translateZ(calc(var(--D) * -1px)) scale(2.8); }
+}
+.billboard[data-status="due"] { --neon: var(--bus-due); }
+.billboard[data-status="delayed"] { --neon: var(--pink); }
+.billboard[data-status="scheduled"] { --neon: var(--yellow); }
+.sign {
+  /* BILLBOARD_METRICS in depth-geometry.ts: keep them in step. */
+  --stem: calc(22px + var(--lane) * 40px);
+  position: absolute;
+  left: 0;
+  bottom: var(--stem);
+  translate: -50% 0;
+  padding: 5px 10px 6px;
+  border-radius: 8px;
+  border: 1.5px solid var(--neon);
+  background: rgba(10, 4, 24, 0.85);
+  box-shadow: 0 0 12px var(--neon), inset 0 0 8px color-mix(in srgb, var(--neon) 50%, transparent);
+  font-family: var(--numeral-font);
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 0 8px var(--neon);
+}
+.sign small { margin-left: 2px; font-size: 10px; font-weight: 700; opacity: 0.85; }
+.sign::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 2px;
+  height: var(--stem);
+  margin-left: -1px;
+  background: linear-gradient(var(--neon), transparent);
+}
+/* Pressed: a brighter glow, no filter, which would re-layer the 3D scene mid-tap. */
+.billboard:active .sign { background: color-mix(in srgb, var(--neon) 35%, #0a0418); }
+
+/* ── Which way each lane runs ── */
+/* In the sky's top corners: the bottom of the stage is where the Due billboard stands. */
+.ends {
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 14px;
+  pointer-events: none;
+}
+.end {
+  min-width: 0;
+  color: color-mix(in oklab, var(--c) 60%, white);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px color-mix(in oklab, var(--c) 72%, white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floor, .streak[data-status="due"] { animation: none; }
+  .streak, .billboard { transition: none; }
+}
