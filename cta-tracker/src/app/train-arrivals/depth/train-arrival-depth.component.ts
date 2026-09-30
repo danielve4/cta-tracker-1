@@ -3,6 +3,8 @@ import { DisplayPreferencesService } from '../../services/display-preferences.se
 import { ArrivalGroup } from '../train-arrival-groups';
 import { CoverFlowComponent } from './cover-flow.component';
 import { DioramaComponent } from './diorama.component';
+import { HoloCardComponent } from './holo-card.component';
+import { NeonSkylineComponent } from './neon-skyline.component';
 import { TimeStackComponent } from './time-stack.component';
 import { TunnelComponent } from './tunnel.component';
 
@@ -16,7 +18,7 @@ import { TunnelComponent } from './tunnel.component';
   templateUrl: './train-arrival-depth.component.html',
   styleUrls: ['../columns/columns-shared.css', './train-arrival-depth.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CoverFlowComponent, DioramaComponent, TimeStackComponent, TunnelComponent]
+  imports: [CoverFlowComponent, DioramaComponent, HoloCardComponent, NeonSkylineComponent, TimeStackComponent, TunnelComponent]
 })
 export class TrainArrivalDepthComponent {
   protected readonly prefs = inject(DisplayPreferencesService);

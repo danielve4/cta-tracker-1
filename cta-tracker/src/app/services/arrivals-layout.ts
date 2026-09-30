@@ -50,7 +50,7 @@ export const COLUMN_STYLES: ReadonlyArray<{ id: ColumnStyle; title: string; blur
 ];
 
 /** Which of the 3D treatments renders when the layout is `'depth'`. */
-export type DepthStyle = 'tunnel' | 'diorama' | 'cover-flow' | 'time-stack';
+export type DepthStyle = 'tunnel' | 'diorama' | 'cover-flow' | 'time-stack' | 'neon-skyline' | 'holo-card';
 
 export const DEFAULT_DEPTH_STYLE: DepthStyle = 'tunnel';
 
@@ -59,7 +59,9 @@ export const DEPTH_STYLES: ReadonlyArray<{ id: DepthStyle; title: string; blurb:
   { id: 'tunnel',     title: 'Tunnel',     blurb: 'Down the subway tunnel, headlights getting closer.' },
   { id: 'diorama',    title: 'Diorama',    blurb: 'A tiny elevated L. Drag, or tilt your phone, to look around.' },
   { id: 'cover-flow', title: 'Cover Flow', blurb: 'Swipe through glass cards, one per train.' },
-  { id: 'time-stack', title: 'Time Stack', blurb: 'Later trains stacked deeper, spaced by the minutes between them.' }
+  { id: 'time-stack', title: 'Time Stack', blurb: 'Later trains stacked deeper, spaced by the minutes between them.' },
+  { id: 'neon-skyline', title: 'Neon Skyline', blurb: 'Synthwave. Neon trains racing in from the skyline.' },
+  { id: 'holo-card',  title: 'Holo Card',  blurb: 'The next train on a holographic card that tilts in the light.' }
 ];
 
 /** An unknown value — stale, corrupt, or from another build — falls back to the default. */

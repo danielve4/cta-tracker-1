@@ -1,0 +1,173 @@
+/* The tilt and the light, registered so a release can spring back and the foil can drift. */
+@property --rx { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --ry { syntax: '<angle>'; inherits: true; initial-value: 0deg; }
+@property --gx { syntax: '<number>'; inherits: true; initial-value: 35; }
+@property --gy { syntax: '<number>'; inherits: true; initial-value: 25; }
+
+.toolbar { display: flex; justify-content: flex-end; margin-bottom: 6px; }
+.tilt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  /* The global input/button rule makes every button a full-width 56px bar. */
+  width: auto;
+  height: 30px;
+  margin: 0;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 14%, transparent);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+.tilt svg { width: 15px; height: 15px; }
+.tilt[aria-pressed="true"] { background: var(--text-primary); color: var(--background); }
+
+.shelves { display: grid; gap: 22px; transition: opacity var(--duration-medium) var(--ease-standard); }
+.shelves.refreshing { opacity: 0.72; }
+.shelf { min-width: 0; }
+.shelf-header {
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--c);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: color-mix(in srgb, var(--c) 72%, var(--text-primary));
+}
+.outline .shelf-header { border-bottom-style: dashed; }
+
+/* ── The cards: flat, so blend modes are safe on them; only the hero is tipped ── */
+.card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 18px;
+  aspect-ratio: 1.586;
+  color: var(--c-text);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  /* A press is a tilt: no native link drag (it swallows the pointer moves) and no iOS link preview. */
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--c), white 18%), var(--c) 45%, color-mix(in srgb, var(--c), black 38%));
+}
+.card[data-status="due"] { --c: var(--bus-due); --c-text: var(--status-due-ink); }
+.card:focus-visible { outline: 3px solid var(--focus-color); outline-offset: 3px; }
+
+/* Rainbow foil and diagonal holo lines, moved by the light; glare where the light hits. */
+.foil, .glare { position: absolute; inset: 0; pointer-events: none; }
+.foil {
+  z-index: 1;
+  /* Enough to shimmer; any more and a Red Line card reads pink. */
+  opacity: 0.3;
+  mix-blend-mode: color-dodge;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 5%, rgba(255,255,255,0.24) 6% 7%, transparent 8% 12%),
+    conic-gradient(from calc(var(--gx) * 3.6deg) at calc(var(--gx) * 1%) calc(var(--gy) * 1%),
+      #ff2a8a, #ffb800, #3dffb0, #22b8ff, #b63dff, #ff2a8a);
+  background-size: 220% 220%, 100% 100%;
+  background-position: calc(var(--gx) * 1%) calc(var(--gy) * 1%), 0 0;
+}
+.glare {
+  z-index: 2;
+  mix-blend-mode: overlay;
+  background: radial-gradient(circle at calc(var(--gx) * 1%) calc(var(--gy) * 1%), rgba(255,255,255,0.6), transparent 45%);
+}
+.face {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  box-sizing: border-box;
+}
+.num { letter-spacing: -0.05em; }
+
+/* ── The hero ── */
+.stage { display: flex; justify-content: center; padding: 16px 0 4px; perspective: 900px; touch-action: pan-y; }
+.hero {
+  --rx: var(--tilt-rx, 0deg);
+  --ry: var(--tilt-ry, 0deg);
+  --gx: var(--tilt-gx, 35);
+  --gy: var(--tilt-gy, 25);
+  width: min(100%, 330px);
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  /* The shadow falls away from whichever edge is tipped up. */
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.45),
+    calc(sin(var(--ry)) * -40px) calc(18px + sin(var(--rx)) * 30px) 40px -14px rgba(0,0,0,0.55);
+  /* A spring: overshoots and settles when the finger lets go. */
+  transition-property: --rx, --ry, --gx, --gy;
+  transition-duration: 0.9s;
+  transition-timing-function: linear(0, 0.42 9%, 1.12 28%, 0.97 44%, 1.01 62%, 1);
+}
+.tracking .hero { transition-duration: 90ms; transition-timing-function: linear; }
+@starting-style {
+  .hero { --rx: 28deg; --ry: -24deg; --gx: 90; --gy: 80; }
+}
+.hero .face { padding: 14px 18px 16px; }
+.card-top { display: flex; align-items: center; justify-content: space-between; }
+.line { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+.emv {
+  width: 34px;
+  height: 26px;
+  border-radius: 5px;
+  background:
+    linear-gradient(to right, transparent 32%, rgba(90,60,0,0.35) 32% 34%, transparent 34% 66%, rgba(90,60,0,0.35) 66% 68%, transparent 68%),
+    linear-gradient(to bottom, transparent 46%, rgba(90,60,0,0.35) 46% 54%, transparent 54%),
+    linear-gradient(135deg, #f8e79a, #c9a23c 60%, #e9cf73);
+}
+.chip { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; background: rgba(0,0,0,0.35); }
+.card[data-status="delayed"] .chip { background: var(--pink); color: #fff; }
+.card[data-status="scheduled"] .chip { background: #000; color: var(--yellow); }
+.hero .num { font-size: 58px; }
+.hero .unit { font-size: 16px; margin-left: 4px; }
+.card-bottom { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-width: 0; }
+.dest { display: flex; flex-direction: column; min-width: 0; font-size: 15px; font-weight: 700; line-height: 1.2; }
+.when { font-size: 12px; font-weight: 600; opacity: 0.8; }
+.hero .meta-extra { font-size: 11px; font-weight: 500; }
+/* The run number, embossed like a card number. */
+.run {
+  flex: none;
+  font-family: var(--mono-font);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.35), 0 -1px 0 rgba(0,0,0,0.35);
+}
+
+/* ── The hand: later trains, fanned on an arc ── */
+.hand { display: flex; justify-content: center; padding: 18px 0 8px; }
+.hand li {
+  transform: translateY(var(--lift)) rotate(var(--angle));
+  transform-origin: 50% 130%;
+  transition: translate var(--duration-medium) var(--ease-standard);
+}
+.hand li + li { margin-left: -8px; }
+.hand[data-count="3"] li + li { margin-left: -20px; }
+.hand[data-count="4"] li + li { margin-left: -44px; }
+/* The card you are about to tap rises out of the hand. */
+.hand li:hover,
+.hand li:has(:focus-visible) { translate: 0 -10px; z-index: 1; }
+.mini { width: 118px; border-radius: 11px; box-shadow: 0 10px 20px -10px rgba(0,0,0,0.6); }
+.mini:active { scale: 0.97; }
+.mini .foil { animation: drift 7s ease-in-out infinite alternate; }
+@keyframes drift { from { --gx: 15; --gy: 20; } to { --gx: 85; --gy: 70; } }
+.mini .face { padding: 8px 10px 9px; }
+.mini .num { font-size: 26px; }
+.mini .unit { font-size: 11px; margin-left: 2px; }
+.mini .dest { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.more { margin-top: 6px; text-align: center; font-size: 11px; font-weight: 700; color: var(--text-tertiary); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero, .hand li { transition: none; }
+  .mini .foil { animation: none; }
+}

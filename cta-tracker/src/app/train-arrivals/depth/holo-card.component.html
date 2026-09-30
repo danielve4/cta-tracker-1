@@ -1,0 +1,102 @@
+@if (groups(); as groups) {
+  @if (canTilt()) {
+    <div class="toolbar">
+      <button type="button" class="tilt" [attr.aria-pressed]="tilting()" (click)="toggleTilt()"
+              aria-label="Move the light across the cards by tilting your phone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="7" y="2.5" width="10" height="19" rx="2.5" transform="rotate(-18 12 12)"></rect>
+          <path d="M3 8.5a10 10 0 0 0 0 7M21 8.5a10 10 0 0 1 0 7"></path>
+        </svg>
+        Tilt
+      </button>
+    </div>
+  }
+  <div class="shelves" [class.refreshing]="refreshing()">
+    @for (shelf of shelves(); track shelf.group.key; let i = $index) {
+      <section class="shelf" [class.outline]="variantFor(i) === 'outline'"
+               [style.--c]="colorFor(shelf.group)" [style.--c-text]="textColorFor(shelf.group)">
+        <h3 class="shelf-header">{{ shelf.group.directionLabel }}</h3>
+
+        @if (shelf.hero; as hero) {
+          @let tilt = tiltFor(shelf.group.key);
+          <div class="stage"
+               [class.tracking]="tilting() || active() === shelf.group.key"
+               (pointerdown)="onPointerDown(shelf.group.key, $event)"
+               (pointermove)="onPointerMove(shelf.group.key, $event)"
+               (pointerup)="onPointerEnd()"
+               (pointerleave)="onPointerEnd()"
+               (pointercancel)="onPointerEnd()">
+            <a class="card hero" draggable="false"
+               [attr.data-status]="statusOf(hero)"
+               [attr.aria-label]="arrivalLabel(shelf.group, hero)"
+               [style.--tilt-rx]="tilt.rx + 'deg'"
+               [style.--tilt-ry]="tilt.ry + 'deg'"
+               [style.--tilt-gx]="tilt.glareX"
+               [style.--tilt-gy]="tilt.glareY"
+               [routerLink]="['/train-follow', hero.rn]"
+               [queryParams]="{from: stationId(), rt: hero.rt}">
+              <span class="foil" aria-hidden="true"></span>
+              <span class="glare" aria-hidden="true"></span>
+              <span class="face">
+                <span class="card-top">
+                  <span class="line">{{ lineName(shelf.group) }}</span>
+                  @if (statusOf(hero) === 'delayed') {
+                    <span class="chip">Delayed</span>
+                  } @else if (statusOf(hero) === 'scheduled') {
+                    <span class="chip">Scheduled</span>
+                  } @else {
+                    <span class="emv" aria-hidden="true"></span>
+                  }
+                </span>
+                <span class="count">
+                  @if (hero.countdown === 'DUE') {
+                    <span class="num">Due</span>
+                  } @else {
+                    <span class="num">{{ hero.countdown }}</span><span class="unit">min</span>
+                  }
+                </span>
+                <span class="card-bottom">
+                  <span class="dest">
+                    To {{ hero.destNm }}
+                    <span class="when">{{ hero.countdown | timeuntil:'time' }}</span>
+                    <span class="meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ hero.apiArrivalTime }}</span>}@if (prefs.showDistance() && hero.distance) {<span>{{ hero.distance }}</span>}</span>
+                  </span>
+                  <span class="run">{{ hero.rn }}</span>
+                </span>
+              </span>
+            </a>
+          </div>
+        }
+
+        @if (shelf.hand.length) {
+          <ol class="hand" [attr.data-count]="shelf.hand.length">
+            @for (card of shelf.hand; track card.arrival.rn + card.arrival.stpId) {
+              <li [style.--angle]="card.angle + 'deg'" [style.--lift]="card.lift + 'px'">
+                <a class="card mini" draggable="false"
+                   [attr.data-status]="statusOf(card.arrival)"
+                   [attr.aria-label]="arrivalLabel(shelf.group, card.arrival)"
+                   [routerLink]="['/train-follow', card.arrival.rn]"
+                   [queryParams]="{from: stationId(), rt: card.arrival.rt}">
+                  <span class="foil" aria-hidden="true"></span>
+                  <span class="face">
+                    <span class="count">
+                      @if (card.arrival.countdown === 'DUE') {
+                        <span class="num">Due</span>
+                      } @else {
+                        <span class="num">{{ card.arrival.countdown }}</span><span class="unit">min</span>
+                      }
+                    </span>
+                    <span class="dest">{{ card.arrival.destNm }}</span>
+                  </span>
+                </a>
+              </li>
+            }
+          </ol>
+          @if (shelf.hidden) {
+            <p class="more">+{{ shelf.hidden }} more later</p>
+          }
+        }
+      </section>
+    }
+  </div>
+}

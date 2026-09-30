@@ -8,6 +8,7 @@ import { ArrivalGroup, TrainArrivalDisplay } from '../train-arrival-groups';
 import { BoxComponent } from './box.component';
 import { DRAG_YAW_PER_PX, Orbit, REST_ORBIT, clampOrbit, tiltToOrbit } from './depth-geometry';
 import { DepthListComponent } from './depth-list.component';
+import { DeviceTilt, tiltAvailable } from './device-tilt';
 
 interface ModelTrain {
   arrival: TrainArrivalDisplay;
@@ -28,10 +29,6 @@ const BUILDINGS: ReadonlyArray<readonly [number, number, number, number, number]
   [4, 6, 34, 26, 30], [22, 8, 26, 22, 52], [68, 4, 40, 28, 22], [86, 10, 26, 24, 40],
   [8, 74, 30, 22, 18], [36, 78, 38, 18, 26], [72, 76, 28, 20, 44]
 ];
-
-type OrientationEventWithPermission = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<'granted' | 'denied'>;
-};
 
 /**
  * A tabletop model of an elevated L station: the structure on its pillars, a station with side
@@ -63,22 +60,13 @@ export class DioramaComponent extends ColumnVariantBase {
 
   private readonly scene = viewChild<ElementRef<HTMLElement>>('scene');
   private drag: { pointerId: number; startX: number; startYaw: number; moved: boolean } | null = null;
-  private tiltBaseline: { beta: number; gamma: number } | null = null;
-  private readonly onOrientation = (event: DeviceOrientationEvent) => {
-    if (event.beta === null || event.gamma === null) {
-      return;
-    }
-    const reading = { beta: event.beta, gamma: event.gamma };
-    this.tiltBaseline ??= reading;
-    this.orbit.set(tiltToOrbit(reading, this.tiltBaseline));
-  };
+  private readonly deviceTilt = new DeviceTilt((reading, baseline) => this.orbit.set(tiltToOrbit(reading, baseline)));
 
   constructor() {
     super();
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      // Desktop browsers have the API too, but no gyroscope to feed it.
-      this.canTilt.set(typeof DeviceOrientationEvent !== 'undefined' && matchMedia('(pointer: coarse)').matches);
+      this.canTilt.set(tiltAvailable());
       // A drag must not also follow the train it ended on. Capture phase, so it runs before the
       // RouterLink's own click handler on the train.
       const scene = this.scene()?.nativeElement;
@@ -92,7 +80,7 @@ export class DioramaComponent extends ColumnVariantBase {
       scene?.addEventListener('click', swallow, true);
       destroyRef.onDestroy(() => {
         scene?.removeEventListener('click', swallow, true);
-        window.removeEventListener('deviceorientation', this.onOrientation);
+        this.deviceTilt.stop();
       });
     });
   }
@@ -158,22 +146,11 @@ export class DioramaComponent extends ColumnVariantBase {
 
   async toggleTilt(): Promise<void> {
     if (this.tilting()) {
-      window.removeEventListener('deviceorientation', this.onOrientation);
+      this.deviceTilt.stop();
       this.tilting.set(false);
       this.orbit.set(REST_ORBIT);
       return;
     }
-    const api = DeviceOrientationEvent as OrientationEventWithPermission;
-    try {
-      // iOS asks once per origin, and only from a tap; everywhere else there is nothing to ask.
-      if (typeof api.requestPermission === 'function' && await api.requestPermission() !== 'granted') {
-        return;
-      }
-    } catch {
-      return;
-    }
-    this.tiltBaseline = null;
-    window.addEventListener('deviceorientation', this.onOrientation);
-    this.tilting.set(true);
+    this.tilting.set(await this.deviceTilt.start());
   }
 }

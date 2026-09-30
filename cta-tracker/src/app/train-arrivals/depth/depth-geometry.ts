@@ -130,3 +130,113 @@ export function tiltToOrbit(reading: { beta: number; gamma: number }, baseline: 
   });
 }
 
+// ── Neon Skyline billboards ──
+
+export interface Billboard {
+  /** Screen x of the train the sign stands over, in px. */
+  x: number;
+  /** Screen y of that train on the floor, in px. */
+  y: number;
+  /** Everything about the sign (width, height, stem) is multiplied by this on screen. */
+  scale: number;
+  /** The sign's width before scaling, in px. */
+  width: number;
+}
+
+/** A sign's height, the shortest stem, and how much taller each lane's stem is, all before scaling. */
+export const BILLBOARD_METRICS = { height: 30, stem: 22, step: 40 } as const;
+
+/**
+ * A stem height (lane) per sign, so no two signs overlap on screen. Signs are placed nearest the
+ * viewer first, since the nearest trains matter most and get the shortest stems; each takes the
+ * lowest lane whose box on screen is clear, or the one it overlaps least.
+ *
+ * Done in two dimensions on screen rather than along the track, because the stem is scaled with
+ * the sign: a far sign in a high lane can land exactly where a nearer one stands, which spacing
+ * the trains by depth alone cannot see.
+ */
+export function stackBillboards(signs: Billboard[], lanes = 4, gap = 3): number[] {
+  const { height, stem, step } = BILLBOARD_METRICS;
+  const boxFor = (sign: Billboard, lane: number) => {
+    const bottom = sign.y - (stem + lane * step) * sign.scale;
+    const half = sign.width * sign.scale / 2;
+    return { left: sign.x - half, right: sign.x + half, top: bottom - height * sign.scale, bottom };
+  };
+  type Box = ReturnType<typeof boxFor>;
+  const overlap = (a: Box, b: Box) =>
+    Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left) + gap) *
+    Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) + gap);
+
+  const placed: Box[] = [];
+  const result = new Array<number>(signs.length);
+  const nearestFirst = signs.map((_, i) => i).sort((a, b) => signs[b].y - signs[a].y);
+  for (const index of nearestFirst) {
+    const options = Array.from({ length: lanes }, (_, lane) => boxFor(signs[index], lane));
+    const cost = options.map(box => placed.reduce((sum, other) => sum + overlap(box, other), 0));
+    const free = cost.findIndex(value => value === 0);
+    const lane = free >= 0 ? free : cost.indexOf(Math.min(...cost));
+    placed.push(options[lane]);
+    result[index] = lane;
+  }
+  return result;
+}
+
+// ── Holo Card ──
+
+/** Degrees a card tips at the edge of the finger's reach, or at the gyroscope's clamp. */
+export const CARD_TILT_MAX = 14;
+
+export interface CardTilt {
+  /** Degrees about the horizontal axis; positive tips the top edge away. */
+  rx: number;
+  /** Degrees about the vertical axis; positive tips the right edge away. */
+  ry: number;
+  /** Where the light catches the foil, 0–100 across and down the card. */
+  glareX: number;
+  glareY: number;
+}
+
+/** Flat, lit from the upper left. */
+export const REST_TILT: CardTilt = { rx: 0, ry: 0, glareX: 35, glareY: 25 };
+
+/**
+ * The tilt for a finger at (x, y) within a card `width` × `height`: the card tips away under the
+ * finger, like pressing a real card on its corner, and the glare sits where the finger is. A
+ * position outside the card is clamped to its edge.
+ */
+export function cardTilt(x: number, y: number, width: number, height: number): CardTilt {
+  const nx = width > 0 ? clamp(x / width, 0, 1) : 0.5;
+  const ny = height > 0 ? clamp(y / height, 0, 1) : 0.5;
+  return {
+    rx: (0.5 - ny) * 2 * CARD_TILT_MAX,
+    ry: (nx - 0.5) * 2 * CARD_TILT_MAX,
+    glareX: nx * 100,
+    glareY: ny * 100
+  };
+}
+
+/**
+ * The same tilt from the gyroscope, relative to how the phone was held when tilt was switched on.
+ * Mapped through `cardTilt`, so tipping the phone moves the light exactly as a finger would.
+ */
+export function tiltToCard(reading: { beta: number; gamma: number }, baseline: { beta: number; gamma: number }): CardTilt {
+  // A 30° turn of the phone reaches the edge of the card.
+  const nx = 0.5 + (reading.gamma - baseline.gamma) / 60;
+  const ny = 0.5 + (reading.beta - baseline.beta) / 60;
+  return cardTilt(nx, ny, 1, 1);
+}
+
+/** Later cards shown in the hand; the rest are counted beside it. */
+export const HAND_MAX_CARDS = 4;
+
+/**
+ * A hand of cards: each fanned about the middle of the hand, and lowered along an arc toward the
+ * ends, the way cards sit when held. One card is held straight.
+ */
+export function fanLayout(count: number): Array<{ angle: number; lift: number }> {
+  const middle = (count - 1) / 2;
+  return Array.from({ length: count }, (_, i) => ({
+    angle: (i - middle) * 7,
+    lift: (i - middle) ** 2 * 5
+  }));
+}

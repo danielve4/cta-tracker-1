@@ -102,8 +102,9 @@ describe('parseDepthStyle', () => {
     }
   });
 
-  it('offers the four 3D styles, Tunnel first', () => {
-    expect(DEPTH_STYLES.map(style => style.id)).toEqual(['tunnel', 'diorama', 'cover-flow', 'time-stack']);
+  it('offers the six 3D styles, Tunnel first', () => {
+    expect(DEPTH_STYLES.map(style => style.id))
+      .toEqual(['tunnel', 'diorama', 'cover-flow', 'time-stack', 'neon-skyline', 'holo-card']);
     expect(DEFAULT_DEPTH_STYLE).toBe('tunnel');
   });
 

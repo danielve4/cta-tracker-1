@@ -149,6 +149,12 @@ cta-tracker-1/
     the camera to `deviceorientation` behind iOS's permission prompt. **Cover Flow**: a scroll-snap
     row per direction whose cards turn on a `view-timeline`, reflected with `-webkit-box-reflect`.
     **Time Stack**: slabs pushed back by the minutes after the one in front (`timeStack`).
+    **Neon Skyline**: synthwave — neon streaks racing in along a scrolling grid toward a flat sky
+    and skyline drawn down to the horizon the floor projects to, minutes on glowing billboards.
+    **Holo Card**: the next train on a foil card that tips under a finger or the gyroscope, later
+    trains fanned below it (`cardTilt`, `tiltToCard`, `fanLayout`).
+  - Gyroscope access for Diorama and Holo Card goes through `depth/device-tilt.ts` (the
+    `(pointer: coarse)` gate, iOS's permission prompt, the baseline reading).
   - Tunnel and Diorama are `aria-hidden` with their trains out of the tab order; `app-depth-list`
     under them is the accessible, exact-time version. Cover Flow and Time Stack are real links.
   - **A face's outside must face out.** `backface-visibility: hidden` culls what the eye cannot
@@ -164,6 +170,14 @@ cta-tracker-1/
     Diorama binds `--orbit-yaw` and derives `--yaw` from it in CSS.
   - A `filter` also makes an element a backdrop root, so a `backdrop-filter` inside it sees nothing
     behind — Time Stack's slabs are opaque for that reason, not frosted.
+  - **Billboards are laid out on screen, not along the track.** Neon Skyline's stems are scaled with
+    their signs, so `stackBillboards` places each sign's projected box, nearest first. Its constants
+    mirror the stage's `--P`, `--D` and `--oy`; change them together.
+  - A `preserve-3d` container's own box sits at z = 0 and takes taps meant for anything pushed back
+    behind it. Neon Skyline's world is `pointer-events: none` with only the billboards opted back in.
+  - A pressed link starts the browser's native link drag, which swallows the pointer moves a tilt
+    needs; Holo Card's cards are `draggable="false"` with `-webkit-user-drag: none`. Blend modes
+    (the foil) are safe there because the cards themselves are flat — keep them out of `preserve-3d`.
   - Positions and camera limits are Angular-free and unit-tested in `depth/depth-geometry.ts`.
 
 ### Stop Prediction (on-device)

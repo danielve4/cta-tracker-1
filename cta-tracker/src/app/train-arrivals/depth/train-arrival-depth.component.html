@@ -25,6 +25,12 @@
     @case ('time-stack') {
       <app-time-stack [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
     }
+    @case ('neon-skyline') {
+      <app-neon-skyline [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
+    @case ('holo-card') {
+      <app-holo-card [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
     @default {
       <app-tunnel [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
     }
