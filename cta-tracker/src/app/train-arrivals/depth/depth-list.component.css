@@ -1,0 +1,23 @@
+/* The scene above already clears nothing; the FAB clearance is the parent style's. */
+:host { padding-bottom: 0; }
+
+.list { margin-top: 16px; }
+.list-header { padding-bottom: 6px; border-bottom: 2px solid var(--col-color); font-size: 12px; font-weight: 700; line-height: 1.25; color: var(--col-ink); }
+.outline .list-header { border-bottom-style: dashed; }
+.list-row {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+.list-count .num { font-size: 20px; }
+.list-count .unit { font-size: 11px; color: var(--text-tertiary); }
+.list-text { display: flex; flex-direction: column; min-width: 0; }
+.list-dest { font-size: 12.5px; line-height: 1.25; color: var(--text-secondary); overflow-wrap: break-word; }
+.list-dest b { margin-right: 4px; font-weight: 800; color: var(--text-primary); }
+.list-row .meta { font-size: 11px; }
+.list-row[data-status="due"] .num { color: var(--bus-due); }
+.list-row[data-status="delayed"] .num { color: var(--pink); }
+.list-row[data-status="scheduled"] .num { color: var(--status-scheduled); }

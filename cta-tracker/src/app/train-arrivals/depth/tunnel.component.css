@@ -1,0 +1,269 @@
+/* ── The stage: one perspective, one 3D world. Stays dark in both themes — it is a tunnel. ── */
+.stage {
+  --D: 1500px;            /* How deep the tunnel runs. */
+  --P: 560px;             /* The eye's distance from the screen. */
+  --car-w: 104px;
+  --car-h: 128px;
+  /* Shorter than a real car, so a later train shows over the roof of the one in front of it. */
+  --car-l: 180px;
+  --lamp: #fff6d6;
+  position: relative;
+  height: 330px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #000;
+  perspective: var(--P);
+  perspective-origin: 50% 8%;
+  isolation: isolate;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+/* On the stage, never the world: opacity on a preserve-3d element flattens it. */
+.stage.refreshing { opacity: 0.75; }
+:host-context([data-theme="light"]) .stage { box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 10px 30px -12px rgba(0,0,0,0.45); }
+
+.world { position: absolute; inset: 0; transform-style: preserve-3d; }
+.plane { position: absolute; }
+
+/* Each surface is laid flat into the tunnel around its near edge, so its far edge meets the dark. */
+.wall { top: 0; width: var(--D); height: 100%; }
+.wall-left { left: 0; transform-origin: left center; transform: rotateY(90deg); --into: to right; }
+.wall-right { right: 0; transform-origin: right center; transform: rotateY(-90deg); --into: to left; }
+.wall {
+  background:
+    linear-gradient(var(--into), transparent 0%, rgba(0,0,0,0.5) 42%, #000 90%),
+    /* The tunnel lights, and their glow on the wall. */
+    repeating-linear-gradient(var(--into), transparent 0 150px, #ffe3ad 150px 162px, transparent 162px 230px) 0 20% / 100% 5px no-repeat,
+    repeating-linear-gradient(var(--into), transparent 0 130px, rgba(255,214,150,0.16) 130px 182px, transparent 182px 230px) 0 16% / 100% 34px no-repeat,
+    /* Cable trays. */
+    repeating-linear-gradient(to bottom, transparent 0 46px, rgba(255,255,255,0.05) 46px 48px),
+    linear-gradient(to bottom, #1d1e23, #111216 60%, #0a0a0c);
+}
+.ceiling {
+  top: 0; left: 0; width: 100%; height: var(--D);
+  transform-origin: top center;
+  transform: rotateX(-90deg);
+  background:
+    linear-gradient(to bottom, transparent, rgba(0,0,0,0.6) 40%, #000 88%),
+    linear-gradient(to right, #060607, #17181c 50%, #060607);
+}
+.floor {
+  bottom: 0; left: 0; width: 100%; height: var(--D);
+  transform-origin: bottom center;
+  transform: rotateX(90deg);
+  transform-style: preserve-3d;
+  background:
+    linear-gradient(to top, transparent 0%, rgba(0,0,0,0.45) 38%, #000 88%),
+    repeating-linear-gradient(to top, rgba(255,255,255,0.025) 0 2px, transparent 2px 7px),
+    #18171a;
+}
+.far-end {
+  inset: 0;
+  transform: translateZ(calc(-1 * var(--D)));
+  background: radial-gradient(circle at 50% 70%, rgba(255,200,120,0.08), transparent 55%), #000;
+}
+
+/* The track: sleepers along the tunnel, two rails and the third rail's cover board. */
+.rails {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: calc(var(--x) * 1% - 46px);
+  width: 92px;
+  background:
+    linear-gradient(to top, transparent 0%, rgba(0,0,0,0.5) 38%, #000 88%),
+    linear-gradient(to right, #57533a 0 5px, transparent 5px 20px, #a3a6ad 20px 24px, transparent 24px 68px, #a3a6ad 68px 72px, transparent 72px),
+    repeating-linear-gradient(to top, #2c2723 0 9px, transparent 9px 30px);
+}
+
+/* The island platform, raised off the floor with its edges dropping to the track bed. */
+.platform {
+  position: absolute;
+  bottom: 0;
+  left: calc(25% + 56px);
+  right: calc(25% + 56px);
+  height: 38%;
+  transform: translateZ(24px);
+  transform-style: preserve-3d;
+  background:
+    linear-gradient(to top, transparent 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.9) 100%),
+    linear-gradient(to right, #f0c400 0 7px, transparent 7px calc(100% - 7px), #f0c400 calc(100% - 7px)),
+    repeating-linear-gradient(to top, rgba(0,0,0,0.25) 0 1px, transparent 1px 36px),
+    #4a4a50;
+}
+.single .platform { left: 0; right: calc(50% + 56px); }
+.platform::before,
+.platform::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 100%;
+  background: linear-gradient(to top, #2a2a2e, #000);
+}
+.platform::before { left: 0; transform-origin: left center; transform: rotateY(90deg); }
+.platform::after { right: 0; transform-origin: right center; transform: rotateY(-90deg); }
+
+/* ── Trains: a box a car long, standing on its track, pushed in by --f ── */
+.train {
+  position: absolute;
+  bottom: 0;
+  left: calc(var(--x) * 1%);
+  width: var(--car-w);
+  height: var(--car-h);
+  margin-left: calc(var(--car-w) / -2);
+  transform-style: preserve-3d;
+  transform: translateZ(calc(-30px - var(--f) * (var(--D) - var(--car-l) - 40px)));
+  transition: transform 1.4s var(--ease-standard);
+  -webkit-tap-highlight-color: transparent;
+  color: inherit;
+  text-decoration: none;
+  /* The fog, darkening each face by depth. Painted as a background layer so the lamps and sign
+     on top of it stay lit. */
+  --fog: linear-gradient(rgb(0 0 0 / calc(var(--f) * 0.7)), rgb(0 0 0 / calc(var(--f) * 0.7)));
+}
+/* A new prediction rolls in out of the dark rather than appearing on the track. */
+@starting-style {
+  .train { transform: translateZ(calc(-1 * var(--D))); }
+}
+
+.car-front,
+.car-side,
+.car-roof { position: absolute; }
+.car-front {
+  inset: 0;
+  border-radius: 10px 10px 4px 4px;
+  background:
+    var(--fog),
+    linear-gradient(100deg, rgba(255,255,255,0.35), transparent 30% 70%, rgba(255,255,255,0.15)),
+    linear-gradient(to bottom, #c9ccd3, #8b9098 60%, #5b5f66);
+  box-shadow: inset 0 0 0 1.5px rgba(0,0,0,0.35);
+}
+/* Every face is turned so its outside faces out, and culled from behind: the eye only ever sees
+   the side of a car nearest the middle of the tunnel, and a face whose front points into the car
+   gets its depth order wrong in Chrome and paints over the car's front. */
+.car-front, .car-side, .car-roof { backface-visibility: hidden; }
+.car-side { top: 0; width: var(--car-l); height: 100%; }
+/* Laid out beside the car, then swung back into the tunnel about the car's own edge. */
+.car-side-left { left: calc(-1 * var(--car-l)); transform-origin: right center; transform: rotateY(-90deg); }
+.car-side-right { left: 100%; transform-origin: left center; transform: rotateY(90deg); }
+.car-side {
+  background:
+    var(--fog),
+    linear-gradient(var(--into), rgba(0,0,0,0.55), transparent 70%),
+    /* The line stripe and the windows running down the car. */
+    linear-gradient(to bottom, transparent 58%, var(--line) 58% 64%, transparent 64%),
+    repeating-linear-gradient(var(--into), transparent 0 18px, #1a1c22 18px 58px, transparent 58px 72px) 0 18% / 100% 30% no-repeat,
+    linear-gradient(to bottom, #a6aab2, #6c7078);
+}
+.car-side-left { --into: to left; }
+.car-side-right { --into: to right; }
+.car-roof {
+  bottom: 100%; left: 0; width: 100%; height: var(--car-l);
+  transform-origin: bottom center;
+  transform: rotateX(90deg);
+  background: var(--fog), linear-gradient(to right, #6c7078, #b8bcc4 50%, #6c7078);
+}
+
+.sign {
+  position: absolute;
+  top: 8px; left: 12px; right: 12px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #050505;
+  color: color-mix(in srgb, var(--line) 55%, #ffcf6b);
+  font-family: var(--mono-font);
+  font-size: 8.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.windshield {
+  position: absolute;
+  top: 26px; left: 10px; right: 10px; height: 46px;
+  border-radius: 6px;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,0.28) 0 18%, transparent 18% 32%, rgba(255,255,255,0.12) 32% 38%, transparent 38%),
+    linear-gradient(to bottom, #20242c, #0b0d11);
+}
+.stripe { position: absolute; left: 0; right: 0; top: 80px; height: 8px; background: var(--line); }
+.lamp {
+  position: absolute;
+  bottom: 14px;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--lamp);
+  box-shadow: 0 0 6px 2px var(--lamp), 0 0 26px 10px rgb(255 232 170 / 0.45);
+}
+.lamp-left { left: 12px; }
+.lamp-right { right: 12px; }
+
+/* A train past the half hour is only its lamps at the end of the tunnel. */
+.train.overflow :is(.car-side, .car-roof, .sign, .windshield, .stripe, .readout) { visibility: hidden; }
+.train.overflow .car-front { background: transparent; box-shadow: none; }
+
+/* The minutes, lit on the windshield and scaled back up against the perspective, so a far train
+   is still a number you can read rather than a speck. */
+.readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  padding-top: 7px;
+  scale: calc(1 + var(--f) * 0.8);
+  color: #f4f6fb;
+  font-family: var(--numeral-font);
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgb(255 255 255 / 0.45);
+}
+.readout small { margin-left: 1px; font-size: 11px; font-weight: 700; opacity: 0.8; letter-spacing: 0; }
+.train[data-status="due"] .readout { color: var(--bus-due); text-shadow: 0 0 12px var(--bus-due); font-size: 24px; }
+.train[data-status="delayed"] .readout { color: var(--pink); text-shadow: 0 0 10px var(--pink); }
+.train[data-status="scheduled"] .readout { color: var(--yellow); text-shadow: 0 0 10px rgb(255 230 32 / 0.6); }
+/* Pressed feedback on the lamps only. A filter on a face mid-tap changes how the 3D scene is layered,
+   the pointer is released over a different element, and the tap never becomes a click. */
+.train:active .lamp { background: #fff; box-shadow: 0 0 12px 5px #fff, 0 0 40px 16px rgb(255 240 200 / 0.7); }
+
+/* A due train has its lamps full on, breathing. */
+.train[data-status="due"] .lamp { animation: lampPulse 1.1s ease-in-out infinite alternate; }
+@keyframes lampPulse {
+  from { box-shadow: 0 0 6px 2px var(--lamp), 0 0 22px 8px rgb(255 232 170 / 0.4); }
+  to { box-shadow: 0 0 10px 4px var(--lamp), 0 0 46px 20px rgb(255 232 170 / 0.6); }
+}
+
+/* Which way each track runs, pinned flat to the glass. */
+.ends {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+}
+.single .ends { justify-content: flex-end; }
+.end {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #f2f2f5;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.end::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+  .train { transition: none; }
+  .train[data-status="due"] .lamp { animation: none; }
+}

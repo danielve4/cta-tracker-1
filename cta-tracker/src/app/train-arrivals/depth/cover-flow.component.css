@@ -1,0 +1,135 @@
+.shelves { display: grid; gap: 8px; transition: opacity var(--duration-medium) var(--ease-standard); }
+.shelves.refreshing { opacity: 0.72; }
+
+.shelf {
+  --card-w: 176px;
+  --card-h: 204px;
+  --slot-w: calc(var(--card-w) + 14px);
+  --ink: color-mix(in srgb, var(--c) 72%, var(--text-primary));
+  position: relative;
+  /* A grid item sizes to its content by default, and a row of cards is very wide content. */
+  min-width: 0;
+}
+.shelf-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--c);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.outline .shelf-header { border-bottom-style: dashed; }
+.shelf-count { flex: none; font-size: 11px; font-weight: 600; color: var(--text-tertiary); }
+
+/* ── The row: native scrolling and snapping; the cards turn on its timeline ── */
+.flow {
+  display: flex;
+  margin-inline: -16px;
+  /* Centres the first and last cards. */
+  padding: 18px calc(50% - var(--slot-w) / 2) 76px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  perspective: 900px;
+  /* A glossy floor under the cards, for the reflections to sit on, lit under the centre card. */
+  background: radial-gradient(60% 70px at 50% calc(18px + var(--card-h)), color-mix(in srgb, var(--c) 18%, transparent), transparent);
+}
+.flow::-webkit-scrollbar { display: none; }
+
+.slot {
+  flex: 0 0 var(--slot-w);
+  /* Narrower than its card on purpose; without this the card's width wins. */
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  scroll-snap-align: center;
+  view-timeline: --slot inline;
+}
+
+/* ── The card: tinted glass with a specular edge ── */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: var(--card-w);
+  height: var(--card-h);
+  padding: 14px 16px 16px;
+  box-sizing: border-box;
+  border-radius: 26px;
+  color: var(--c-text);
+  text-decoration: none;
+  background:
+    radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,0.45), transparent 55%),
+    linear-gradient(160deg, color-mix(in srgb, var(--c), white 12%), color-mix(in srgb, var(--c), black 38%));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.55),
+    inset 0 0 0 1px rgba(255,255,255,0.18),
+    inset 0 -30px 50px -20px rgba(0,0,0,0.35),
+    0 18px 40px -18px rgba(0,0,0,0.6);
+  /* WebKit's own reflection, which turns with the card because it is painted with it. */
+  -webkit-box-reflect: below 8px linear-gradient(transparent 64%, rgba(255,255,255,0.28));
+  -webkit-tap-highlight-color: transparent;
+  transform-origin: 50% 50%;
+}
+.card:focus-visible { outline: 3px solid var(--focus-color); outline-offset: 4px; }
+.card:active { scale: 0.97; }
+
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 22px; }
+.run { font-family: var(--mono-font); font-size: 11px; font-weight: 600; opacity: 0.8; }
+.chip {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  background: rgba(0,0,0,0.35);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.count { display: flex; align-items: baseline; }
+.count .num { font-size: 64px; letter-spacing: -0.05em; }
+.count .unit { font-size: 17px; margin-left: 4px; opacity: 0.85; }
+.card-bottom { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dest { font-size: 15px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.when { font-size: 12px; font-weight: 600; opacity: 0.8; }
+.card .meta-extra { font-size: 11px; font-weight: 500; }
+
+/* Status: the chip carries the word, the glass carries the colour. */
+.card[data-status="due"] {
+  color: var(--status-due-ink);
+  background:
+    radial-gradient(120% 60% at 20% 0%, rgba(255,255,255,0.5), transparent 55%),
+    linear-gradient(160deg, color-mix(in srgb, var(--bus-due), white 18%), color-mix(in srgb, var(--bus-due), black 25%));
+}
+.card[data-status="delayed"] .chip { background: var(--pink); color: #fff; }
+.card[data-status="scheduled"] .chip { background: #000; color: var(--yellow); }
+
+/* ── Cover Flow proper, where scroll-driven animations exist ── */
+@supports (animation-timeline: view()) {
+  /* Slots narrower than the cards, so neighbours tuck in behind the centre one. */
+  .shelf { --slot-w: 96px; }
+
+  .card {
+    animation: flow linear both;
+    animation-timeline: --slot;
+    animation-range: cover 0% cover 100%;
+  }
+}
+
+@keyframes flow {
+  0% { transform: translateX(34%) translateZ(-220px) rotateY(-62deg); z-index: 1; filter: brightness(0.62); }
+  38% { transform: translateX(10%) translateZ(-120px) rotateY(-62deg); z-index: 5; filter: brightness(0.8); }
+  50% { transform: none; z-index: 10; filter: none; }
+  62% { transform: translateX(-10%) translateZ(-120px) rotateY(62deg); z-index: 5; filter: brightness(0.8); }
+  100% { transform: translateX(-34%) translateZ(-220px) rotateY(62deg); z-index: 1; filter: brightness(0.62); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf { --slot-w: calc(var(--card-w) + 14px); }
+  .card { animation: none; }
+}

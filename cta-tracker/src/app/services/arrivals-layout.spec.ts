@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  ARRIVALS_LAYOUTS, COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, isSideBySide,
-  parseArrivalsLayout, parseColumnStyle, parseSwappedLines
+  ARRIVALS_LAYOUTS, COLUMN_STYLES, DEFAULT_ARRIVALS_LAYOUT, DEFAULT_COLUMN_STYLE, DEFAULT_DEPTH_STYLE, DEPTH_STYLES,
+  isSideBySide, parseArrivalsLayout, parseColumnStyle, parseDepthStyle, parseSwappedLines
 } from './arrivals-layout';
 
 describe('parseArrivalsLayout', () => {
@@ -11,8 +11,8 @@ describe('parseArrivalsLayout', () => {
     }
   });
 
-  it('offers the list, columns and approach layouts', () => {
-    expect(ARRIVALS_LAYOUTS.map(layout => layout.id)).toEqual(['list', 'columns', 'approach']);
+  it('offers the list, columns, approach and 3D layouts', () => {
+    expect(ARRIVALS_LAYOUTS.map(layout => layout.id)).toEqual(['list', 'columns', 'approach', 'depth']);
   });
 
   it('falls back to the default when nothing is stored', () => {
@@ -37,6 +37,7 @@ describe('isSideBySide', () => {
     expect(isSideBySide('list')).toBe(false);
     expect(isSideBySide('columns')).toBe(true);
     expect(isSideBySide('approach')).toBe(true);
+    expect(isSideBySide('depth')).toBe(true);
   });
 });
 
@@ -91,5 +92,25 @@ describe('parseSwappedLines', () => {
 
   it('keeps only the string entries of a mixed array', () => {
     expect([...parseSwappedLines('["Blue", 1, null, {"rt":"Red"}, "G"]')]).toEqual(['Blue', 'G']);
+  });
+});
+
+describe('parseDepthStyle', () => {
+  it('round-trips every style the picker offers', () => {
+    for (const style of DEPTH_STYLES) {
+      expect(parseDepthStyle(style.id)).toBe(style.id);
+    }
+  });
+
+  it('offers the four 3D styles, Tunnel first', () => {
+    expect(DEPTH_STYLES.map(style => style.id)).toEqual(['tunnel', 'diorama', 'cover-flow', 'time-stack']);
+    expect(DEFAULT_DEPTH_STYLE).toBe('tunnel');
+  });
+
+  it('falls back to the default for nothing, garbage, or a column style', () => {
+    expect(parseDepthStyle(null)).toBe(DEFAULT_DEPTH_STYLE);
+    expect(parseDepthStyle('')).toBe(DEFAULT_DEPTH_STYLE);
+    expect(parseDepthStyle('Tunnel')).toBe(DEFAULT_DEPTH_STYLE);
+    expect(parseDepthStyle('platform-led')).toBe(DEFAULT_DEPTH_STYLE);
   });
 });

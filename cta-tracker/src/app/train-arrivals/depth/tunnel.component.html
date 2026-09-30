@@ -1,0 +1,50 @@
+@if (groups(); as groups) {
+  <div class="stage" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()" aria-hidden="true">
+    <div class="world">
+      <div class="plane ceiling"></div>
+      <div class="plane wall wall-left"></div>
+      <div class="plane wall wall-right"></div>
+      <div class="plane floor">
+        <div class="platform"></div>
+        @for (track of tracks(); track track.group.key) {
+          <div class="rails" [style.--x]="track.x"></div>
+        }
+      </div>
+      <div class="plane far-end"></div>
+
+      @for (track of tracks(); track track.group.key) {
+        @for (train of track.trains; track train.arrival.rn + train.arrival.stpId) {
+          <a class="train"
+             tabindex="-1"
+             [class.overflow]="train.overflow"
+             [attr.data-status]="statusOf(train.arrival)"
+             [style.--x]="track.x"
+             [style.--f]="train.fraction"
+             [style.--line]="colorFor(track.group)"
+             [style.--line-text]="textColorFor(track.group)"
+             [routerLink]="['/train-follow', train.arrival.rn]"
+             [queryParams]="{from: stationId(), rt: train.arrival.rt}">
+            <span class="car-side car-side-left"></span>
+            <span class="car-side car-side-right"></span>
+            <span class="car-roof"></span>
+            <span class="car-front">
+              <span class="sign">{{ train.arrival.destNm }}</span>
+              <span class="windshield">
+                <span class="readout">@if (train.minutes === 0) {Due} @else {<span>{{ train.minutes }}</span><small>m</small>}</span>
+              </span>
+              <span class="stripe"></span>
+              <span class="lamp lamp-left"></span>
+              <span class="lamp lamp-right"></span>
+            </span>
+          </a>
+        }
+      }
+    </div>
+    <div class="ends">
+      @for (track of tracks(); track track.group.key) {
+        <span class="end" [style.--line]="colorFor(track.group)">{{ placeName(track.group.directionLabel) }}</span>
+      }
+    </div>
+  </div>
+  <app-depth-list [groups]="groups" [stationId]="stationId()" [refreshing]="refreshing()" />
+}

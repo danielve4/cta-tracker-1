@@ -1,0 +1,50 @@
+@if (groups(); as groups) {
+  <div class="columns" [class.single]="isSingle(groups)" [class.refreshing]="refreshing()">
+    @for (stack of stacks(); track stack.group.key; let i = $index) {
+      <section class="column"
+               [class.outline]="variantFor(i) === 'outline'"
+               [style.--col-color]="colorFor(stack.group)">
+        <h3 class="stack-header">{{ stack.group.directionLabel }}</h3>
+        <ol class="column-body stack" [style.--depth]="stack.depth">
+          @for (card of stack.cards; track card.arrival.rn + card.arrival.stpId; let k = $index, last = $last) {
+            <li class="slab" [style.--o]="card.offset" [style.z-index]="20 - k" [class.front]="k === 0">
+              <a class="arrival-link slab-link"
+                 [attr.data-status]="statusOf(card.arrival)"
+                 [attr.aria-label]="arrivalLabel(stack.group, card.arrival)"
+                 [routerLink]="['/train-follow', card.arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: card.arrival.rt}">
+                <span class="slab-count">
+                  @if (isDue(card.arrival)) {
+                    <span class="num">Due</span>
+                  } @else {
+                    <span class="num">{{ card.arrival.countdown }}</span><span class="unit">min</span>
+                  }
+                </span>
+                @if (card.gapBefore !== null) {
+                  <span class="gap" aria-hidden="true">+{{ card.gapBefore }}</span>
+                }
+                <span class="slab-text">
+                  <span class="slab-dest">{{ card.arrival.destNm }}</span>
+                  <span class="meta">
+                    {{ card.arrival.countdown | timeuntil:'time' }}
+                    @if (card.arrival.isDly === '1') {
+                      <span class="flag flag-delayed"> · Delayed</span>
+                    } @else if (card.arrival.isSch === '1') {
+                      <span class="flag flag-scheduled"> · Sched.</span>
+                    }
+                  </span>
+                  @if (k === 0) {
+                    <span class="meta meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ card.arrival.apiArrivalTime }}</span>}@if (prefs.showDistance() && card.arrival.distance) {<span>{{ card.arrival.distance }}</span>}</span>
+                  }
+                </span>
+                @if (last && stack.hidden) {
+                  <span class="more">+{{ stack.hidden }} more</span>
+                }
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

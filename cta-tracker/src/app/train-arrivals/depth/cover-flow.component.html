@@ -1,0 +1,47 @@
+@if (groups(); as groups) {
+  <div class="shelves" [class.refreshing]="refreshing()">
+    @for (group of groups; track group.key; let i = $index) {
+      <section class="shelf" [class.outline]="variantFor(i) === 'outline'"
+               [style.--c]="colorFor(group)" [style.--c-text]="textColorFor(group)">
+        <h3 class="shelf-header">
+          <span class="shelf-label">{{ group.directionLabel }}</span>
+          @if (group.arrivals.length > 1) {
+            <span class="shelf-count">{{ group.arrivals.length }} trains</span>
+          }
+        </h3>
+        <ol class="flow">
+          @for (arrival of group.arrivals; track arrival.rn + arrival.stpId) {
+            <li class="slot">
+              <a class="card"
+                 [attr.data-status]="statusOf(arrival)"
+                 [attr.aria-label]="arrivalLabel(group, arrival)"
+                 [routerLink]="['/train-follow', arrival.rn]"
+                 [queryParams]="{from: stationId(), rt: arrival.rt}">
+                <span class="card-top">
+                  <span class="run">Run {{ arrival.rn }}</span>
+                  @if (statusOf(arrival) === 'delayed') {
+                    <span class="chip">Delayed</span>
+                  } @else if (statusOf(arrival) === 'scheduled') {
+                    <span class="chip">Scheduled</span>
+                  }
+                </span>
+                <span class="count">
+                  @if (arrival.countdown === 'DUE') {
+                    <span class="num">Due</span>
+                  } @else {
+                    <span class="num">{{ arrival.countdown }}</span><span class="unit">min</span>
+                  }
+                </span>
+                <span class="card-bottom">
+                  <span class="dest">To {{ arrival.destNm }}</span>
+                  <span class="when">{{ arrival.countdown | timeuntil:'time' }}</span>
+                  <span class="meta-extra">@if (prefs.showApiTimestamp()) {<span>API {{ arrival.apiArrivalTime }}</span>}@if (prefs.showDistance() && arrival.distance) {<span>{{ arrival.distance }}</span>}</span>
+                </span>
+              </a>
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}

@@ -7,15 +7,17 @@
 
 export const TRAIN_ARRIVALS_LAYOUT_KEY = 'train-arrivals-layout';
 export const TRAIN_ARRIVALS_COLUMN_STYLE_KEY = 'train-arrivals-column-style';
+export const TRAIN_ARRIVALS_DEPTH_STYLE_KEY = 'train-arrivals-depth-style';
 /** The lines whose two directions the rider has swapped, as a JSON array of route ids. */
 export const TRAIN_ARRIVALS_SWAPPED_LINES_KEY = 'train-arrivals-swapped-lines';
 
 /**
  * `'list'` is the stacked cards; `'columns'` puts each direction in its own column, drawn in one
  * of the column styles below; `'approach'` draws the line itself, with the station in the middle
- * and each direction's trains closing in from its own side.
+ * and each direction's trains closing in from its own side; `'depth'` draws the arrivals in 3D, in
+ * one of the depth styles below.
  */
-export type ArrivalsLayout = 'list' | 'columns' | 'approach';
+export type ArrivalsLayout = 'list' | 'columns' | 'approach' | 'depth';
 
 export const DEFAULT_ARRIVALS_LAYOUT: ArrivalsLayout = 'list';
 
@@ -23,7 +25,8 @@ export const DEFAULT_ARRIVALS_LAYOUT: ArrivalsLayout = 'list';
 export const ARRIVALS_LAYOUTS: ReadonlyArray<{ id: ArrivalsLayout; title: string; blurb: string }> = [
   { id: 'list',     title: 'Stacked',  blurb: 'One card per train, directions one above the other.' },
   { id: 'columns',  title: 'Columns',  blurb: 'Each direction side by side, in the style below.' },
-  { id: 'approach', title: 'Approach', blurb: 'The line itself, with trains closing in on your station.' }
+  { id: 'approach', title: 'Approach', blurb: 'The line itself, with trains closing in on your station.' },
+  { id: 'depth',    title: '3D',       blurb: 'Trains in space, in the 3D style below.' }
 ];
 
 /** Which of the column treatments renders when the layout is `'columns'`. */
@@ -46,6 +49,19 @@ export const COLUMN_STYLES: ReadonlyArray<{ id: ColumnStyle; title: string; blur
   { id: 'pocket-lcd',   title: 'Pocket LCD',   blurb: 'A 90s watch face. Dark mode lights the Indiglo.' }
 ];
 
+/** Which of the 3D treatments renders when the layout is `'depth'`. */
+export type DepthStyle = 'tunnel' | 'diorama' | 'cover-flow' | 'time-stack';
+
+export const DEFAULT_DEPTH_STYLE: DepthStyle = 'tunnel';
+
+/** The 3D picker's source of truth. Same rule as COLUMN_STYLES: only list what the switcher renders. */
+export const DEPTH_STYLES: ReadonlyArray<{ id: DepthStyle; title: string; blurb: string }> = [
+  { id: 'tunnel',     title: 'Tunnel',     blurb: 'Down the subway tunnel, headlights getting closer.' },
+  { id: 'diorama',    title: 'Diorama',    blurb: 'A tiny elevated L. Drag, or tilt your phone, to look around.' },
+  { id: 'cover-flow', title: 'Cover Flow', blurb: 'Swipe through glass cards, one per train.' },
+  { id: 'time-stack', title: 'Time Stack', blurb: 'Later trains stacked deeper, spaced by the minutes between them.' }
+];
+
 /** An unknown value — stale, corrupt, or from another build — falls back to the default. */
 export function parseArrivalsLayout(raw: string | null | undefined): ArrivalsLayout {
   return ARRIVALS_LAYOUTS.some(layout => layout.id === raw)
@@ -62,6 +78,13 @@ export function parseColumnStyle(raw: string | null | undefined): ColumnStyle {
   return COLUMN_STYLES.some(style => style.id === raw)
     ? raw as ColumnStyle
     : DEFAULT_COLUMN_STYLE;
+}
+
+/** An unknown 3D style falls back to the default, like `parseColumnStyle`. */
+export function parseDepthStyle(raw: string | null | undefined): DepthStyle {
+  return DEPTH_STYLES.some(style => style.id === raw)
+    ? raw as DepthStyle
+    : DEFAULT_DEPTH_STYLE;
 }
 
 /** Only `'list'` keeps the A-Z order; every other layout places each direction on a fixed side. */

@@ -1,0 +1,32 @@
+@if (loading()) {
+  <div class="skeleton-stage" aria-hidden="true">
+    <span class="skeleton-line sk-vanish"></span>
+  </div>
+  <div class="columns" aria-hidden="true">
+    @for (column of [0, 1]; track column) {
+      <div class="column">
+        <span class="skeleton-line sk-label"></span>
+        <div class="column-body">
+          @for (row of [0, 1, 2]; track row) {
+            <span class="skeleton-line sk-row"></span>
+          }
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  @switch (prefs.depthStyle()) {
+    @case ('diorama') {
+      <app-diorama [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
+    @case ('cover-flow') {
+      <app-cover-flow [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
+    @case ('time-stack') {
+      <app-time-stack [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
+    @default {
+      <app-tunnel [groups]="groups()" [stationId]="stationId()" [refreshing]="refreshing()" />
+    }
+  }
+}
