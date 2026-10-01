@@ -1,6 +1,11 @@
 /* Stop Header */
-.stop-header { margin-bottom: 8px; }
+.stop-header { margin-bottom: 8px; position: relative; }
 .stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+/* Counter sits beside the station name and Toast docks into the corner above it; keep the name clear. */
+.stop-header:has(> app-alerts-banner[data-active][data-style="counter"]) h2 { padding-right: 96px; }
+.stop-header:has(> app-alerts-banner[data-active][data-style="toast"]) h2 { padding-right: 64px; }
+/* The subheader ends in the Swap chip, not text; 16px (collapsing with its 8px margin) clears the chip. */
+.stop-header > app-alerts-banner[data-active] { margin-top: 16px; }
 .stop-subheader {
   display: flex;
   align-items: center;

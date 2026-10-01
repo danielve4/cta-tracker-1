@@ -1,6 +1,9 @@
 /* Stop Header */
-.stop-header { margin-bottom: 8px; }
+.stop-header { margin-bottom: 8px; position: relative; }
 .stop-header h2 { margin-bottom: 4px; letter-spacing: -0.02em; }
+/* Counter sits beside the station name and Toast docks into the corner above it; keep the name clear. */
+.stop-header:has(> app-alerts-banner[data-active][data-style="counter"]) h2 { padding-right: 96px; }
+.stop-header:has(> app-alerts-banner[data-active][data-style="toast"]) h2 { padding-right: 64px; }
 .direction-label {
   display: inline-flex;
   color: var(--text-tertiary);

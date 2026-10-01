@@ -1,0 +1,66 @@
+@if (summary(); as s) {
+  @if (phase() === 'toast') {
+    <div class="toast" [class.open]="expanded()" [attr.data-tone]="s.tone"
+         role="status" aria-label="Service alerts" animate.leave="toast-leave">
+      <button type="button" class="toast-body" [attr.aria-expanded]="expanded()" [attr.aria-controls]="uid"
+              (click)="toggle()">
+        <span class="tile"><app-alert-glyph [tone]="s.tone" /></span>
+        <span class="text">
+          <span class="eyebrow">
+            <span class="eyebrow-label">{{ s.tone === 'note' ? 'Service note' : 'Service alert' }}</span>
+            <span class="eyebrow-window">{{ windowOf(s.lead) }}</span>
+          </span>
+          <span class="headline">{{ expanded() ? countLabel(s.count) : s.lead.headline }}</span>
+          <span class="hint">
+            @if (expanded()) {
+              Tap to collapse
+            } @else if (s.count > 1) {
+              +{{ s.count - 1 }} more · Tap for details
+            } @else {
+              Tap for details
+            }
+          </span>
+        </span>
+      </button>
+      <button type="button" class="close" aria-label="Dismiss service alerts" (click)="close()">
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3 3 9"/></svg>
+      </button>
+
+      <div class="reveal" [class.open]="expanded()" [id]="uid">
+        <div>
+          <ul class="list">
+            @for (alert of s.ordered; track alert.id) {
+              <li class="item" [attr.data-tone]="toneOf(alert)">
+                <button type="button" class="item-head" [attr.aria-expanded]="openAlertId() === alert.id"
+                        (click)="toggleAlert(alert.id)">
+                  <span class="item-dot" aria-hidden="true"></span>
+                  <span class="item-text">
+                    <span class="item-headline">{{ alert.headline }}</span>
+                    <span class="item-kicker">{{ kickerOf(alert) }}</span>
+                  </span>
+                  <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+                  </svg>
+                </button>
+                <div class="reveal" [class.open]="openAlertId() === alert.id">
+                  <div><app-alert-detail class="item-detail" [alert]="alert" /></div>
+                </div>
+              </li>
+            }
+          </ul>
+          <div class="foot">
+            <a class="all-alerts" routerLink="/alerts">All alerts
+              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 1.75 6.75 5 3.5 8.25"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (phase() === 'docked') {
+    <button type="button" class="chip" [attr.data-tone]="s.tone"
+            [attr.aria-label]="'Show ' + countLabel(s.count)" (click)="show(true)">
+      <app-alert-glyph class="chip-glyph" [tone]="s.tone" />
+      <span class="chip-count">{{ s.count }}</span>
+    </button>
+  }
+}

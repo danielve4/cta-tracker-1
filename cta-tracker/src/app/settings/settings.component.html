@@ -68,6 +68,24 @@
   }
 </section>
 
+<!-- Service Alerts -->
+<section class="cols-4 settings-section">
+  <h2 class="section-title">Service Alerts</h2>
+  <p class="section-description">How CTA alerts for the route appear on a stop's arrivals. Severe ones come first; elevator and stop notes stay tucked away.</p>
+  <div class="style-picker alert-style-picker" role="radiogroup" aria-label="Alert style">
+    @for (style of alertStyles; track style.id) {
+      <button type="button" role="radio" class="style-chip alert-style-chip"
+              [attr.aria-checked]="prefs.alertStyle() === style.id"
+              [class.selected]="prefs.alertStyle() === style.id"
+              (click)="prefs.setAlertStyle(style.id)">
+        <app-alert-style-thumb [style]="style.id" />
+        <span class="style-chip-title">{{ style.title }}</span>
+        <span class="style-chip-blurb">{{ style.blurb }}</span>
+      </button>
+    }
+  </div>
+</section>
+
 <!-- Sync Favorites -->
 <section class="cols-4 settings-section">
   <h2 class="section-title">Sync Favorites</h2>

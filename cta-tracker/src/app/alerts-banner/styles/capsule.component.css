@@ -1,0 +1,85 @@
+.stage { display: flex; justify-content: center; margin: 2px 0 16px; }
+
+/* Always dark: the island is a piece of hardware, not a themed surface. */
+.island {
+  --tone-major: rgb(255, 92, 92);
+  --tone-service: rgb(255, 184, 76);
+  --tone-note: rgb(152, 152, 162);
+  --text-primary: #f5f5f7;
+  --text-secondary: rgba(235, 235, 245, 0.72);
+  --text-tertiary: rgba(235, 235, 245, 0.46);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --detail-text: rgba(235, 235, 245, 0.72);
+  --detail-strong: #f5f5f7;
+  --detail-link: #f5f5f7;
+
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #050506;
+  color: #f5f5f7;
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.14),
+    0 8px 24px -8px rgba(0, 0, 0, 0.45);
+}
+:host-context([data-theme="light"]) .island {
+  box-shadow: 0 10px 28px -10px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.island.open { width: 100%; border-radius: 26px; }
+
+.island-head {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; height: 38px; padding: 0 14px 0 5px;
+  border-radius: inherit;
+}
+.island-head:focus-visible { outline-offset: 3px; }
+.island.open .island-head { height: 50px; padding: 0 12px 0 9px; }
+
+.orb {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--tone) 20%, transparent);
+  color: var(--tone);
+}
+.island.open .orb { width: 32px; height: 32px; }
+.orb-glyph { font-size: 15px; --glyph-ink: #050506; }
+
+.head-text {
+  min-width: 0; max-width: 236px; line-height: 20px;
+  font-size: 13px; font-weight: 600; letter-spacing: -0.005em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.more {
+  flex-shrink: 0;
+  height: 20px; padding: 0 7px; border-radius: 10px;
+  line-height: 20px;
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, 0.12); color: rgba(235, 235, 245, 0.8);
+}
+.head-title { flex: 1; line-height: 20px; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; text-align: left; }
+.close {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, 0.1); color: rgba(235, 235, 245, 0.8);
+}
+.close svg { width: 10px; height: 10px; }
+
+.panel { animation: panel-in 320ms 120ms var(--glide) both; }
+@keyframes panel-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.list { margin: 0 8px; border-top: 1px solid var(--card-border); }
+.item + .item { border-top: 1px solid var(--card-border); }
+.item-head { display: flex; align-items: flex-start; gap: 11px; width: 100%; padding: 12px 6px; }
+.item-head:focus-visible { outline-offset: -2px; border-radius: 12px; }
+.item-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin: 6px 2px 0 6px;
+  background: var(--tone);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--tone) 70%, transparent);
+}
+.item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.item-headline { font-size: 14px; font-weight: 600; line-height: 1.3; text-wrap: pretty; }
+.item-kicker { font-size: 12px; color: var(--text-tertiary); }
+.item-head > .chevron { color: var(--text-tertiary); margin-top: 2px; }
+.item-detail { padding: 0 6px 14px 28px; }
+
+.foot { display: flex; justify-content: flex-end; padding: 10px 18px 14px; border-top: 1px solid var(--card-border); margin: 0 8px; padding-right: 10px; }

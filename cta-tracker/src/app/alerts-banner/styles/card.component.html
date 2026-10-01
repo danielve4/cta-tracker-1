@@ -1,0 +1,49 @@
+@if (summary(); as s) {
+  <section class="card" aria-label="Service alerts">
+    <ul>
+      @for (alert of s.prominent; track alert.id) {
+        <ng-container *ngTemplateOutlet="row; context: { $implicit: alert }" />
+      }
+      @if (s.minor.length) {
+        @if (expanded() || !s.prominent.length) {
+          @for (alert of s.minor; track alert.id) {
+            <ng-container *ngTemplateOutlet="row; context: { $implicit: alert }" />
+          }
+        }
+      }
+    </ul>
+    <div class="foot">
+      @if (s.minor.length && s.prominent.length) {
+        <button type="button" class="notes-toggle" [attr.aria-expanded]="expanded()" (click)="toggle()">
+          <span class="notes-count">{{ s.minor.length }}</span>
+          {{ expanded() ? 'Hide notes' : (s.minor.length === 1 ? 'note' : 'notes') }}
+        </button>
+      }
+      <a class="all-alerts" routerLink="/alerts">All alerts
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 1.75 6.75 5 3.5 8.25"/></svg>
+      </a>
+    </div>
+  </section>
+}
+
+<ng-template #row let-alert>
+  <li class="row" [attr.data-tone]="toneOf(alert)" [class.open]="openAlertId() === alert.id">
+    <button type="button" class="row-head" [attr.aria-expanded]="openAlertId() === alert.id"
+            (click)="toggleAlert(alert.id)">
+      <span class="rail" aria-hidden="true"></span>
+      <span class="row-text">
+        <span class="row-headline">{{ alert.headline }}</span>
+        <span class="row-kicker">
+          <span class="row-impact">{{ alert.impact }}</span>
+          <span class="row-window">{{ windowOf(alert) }}</span>
+        </span>
+      </span>
+      <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+      </svg>
+    </button>
+    <div class="reveal" [class.open]="openAlertId() === alert.id">
+      <div><app-alert-detail class="row-detail" [alert]="alert" /></div>
+    </div>
+  </li>
+</ng-template>

@@ -1,0 +1,43 @@
+@if (summary(); as s) {
+  <section class="notes" aria-label="Service alerts">
+    @for (alert of (s.prominent.length ? s.prominent : s.minor); track alert.id) {
+      <ng-container *ngTemplateOutlet="note; context: { $implicit: alert, lead: $first }" />
+    }
+    @if (s.prominent.length && s.minor.length) {
+      @if (expanded()) {
+        @for (alert of s.minor; track alert.id) {
+          <ng-container *ngTemplateOutlet="note; context: { $implicit: alert }" />
+        }
+      } @else {
+        <button type="button" class="folded" [attr.aria-expanded]="false" (click)="toggle()">
+          <span class="folded-count">+ {{ s.minor.length }} {{ s.minor.length === 1 ? 'note' : 'notes' }}</span>
+          <span class="folded-preview">{{ notesPreview(headlinesOf(s.minor)) }}</span>
+        </button>
+      }
+    }
+    <a class="all-link" routerLink="/alerts">All service alerts</a>
+  </section>
+}
+
+<ng-template #note let-alert let-lead="lead">
+  <article class="note" [class.lead]="lead" [attr.data-tone]="toneOf(alert)">
+    <p class="kicker">
+      <span class="kicker-impact">{{ alert.impact }}</span>
+      <span class="kicker-window">{{ windowOf(alert) }}</span>
+    </p>
+    <h3 class="headline">{{ alert.headline }}</h3>
+    @if (lead && openAlertId() !== alert.id && alert.shortDescription) {
+      <p class="lede">{{ alert.shortDescription }}</p>
+    }
+    <div class="reveal" [class.open]="openAlertId() === alert.id">
+      <div><app-alert-detail class="detail" [alert]="alert" /></div>
+    </div>
+    <button type="button" class="read-more" [attr.aria-expanded]="openAlertId() === alert.id"
+            (click)="toggleAlert(alert.id)">
+      {{ openAlertId() === alert.id ? 'Show less' : 'Read more' }}<span class="sr-only">: {{ alert.headline }}</span>
+      <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+      </svg>
+    </button>
+  </article>
+</ng-template>

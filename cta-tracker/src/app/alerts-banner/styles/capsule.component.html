@@ -1,0 +1,52 @@
+@if (summary(); as s) {
+  <div class="stage">
+    <div class="island" #island [class.open]="expanded()" [attr.data-tone]="s.tone">
+      <button type="button" class="island-head" [attr.aria-expanded]="expanded()" [attr.aria-controls]="uid"
+              [attr.aria-label]="expanded() ? 'Close service alerts' : countLabel(s.count) + ': ' + s.lead.headline"
+              (click)="morph()">
+        <span class="orb"><app-alert-glyph class="orb-glyph" [tone]="s.tone" /></span>
+        @if (expanded()) {
+          <span class="head-title">{{ countLabel(s.count) }}</span>
+          <span class="close" aria-hidden="true">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l6 6M9 3 3 9"/></svg>
+          </span>
+        } @else {
+          <span class="head-text">{{ s.lead.headline }}</span>
+          @if (s.count > 1) {
+            <span class="more">+{{ s.count - 1 }}</span>
+          }
+        }
+      </button>
+
+      @if (expanded()) {
+        <div class="panel" [id]="uid">
+          <ul class="list">
+            @for (alert of s.ordered; track alert.id) {
+              <li class="item" [attr.data-tone]="toneOf(alert)">
+                <button type="button" class="item-head" [attr.aria-expanded]="openAlertId() === alert.id"
+                        (click)="toggleAlert(alert.id)">
+                  <span class="item-dot" aria-hidden="true"></span>
+                  <span class="item-text">
+                    <span class="item-headline">{{ alert.headline }}</span>
+                    <span class="item-kicker">{{ kickerOf(alert) }}</span>
+                  </span>
+                  <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+                  </svg>
+                </button>
+                <div class="reveal" [class.open]="openAlertId() === alert.id">
+                  <div><app-alert-detail class="item-detail" [alert]="alert" /></div>
+                </div>
+              </li>
+            }
+          </ul>
+          <div class="foot">
+            <a class="all-alerts" routerLink="/alerts">All alerts
+              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 1.75 6.75 5 3.5 8.25"/></svg>
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

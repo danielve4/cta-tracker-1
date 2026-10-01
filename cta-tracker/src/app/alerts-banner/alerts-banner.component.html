@@ -1,28 +1,8 @@
-@if (alerts().length) {
-  <section class="alerts-banner" [class.has-major]="hasMajor()" aria-label="Service alerts">
-    @for (alert of prominent(); track alert.id) {
-      <app-alert-item [alert]="alert" />
-    }
-    @if (minor().length) {
-      @if (showMinor()) {
-        @for (alert of minor(); track alert.id) {
-          <app-alert-item [alert]="alert" />
-        }
-      }
-    }
-    <div class="alerts-footer">
-      @if (minor().length) {
-        <button class="minor-toggle" type="button" (click)="toggleMinor()" [attr.aria-expanded]="showMinor()">
-          @if (showMinor()) {
-            Hide notes
-          } @else if (prominent().length) {
-            +{{ minor().length }} more
-          } @else {
-            {{ minor().length }} service {{ minor().length === 1 ? 'note' : 'notes' }}
-          }
-        </button>
-      }
-      <a class="all-alerts" routerLink="/alerts">All alerts</a>
-    </div>
-  </section>
+@switch (prefs.alertStyle()) {
+  @case ('card') { <app-alert-card [alerts]="alerts()" /> }
+  @case ('capsule') { <app-alert-capsule [alerts]="alerts()" /> }
+  @case ('margin-note') { <app-alert-margin-note [alerts]="alerts()" /> }
+  @case ('counter') { <app-alert-counter [alerts]="alerts()" /> }
+  @case ('toast') { <app-alert-toast [alerts]="alerts()" /> }
+  @default { <app-alert-ticker [alerts]="alerts()" /> }
 }

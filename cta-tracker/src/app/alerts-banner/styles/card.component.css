@@ -1,0 +1,60 @@
+.card {
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--card-border), 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.row + .row { border-top: 1px solid var(--card-border); }
+
+.row-head {
+  position: relative;
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 58px; padding: 11px 14px 11px 20px;
+}
+.row-head:focus-visible { outline-offset: -2px; border-radius: 12px; }
+
+/* Inset from the row edges so stacked rails read as separate marks, not one bar. */
+.rail {
+  position: absolute; left: 8px; top: 12px; bottom: 12px;
+  width: 3px; border-radius: 2px;
+  background: var(--tone);
+}
+.row[data-tone="note"] .rail { opacity: 0.55; }
+
+.row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.row-headline {
+  font-size: 14.5px; font-weight: 650; line-height: 1.28; letter-spacing: -0.01em;
+  color: var(--text-primary); text-wrap: pretty;
+}
+.row[data-tone="note"] .row-headline { font-weight: 550; color: var(--text-secondary); }
+.row-kicker {
+  display: flex; flex-wrap: wrap; column-gap: 6px;
+  font-size: 12px; font-weight: 500; color: var(--text-tertiary);
+}
+.row-impact { color: var(--tone-ink); font-weight: 600; }
+.row[data-tone="note"] .row-impact { color: var(--text-tertiary); }
+.row-window::before { content: '·'; margin-right: 6px; color: var(--text-tertiary); }
+.row-head > .chevron { color: var(--text-tertiary); }
+
+.row-detail { padding: 0 16px 16px 20px; }
+
+.foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 40px; padding: 0 14px 0 20px;
+  border-top: 1px solid var(--card-border);
+}
+.notes-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  padding: 8px 0;
+}
+.notes-count {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+  display: inline-block; text-align: center; line-height: 18px;
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--text-tertiary) 22%, transparent);
+  color: var(--text-secondary);
+}
+.foot .all-alerts { margin-left: auto; padding: 8px 0; }

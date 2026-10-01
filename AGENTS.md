@@ -49,7 +49,7 @@ cta-tracker-1/
 │   │   │   ├── directions/       # Route direction picker
 │   │   │   ├── favorites/        # Saved favorite stops
 │   │   │   ├── alerts/           # All active CTA alerts, Trains | Buses, with search
-│   │   │   ├── alerts-banner/    # Route alerts above the arrivals list (bus and train)
+│   │   │   ├── alerts-banner/    # Route alerts in the stop header, in one of six styles (styles/)
 │   │   │   ├── alert-item/       # One alert, expanding in place; shared by the two above
 │   │   │   ├── follow-vehicle/   # Individual vehicle tracking
 │   │   │   ├── routes/           # Route listing with search
@@ -175,6 +175,30 @@ Things to know before changing any of it:
   it; never bypass that.
 - CTA times have no offset (Chicago wall-clock) and are sometimes date-only. `parseCtaDate` builds
   them from parts, so a bare date is local midnight rather than UTC midnight.
+- **The arrivals banner has six styles**, picked in Settings → Service Alerts and stored under
+  `arrivals-alert-style` (default Ticker): Ticker, Card, Capsule, Margin Note, Counter and Toast.
+  `ALERT_STYLES` in `services/alerts/alert-styles.ts` is what the picker offers; `alerts-banner`
+  switches on it, so a style listed there but missing from the switch silently renders Ticker. Each
+  style is a standalone component in `alerts-banner/styles/` extending `AlertStyleBase` and listing
+  `alert-styles-shared.css` first. They share `AlertDetailComponent` (the sanitized body) and
+  `AlertGlyphComponent`, which encodes the tone as a shape as well as a colour.
+- **Tone** is `toneOf()`: `major` (CTA's MajorAlert), `service` (severity ≥ 20) or `note`. Shapes use
+  `--tone`, text uses `--tone-ink`, which is darker on the light theme because amber fails contrast
+  on white. Wording that every style shares (`alertWindow`, the summary, the ticker index, the Toast
+  dismissal key) is Angular-free and unit-tested in `alert-styles.ts`.
+- **The banner is the last child of `.stop-header`**, which is `position: relative`. Counter is
+  absolutely positioned at its top-right and Toast docks into the top-right corner, so both arrivals
+  stylesheets pad the station name with
+  `.stop-header:has(> app-alerts-banner[data-active][data-style=…]) h2`. The host carries
+  `data-style` and `data-active` for exactly that.
+- **Capsule morphs with a FLIP** (measure, toggle, measure, Web Animations API), because CSS cannot
+  transition to an auto-sized box in Safari. **Ticker** carries a copy of its first headline at the
+  end of the track so it loops without sliding backwards, and only resets when the set of alert ids
+  changes, not on every 30 s refresh. **Toast** remembers a dismissal in `sessionStorage`
+  (`arrivals-alert-toast-dismissed`, keyed by the sorted alert ids), so a new alert drops it in
+  again. Its timers start in `afterNextRender`.
+- The global `input, button` rule forces a 56 px full-width box; `alert-styles-shared.css` resets
+  it for every button in the styles.
 
 ### Stop Prediction (on-device)
 

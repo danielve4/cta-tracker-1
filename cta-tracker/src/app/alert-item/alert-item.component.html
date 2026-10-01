@@ -21,11 +21,7 @@
       <span class="alert-headline">{{ a.headline }}</span>
       <span class="alert-meta">
         <span>{{ a.impact }}</span>
-        @if (a.end && !a.tbd) {
-          <span>Until {{ a.end | date:(a.end.getHours() || a.end.getMinutes() ? 'MMM d, h:mm a' : 'MMM d') }}</span>
-        } @else if (a.start) {
-          <span>Since {{ a.start | date:'MMM d' }}</span>
-        }
+        <span>{{ window() }}</span>
       </span>
     </span>
     <svg class="alert-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
