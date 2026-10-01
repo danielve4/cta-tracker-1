@@ -1,6 +1,8 @@
 {
   "index": "/index.html",
-  "navigationUrls": ["/"],
+  "navigationUrls": [
+    "/"
+  ],
   "assetGroups": [
     {
       "name": "app",
@@ -29,11 +31,25 @@
   "dataGroups": [
     {
       "name": "api",
-      "urls": ["/busstoparrivals"],
+      "urls": [
+        "/busstoparrivals"
+      ],
       "cacheConfig": {
         "maxSize": 1,
         "maxAge": "3s",
         "strategy": "performance"
+      }
+    },
+    {
+      "name": "alerts",
+      "urls": [
+        "https://cta-alerts-proxy.danve4.workers.dev/alerts**"
+      ],
+      "cacheConfig": {
+        "maxSize": 20,
+        "maxAge": "5m",
+        "timeout": "5s",
+        "strategy": "freshness"
       }
     }
   ]

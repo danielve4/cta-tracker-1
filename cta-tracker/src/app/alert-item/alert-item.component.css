@@ -1,0 +1,40 @@
+:host { display: block; }
+
+.alert-item { --alert-accent: var(--status-scheduled); }
+.alert-item.major { --alert-accent: var(--pink); }
+.alert-item.minor { --alert-accent: var(--text-tertiary); }
+
+.alert-summary {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; cursor: pointer; list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.alert-summary::-webkit-details-marker { display: none; }
+.alert-summary:focus-visible { outline: 2px solid var(--alert-accent); outline-offset: -2px; border-radius: 12px; }
+
+.alert-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--alert-accent); }
+.alert-text { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+.alert-headline { font-weight: 700; font-size: 14px; line-height: 1.3; color: var(--text-primary); }
+.alert-meta { display: flex; flex-wrap: wrap; gap: 0 6px; font-size: 11px; font-weight: 600; color: var(--text-tertiary); }
+.alert-meta > span:not(:first-child)::before { content: '· '; }
+
+.alert-services { display: flex; flex-wrap: wrap; gap: 4px; }
+.alert-service {
+  font-size: 11px; font-weight: 800; line-height: 1; padding: 4px 7px; border-radius: 6px;
+  background: var(--bus-badge); color: var(--bus-badge-text);
+}
+.alert-service.station { background: var(--surface-elevated); color: var(--text-secondary); }
+
+.alert-chevron {
+  width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--text-tertiary);
+  transition: transform var(--duration-medium) var(--ease-standard);
+}
+.alert-item[open] .alert-chevron { transform: rotate(180deg); }
+
+.alert-body { padding: 0 16px 14px 42px; display: flex; flex-direction: column; gap: 10px; }
+.alert-description { font-size: 13px; line-height: 1.5; color: var(--text-secondary); overflow-wrap: anywhere; }
+.alert-description ::ng-deep p + p { margin-top: 8px; }
+.alert-description ::ng-deep a,
+.alert-link { color: var(--text-primary); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.alert-description ::ng-deep img { max-width: 100%; height: auto; }
+.alert-link { font-size: 13px; align-self: flex-start; }

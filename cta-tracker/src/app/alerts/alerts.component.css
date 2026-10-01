@@ -1,0 +1,56 @@
+.alerts-subheader { min-height: 12px; }
+.last-refreshed {
+  display: block; color: var(--text-tertiary);
+  font-size: 11px; font-weight: 500; margin-bottom: 12px;
+}
+
+/* Trains | Buses */
+.mode-picker {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px;
+  border-radius: 14px; background: var(--surface-card); margin-bottom: 16px;
+}
+.mode-option {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  width: 100%; height: auto; /* undo the global input/button sizing */
+  padding: 9px 12px; border: none; border-radius: 10px; cursor: pointer;
+  background: transparent; color: var(--text-secondary);
+  font: inherit; font-size: 14px; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-medium) var(--ease-standard),
+              color var(--duration-medium) var(--ease-standard);
+}
+.mode-option.active { background: var(--surface-elevated); color: var(--text-primary); }
+.mode-count {
+  min-width: 20px; padding: 2px 6px; border-radius: 999px;
+  font-size: 11px; font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
+}
+
+.alerts-list {
+  display: grid; row-gap: 10px; width: 100%;
+  margin-top: 16px; padding-bottom: calc(56px + 24px + 52px);
+}
+.alert-card {
+  border-radius: 16px; background: var(--surface-card); overflow: hidden;
+  transition: opacity var(--duration-medium) var(--ease-standard);
+}
+.alert-card.loading { opacity: 0.6; }
+
+.error-message {
+  padding: 16px; border-radius: 16px;
+  background-color: var(--pink-opacity); color: var(--pink); font-weight: 600; font-size: 15px;
+}
+.empty-message { padding: 24px 16px; text-align: center; color: var(--text-tertiary); font-size: 14px; font-weight: 600; }
+
+.skeleton-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; pointer-events: none; }
+.skeleton-line {
+  display: block; border-radius: 999px;
+  background-color: color-mix(in srgb, var(--text-tertiary) 20%, transparent);
+  animation: pulse 1.25s ease-in-out infinite;
+}
+.skeleton-line-title { width: 72%; height: 14px; }
+.skeleton-line-meta { width: 40%; height: 10px; }
+
+.refreshing { animation: refreshSpin 0.6s var(--ease-decelerate) 1; }
+@keyframes refreshSpin { from { transform: rotate(0deg); } 50% { transform: rotate(200deg) scale(1.15); } to { transform: rotate(360deg) scale(1); } }
+@keyframes pulse { 50% { opacity: 0.5; } }

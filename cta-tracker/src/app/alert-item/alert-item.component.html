@@ -1,0 +1,45 @@
+@let a = alert();
+<details class="alert-item" [class.major]="a.major" [class.minor]="!a.major && a.severity < minorSeverity">
+  <summary class="alert-summary">
+    <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+      <line x1="12" y1="9" x2="12" y2="13"></line>
+      <line x1="12" y1="17" x2="12.01" y2="17"></line>
+    </svg>
+    <span class="alert-text">
+      @if (showServices() && a.services.length) {
+        <span class="alert-services">
+          @for (service of a.services; track service.type + service.id) {
+            <span class="alert-service" [class.station]="service.type === 'T'"
+                  [style.backgroundColor]="service.type === 'T' ? null : service.backColor"
+                  [style.color]="service.type === 'T' ? null : service.textColor">
+              {{ service.type === 'B' ? service.id : service.name }}
+            </span>
+          }
+        </span>
+      }
+      <span class="alert-headline">{{ a.headline }}</span>
+      <span class="alert-meta">
+        <span>{{ a.impact }}</span>
+        @if (a.end && !a.tbd) {
+          <span>Until {{ a.end | date:(a.end.getHours() || a.end.getMinutes() ? 'MMM d, h:mm a' : 'MMM d') }}</span>
+        } @else if (a.start) {
+          <span>Since {{ a.start | date:'MMM d' }}</span>
+        }
+      </span>
+    </span>
+    <svg class="alert-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </summary>
+  <div class="alert-body">
+    @if (a.fullHtml) {
+      <div class="alert-description" [innerHTML]="a.fullHtml"></div>
+    } @else {
+      <p class="alert-description">{{ a.shortDescription }}</p>
+    }
+    @if (a.url) {
+      <a class="alert-link" [href]="a.url" target="_blank" rel="noopener">View on transitchicago.com</a>
+    }
+  </div>
+</details>

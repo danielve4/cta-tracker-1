@@ -8,6 +8,7 @@ The project is split into two parts:
 
 - **Frontend** (`cta-tracker/`): An Angular single-page application
 - **Backend** (`node/`): A Node.js Express API server that proxies CTA public APIs and manages favorites persistence
+- **Alerts proxy** (`workers/alerts-proxy/`): A Cloudflare Worker in front of the CTA Customer Alerts API, which sends no CORS headers
 
 The frontend is built and its output is copied into the backend's `public/` directory for serving as static files in production.
 
@@ -35,6 +36,7 @@ The frontend is built and its output is copied into the backend's `public/` dire
 
 - Google Cloud App Engine (runtime: `nodejs22`)
 - Configuration in `node/app.yaml`
+- Alerts proxy: Cloudflare Workers (`cta-alerts-proxy.danve4.workers.dev`), configured in `workers/alerts-proxy/wrangler.toml`
 
 ## Project Structure
 
@@ -46,10 +48,14 @@ cta-tracker-1/
 │   │   │   ├── arrivals/         # Real-time arrival predictions view
 │   │   │   ├── directions/       # Route direction picker
 │   │   │   ├── favorites/        # Saved favorite stops
+│   │   │   ├── alerts/           # All active CTA alerts, Trains | Buses, with search
+│   │   │   ├── alerts-banner/    # Route alerts above the arrivals list (bus and train)
+│   │   │   ├── alert-item/       # One alert, expanding in place; shared by the two above
 │   │   │   ├── follow-vehicle/   # Individual vehicle tracking
 │   │   │   ├── routes/           # Route listing with search
 │   │   │   ├── stops/            # Stop listing for a route/direction
-│   │   │   ├── services/         # BusService, FavoritesService
+│   │   │   ├── services/         # BusService, FavoritesService, AlertsService
+│   │   │   │   ├── alerts/       # CTA alerts parsing, filtering and ordering (Angular-free)
 │   │   │   │   └── prediction/   # On-device stop-view log and suggestion ranking
 │   │   │   ├── suggested-stop/   # "Heading here?" chip, rendered on Routes and Favorites
 │   │   │   ├── did-you-mean/     # "Did you mean…?" chip, rendered once in AppComponent
@@ -74,6 +80,8 @@ cta-tracker-1/
 │   ├── config.json               # API keys and endpoint URLs
 │   ├── app.yaml                  # App Engine deployment config
 │   └── package.json              # Backend dependencies
+├── workers/
+│   └── alerts-proxy/             # Cloudflare Worker: CORS + edge cache for CTA alerts (own package, tests)
 ├── build_and_move.sh             # Build script: compiles Angular, copies to node/public
 └── AGENTS.md                     # This file
 ```
@@ -138,6 +146,35 @@ cta-tracker-1/
     casing, lane assignment) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
     differently (A-Z for the list, CTA's `trDr` for the side-by-side layouts, so a direction keeps
     the same side at every station on a line).
+
+### Service Alerts
+
+CTA's Customer Alerts API (`transitchicago.com/api/1.0/alerts.aspx`) needs no key but sends no CORS
+headers, so the browser reaches it through the Worker in `workers/alerts-proxy/`, never through
+`node/`. The app reads the Worker's URL from `environment.alertsBaseURL`. The Worker is a thin
+passthrough: it whitelists `routeid` / `stationid`, adds CORS and a 30 s edge cache, and returns
+CTA's body unchanged. All parsing happens in `services/alerts/alert-model.ts`, so it is unit-tested.
+
+Things to know before changing any of it:
+
+- **The payload is XML converted to JSON.** A single `Alert` or `Service` is an object, not a
+  one-element array. Text arrives as `{ "#cdata-section": … }`, and numbers and flags are strings.
+  **"No alerts" is `ErrorCode: "50"`, not an empty list.** `normalizeAlerts` absorbs all of this,
+  so nothing else should touch a raw response.
+- **`routeid` and `stationid` cannot be combined** (CTA answers ErrorCode 106). Train arrivals query
+  by line and narrow with `alertsForTrainStation`. A `routeid=` query also returns station alerts
+  from anywhere on the line (an elevator at 69th shows up for every Red Line stop), so a station
+  alert is kept only at its own station, and a line alert only when it names no station.
+- **Alerts never block arrivals.** Both arrivals screens fetch them through a separate
+  `httpResource`, and any failure or parse error yields an empty banner. They refresh on the same
+  30 s tick as predictions.
+- **Severity below `MINOR_SEVERITY` (20) folds behind a toggle** in the banner (elevators, stop
+  relocations, stop notes). These are most of the active alerts, so listing them would bury real
+  service problems.
+- CTA's `FullDescription` is HTML. It is bound with `[innerHTML]` so Angular's sanitizer runs over
+  it; never bypass that.
+- CTA times have no offset (Chicago wall-clock) and are sometimes date-only. `parseCtaDate` builds
+  them from parts, so a bare date is local midnight rather than UTC midnight.
 
 ### Stop Prediction (on-device)
 
@@ -246,12 +283,15 @@ Things to know before changing any of it:
 ### Testing
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
-dependency-free logic — `services/prediction/`, `services/arrivals-layout.ts`,
+dependency-free logic — `services/prediction/`, `services/alerts/`, `services/arrivals-layout.ts`,
 `train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts` and
 `train-arrivals/led-matrix.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
 reach the bundle.
+
+The Worker has its own suite: `cd workers/alerts-proxy && npm test`. Its handler takes the upstream
+`fetch` as a parameter, so the tests run on plain Node with no Workers runtime.
 
 There are no component or integration tests. Anything involving the router, IndexedDB or
 geolocation is verified by driving a real browser instead.
@@ -274,6 +314,11 @@ geolocation is verified by driving a real browser instead.
 ### Train
 - `GET /trainstoparrivals?stopId={id}` — Real-time train arrivals
 - `GET /trainfollow?vehicleId={id}` — Track a specific train
+
+### Alerts (Cloudflare Worker, `environment.alertsBaseURL`)
+- `GET /alerts?routeid={ids}` — Active alerts for train lines / bus routes (comma list)
+- `GET /alerts?stationid={mapid}` — Active alerts for a train station
+- `GET /alerts` — Every active alert
 
 ### Favorites
 - `POST /savefavorites` — Save favorites (body: `{ id: phone, favorites: [...] }`)

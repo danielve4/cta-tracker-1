@@ -13,6 +13,9 @@ import { formatDistance } from '../services/distance';
 import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
+import { AlertsService } from '../services/alerts.service';
+import { CtaAlertsResponse, ServiceAlert, normalizeAlerts, sortBySeverity } from '../services/alerts/alert-model';
+import { AlertsBannerComponent } from '../alerts-banner/alerts-banner.component';
 
 interface BusArrivalDisplay extends Prd {
   apiArrivalTime: string;
@@ -24,7 +27,7 @@ interface BusArrivalDisplay extends Prd {
   templateUrl: './arrivals.component.html',
   styleUrls: ['./arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, AlertsBannerComponent]
 })
 export class ArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -34,6 +37,7 @@ export class ArrivalsComponent {
   protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly tracker = inject(StopViewTrackerService);
+  private readonly alertsService = inject(AlertsService);
 
   readonly skeletonCards = [0, 1, 2];
   private readonly refreshInterval = 30 * 1000;
@@ -48,6 +52,23 @@ export class ArrivalsComponent {
   private readonly arrivalsResource = httpResource<BustimeResponse>(() => {
     const stopId = this.forStopId();
     return stopId ? this.busService.arrivalsUrl(stopId) : undefined;
+  });
+
+  private readonly alertsResource = httpResource<CtaAlertsResponse>(() => {
+    const route = this.forRoute();
+    return route ? this.alertsService.routeAlertsUrl(route) : undefined;
+  });
+
+  // Alerts are a side channel: a failed or malformed fetch shows no banner and never touches arrivals.
+  alerts = computed<ServiceAlert[]>(() => {
+    if (!this.alertsResource.hasValue()) {
+      return [];
+    }
+    try {
+      return sortBySeverity(normalizeAlerts(this.alertsResource.value()));
+    } catch {
+      return [];
+    }
   });
 
   vehicles = computed<BusArrivalDisplay[] | null>(() => {
@@ -108,7 +129,7 @@ export class ArrivalsComponent {
         .subscribe((index: number) => this.isFavorite.set(index >= 0));
     });
 
-    const intervalId = setInterval(() => this.arrivalsResource.reload(), this.refreshInterval);
+    const intervalId = setInterval(() => this.reload(), this.refreshInterval);
     this.destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
@@ -116,7 +137,12 @@ export class ArrivalsComponent {
     // A manual refresh says the rider is actually waiting at this stop, which dwell time alone
     // doesn't distinguish from a screen left open in a pocket.
     this.tracker.noteRefresh();
+    this.reload();
+  }
+
+  private reload(): void {
     this.arrivalsResource.reload();
+    this.alertsResource.reload();
   }
 
   addToFavorite(): void {

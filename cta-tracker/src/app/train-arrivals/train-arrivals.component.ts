@@ -17,13 +17,18 @@ import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-a
 import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
 import { ApproachComponent } from './approach/approach.component';
 import { isSideBySide } from '../services/arrivals-layout';
+import { AlertsService } from '../services/alerts.service';
+import {
+  CtaAlertsResponse, ServiceAlert, alertsForTrainStation, normalizeAlerts, sortBySeverity
+} from '../services/alerts/alert-model';
+import { AlertsBannerComponent } from '../alerts-banner/alerts-banner.component';
 
 @Component({
   selector: 'app-train-arrivals',
   templateUrl: './train-arrivals.component.html',
   styleUrls: ['./train-arrivals.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent, ApproachComponent]
+  imports: [DatePipe, TimeuntilPipe, RouterLink, TrainArrivalColumnsComponent, ApproachComponent, AlertsBannerComponent]
 })
 export class TrainArrivalsComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -33,6 +38,7 @@ export class TrainArrivalsComponent {
   protected readonly prefs = inject(DisplayPreferencesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly tracker = inject(StopViewTrackerService);
+  private readonly alertsService = inject(AlertsService);
 
   readonly skeletonCards = [0, 1, 2];
   private readonly refreshInterval = 30 * 1000;
@@ -46,6 +52,26 @@ export class TrainArrivalsComponent {
   private readonly arrivalsResource = httpResource<TrainApiResponse>(() => {
     const stationId = this.stationId();
     return stationId ? this.trainService.arrivalsUrl(stationId) : undefined;
+  });
+
+  // By line rather than station: CTA cannot filter on both, and a station query would miss
+  // line-wide alerts. alertsForTrainStation drops other stations' alerts on the line.
+  private readonly alertsResource = httpResource<CtaAlertsResponse>(() => {
+    const routeId = this.routeId();
+    return routeId ? this.alertsService.routeAlertsUrl(routeId) : undefined;
+  });
+
+  // Alerts are a side channel: a failed or malformed fetch shows no banner and never touches arrivals.
+  alerts = computed<ServiceAlert[]>(() => {
+    if (!this.alertsResource.hasValue()) {
+      return [];
+    }
+    try {
+      const alerts = normalizeAlerts(this.alertsResource.value());
+      return sortBySeverity(alertsForTrainStation(alerts, this.routeId(), this.stationId()));
+    } catch {
+      return [];
+    }
   });
 
   // The train API reports no distance, so it is computed against the station's coordinates.
@@ -143,7 +169,7 @@ export class TrainArrivalsComponent {
         .subscribe((index: number) => this.isFavorite.set(index >= 0));
     });
 
-    const intervalId = setInterval(() => this.arrivalsResource.reload(), this.refreshInterval);
+    const intervalId = setInterval(() => this.reload(), this.refreshInterval);
     this.destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
@@ -151,7 +177,12 @@ export class TrainArrivalsComponent {
     // A manual refresh says the rider is actually waiting at this stop, which dwell time alone
     // doesn't distinguish from a screen left open in a pocket.
     this.tracker.noteRefresh();
+    this.reload();
+  }
+
+  private reload(): void {
     this.arrivalsResource.reload();
+    this.alertsResource.reload();
   }
 
   swapColumns(): void {
