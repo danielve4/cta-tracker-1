@@ -1,0 +1,55 @@
+:host { display: block; }
+
+/*
+ * Each Settings chip carries a drawing of its style: four <i> marks placed per style on a 72×40 stage.
+ * Drawn in theme tokens plus one amber accent, so it reads in both themes. */
+.thumb {
+  --accent: rgb(255, 184, 76);
+  --ink: color-mix(in srgb, var(--text-primary) 72%, transparent);
+  --faint: color-mix(in srgb, var(--text-tertiary) 45%, transparent);
+  position: relative; display: block;
+  width: 72px; height: 40px; margin-bottom: 6px;
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+  overflow: hidden;
+}
+:host-context([data-theme="light"]) .thumb { --accent: rgb(232, 140, 0); }
+.thumb i { position: absolute; display: block; }
+
+/* Ticker: a strip with a dot, a headline and a pager. */
+.thumb[data-style="ticker"] i:nth-child(1) { left: 6px; right: 6px; top: 13px; height: 14px; border-radius: 5px; background: var(--surface-card); box-shadow: inset 0 0 0 1px var(--card-border); }
+.thumb[data-style="ticker"] i:nth-child(2) { left: 11px; top: 18px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--accent) 25%, transparent); }
+.thumb[data-style="ticker"] i:nth-child(3) { left: 19px; top: 19px; width: 30px; height: 2px; border-radius: 1px; background: var(--ink); }
+.thumb[data-style="ticker"] i:nth-child(4) { right: 11px; top: 19px; width: 6px; height: 2px; border-radius: 1px; background: var(--faint); }
+
+/* Card: two rows, each with a rail. */
+.thumb[data-style="card"] i:nth-child(1) { left: 6px; right: 6px; top: 6px; bottom: 6px; border-radius: 6px; background: var(--surface-card); box-shadow: inset 0 0 0 1px var(--card-border); }
+.thumb[data-style="card"] i:nth-child(2) { left: 10px; top: 10px; width: 2px; height: 8px; border-radius: 1px; background: var(--accent); box-shadow: 0 13px 0 var(--faint); }
+.thumb[data-style="card"] i:nth-child(3) { left: 16px; top: 12px; width: 32px; height: 2px; border-radius: 1px; background: var(--ink); box-shadow: 0 13px 0 var(--faint); }
+.thumb[data-style="card"] i:nth-child(4) { left: 6px; right: 6px; top: 20px; height: 1px; background: var(--card-border); }
+
+/* Capsule: a black pill, centred. */
+.thumb[data-style="capsule"] i:nth-child(1) { left: 16px; right: 16px; top: 14px; height: 12px; border-radius: 6px; background: #050506; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.18); }
+.thumb[data-style="capsule"] i:nth-child(2) { left: 18px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 30%, #050506); }
+.thumb[data-style="capsule"] i:nth-child(3) { left: 29px; top: 19px; width: 17px; height: 2px; border-radius: 1px; background: rgba(245,245,247,0.85); }
+.thumb[data-style="capsule"] i:nth-child(4) { right: 19px; top: 18px; width: 5px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.22); }
+
+/* Margin note: a rule, a kicker, a serif headline. */
+.thumb[data-style="margin-note"] i:nth-child(1) { left: 10px; top: 8px; width: 1.5px; height: 24px; border-radius: 1px; background: var(--accent); }
+.thumb[data-style="margin-note"] i:nth-child(2) { left: 16px; top: 10px; width: 16px; height: 2px; border-radius: 1px; background: var(--accent); opacity: 0.85; }
+.thumb[data-style="margin-note"] i:nth-child(3) { left: 16px; top: 16px; width: 42px; height: 4px; border-radius: 1px; background: var(--ink); }
+.thumb[data-style="margin-note"] i:nth-child(4) { left: 16px; top: 25px; width: 34px; height: 2px; border-radius: 1px; background: var(--faint); box-shadow: 0 4px 0 var(--faint); }
+
+/* Counter: the station name, and a count by it. */
+.thumb[data-style="counter"] i:nth-child(1) { left: 8px; top: 10px; width: 30px; height: 5px; border-radius: 2px; background: var(--ink); }
+.thumb[data-style="counter"] i:nth-child(2) { left: 8px; top: 19px; width: 20px; height: 2px; border-radius: 1px; background: var(--faint); box-shadow: 0 5px 0 var(--faint); }
+.thumb[data-style="counter"] i:nth-child(3) { right: 7px; top: 8px; width: 20px; height: 9px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 20%, transparent); }
+.thumb[data-style="counter"] i:nth-child(4) { right: 20px; top: 9.5px; width: 6px; height: 6px; border-radius: 2px; background: var(--accent); }
+
+/* Toast: a frosted notification over the page. */
+.thumb[data-style="toast"] i:nth-child(1) { left: 8px; top: 22px; width: 28px; height: 4px; border-radius: 2px; background: var(--faint); box-shadow: 0 7px 0 var(--faint); }
+.thumb[data-style="toast"] i:nth-child(2) { left: 5px; right: 5px; top: 4px; height: 14px; border-radius: 6px; background: var(--glass-btn-bg); box-shadow: inset 0 0 0 1px var(--glass-btn-border), 0 3px 6px rgba(0,0,0,0.18); }
+.thumb[data-style="toast"] i:nth-child(3) { left: 8px; top: 7px; width: 8px; height: 8px; border-radius: 2.5px; background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.thumb[data-style="toast"] i:nth-child(4) { left: 19px; top: 10px; width: 30px; height: 2px; border-radius: 1px; background: var(--ink); }
+

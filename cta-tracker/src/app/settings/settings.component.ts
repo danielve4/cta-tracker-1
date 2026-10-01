@@ -2,7 +2,9 @@ import { Component, inject, injectAsync, onIdle, afterNextRender, ChangeDetectio
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { ToggleSwitchComponent } from '../toggle-switch/toggle-switch.component';
 import { ThemeService } from '../services/theme.service';
-import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY } from '../services/display-preferences.service';
+import { DisplayPreferencesService, SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY, ARRIVALS_ALERT_STYLE_KEY } from '../services/display-preferences.service';
+import { ALERT_STYLES } from '../services/alerts/alert-styles';
+import { AlertStyleThumbComponent } from '../alerts-banner/styles/alert-style-thumb.component';
 import { ARRIVALS_LAYOUTS, COLUMN_STYLES } from '../services/arrivals-layout';
 import {
   COLLECT_STOP_HISTORY_KEY, DID_YOU_MEAN_KEY, PredictionPreferencesService, SUGGESTION_MODE_KEY, USE_LOCATION_KEY
@@ -47,7 +49,7 @@ function suppressionText(reason: SuppressionReason, mode: SuggestionMode): strin
 /** Keys that survive "Clear Cache" — user preferences and data, not cached API payloads. */
 const PRESERVED_KEYS = [
   'favorites', 'theme-preference', SHOW_API_TIMESTAMP_KEY, SHOW_DISTANCE_KEY,
-  TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY, COLLECT_STOP_HISTORY_KEY,
+  TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY, ARRIVALS_ALERT_STYLE_KEY, COLLECT_STOP_HISTORY_KEY,
   USE_LOCATION_KEY, SUGGESTION_MODE_KEY, DID_YOU_MEAN_KEY, DID_YOU_MEAN_SESSION_KEY, LAST_ACTIVITY_KEY, SESSION_KEY
 ];
 
@@ -56,7 +58,7 @@ const PRESERVED_KEYS = [
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ThemeToggleComponent, ToggleSwitchComponent]
+  imports: [ThemeToggleComponent, ToggleSwitchComponent, AlertStyleThumbComponent]
 })
 export class SettingsComponent {
   protected readonly theme = inject(ThemeService);
@@ -83,6 +85,7 @@ export class SettingsComponent {
   readonly appVersion = '1.0.0';
   readonly arrivalsLayouts = ARRIVALS_LAYOUTS;
   readonly columnStyles = COLUMN_STYLES;
+  readonly alertStyles = ALERT_STYLES;
   readonly suggestionModes = SUGGESTION_MODES;
 
   constructor() {

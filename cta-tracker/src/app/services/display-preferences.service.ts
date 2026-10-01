@@ -5,11 +5,12 @@ import {
   TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY,
   parseArrivalsLayout, parseColumnStyle, parseSwappedLines
 } from './arrivals-layout';
+import { ARRIVALS_ALERT_STYLE_KEY, AlertStyle, DEFAULT_ALERT_STYLE, parseAlertStyle } from './alerts/alert-styles';
 
 export const SHOW_API_TIMESTAMP_KEY = 'show-api-timestamp';
 export const SHOW_DISTANCE_KEY = 'show-distance';
-export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY };
-export type { ArrivalsLayout, ColumnStyle };
+export { TRAIN_ARRIVALS_LAYOUT_KEY, TRAIN_ARRIVALS_COLUMN_STYLE_KEY, TRAIN_ARRIVALS_SWAPPED_LINES_KEY, ARRIVALS_ALERT_STYLE_KEY };
+export type { ArrivalsLayout, ColumnStyle, AlertStyle };
 
 @Injectable({ providedIn: 'root' })
 export class DisplayPreferencesService {
@@ -22,6 +23,8 @@ export class DisplayPreferencesService {
   readonly columnStyle = signal<ColumnStyle>(this.loadColumnStyle());
   /** Route ids whose columns show trDr '5' on the left instead of '1'. */
   readonly swappedLines = signal<ReadonlySet<string>>(this.loadSwappedLines());
+  /** How both arrivals screens draw service alerts. */
+  readonly alertStyle = signal<AlertStyle>(this.loadAlertStyle());
 
   setShowApiTimestamp(show: boolean): void {
     this.showApiTimestamp.set(show);
@@ -49,6 +52,11 @@ export class DisplayPreferencesService {
   setColumnStyle(style: ColumnStyle): void {
     this.columnStyle.set(style);
     this.storeString(TRAIN_ARRIVALS_COLUMN_STYLE_KEY, style);
+  }
+
+  setAlertStyle(style: AlertStyle): void {
+    this.alertStyle.set(style);
+    this.storeString(ARRIVALS_ALERT_STYLE_KEY, style);
   }
 
   isLineSwapped(route: string): boolean {
@@ -98,6 +106,13 @@ export class DisplayPreferencesService {
       return DEFAULT_COLUMN_STYLE;
     }
     return parseColumnStyle(localStorage.getItem(TRAIN_ARRIVALS_COLUMN_STYLE_KEY));
+  }
+
+  private loadAlertStyle(): AlertStyle {
+    if (!this.isBrowser) {
+      return DEFAULT_ALERT_STYLE;
+    }
+    return parseAlertStyle(localStorage.getItem(ARRIVALS_ALERT_STYLE_KEY));
   }
 
   private loadSwappedLines(): ReadonlySet<string> {

@@ -1,0 +1,78 @@
+@if (summary(); as s) {
+  <section class="ticker" [class.open]="expanded()" aria-label="Service alerts">
+    <button type="button" class="strip" [attr.data-tone]="toneOf(s.ordered[shown()])"
+            [attr.aria-expanded]="expanded()" [attr.aria-controls]="uid"
+            (click)="toggle()"
+            (mouseenter)="hold(true)" (mouseleave)="hold(false)"
+            (focus)="hold(true)" (blur)="hold(false)">
+      <span class="dot" [class.pulse]="s.tone === 'major'" aria-hidden="true"></span>
+      <span class="copy">
+      @if (expanded() && s.count > 1) {
+        <span class="line count-line" aria-hidden="true">{{ countLabel(s.count) }}</span>
+      } @else {
+      <span class="window" aria-hidden="true">
+        <span class="track" [class.still]="!animate()"
+              [style.transform]="'translateY(' + (-index() * 100) + '%)'"
+              (transitionend)="onSlid()">
+          @for (alert of s.ordered; track alert.id) {
+            <span class="line">{{ alert.headline }}</span>
+          }
+          @if (s.count > 1) {
+            <span class="line">{{ s.ordered[0].headline }}</span>
+          }
+        </span>
+      </span>
+      }
+      <span class="sr-only">
+        {{ countLabel(s.count) }}:
+        @for (alert of s.ordered; track alert.id) {
+          {{ alert.headline }}{{ $last ? '.' : ';' }}
+        }
+      </span>
+      @if (s.count > 1 && !expanded()) {
+        <span class="pager" aria-hidden="true">{{ shown() + 1 }}<span class="pager-of">/{{ s.count }}</span></span>
+      }
+      </span>
+      <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+      </svg>
+    </button>
+
+    <div class="reveal" [class.open]="expanded()" [id]="uid">
+      <div>
+        @if (s.count === 1) {
+          <div class="solo">
+            <p class="item-kicker">{{ kickerOf(s.lead) }}</p>
+            <app-alert-detail [alert]="s.lead" />
+          </div>
+        } @else {
+        <ul class="list">
+          @for (alert of s.ordered; track alert.id) {
+            <li class="item" [attr.data-tone]="toneOf(alert)">
+              <button type="button" class="item-head" [attr.aria-expanded]="openAlertId() === alert.id"
+                      (click)="toggleAlert(alert.id)">
+                <app-alert-glyph class="item-glyph" [tone]="toneOf(alert)" />
+                <span class="item-text">
+                  <span class="item-headline">{{ alert.headline }}</span>
+                  <span class="item-kicker">{{ kickerOf(alert) }}</span>
+                </span>
+                <svg class="chevron" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3.5 5.25 7 8.75l3.5-3.5"/>
+                </svg>
+              </button>
+              <div class="reveal" [class.open]="openAlertId() === alert.id">
+                <div><app-alert-detail class="item-detail" [alert]="alert" /></div>
+              </div>
+            </li>
+          }
+        </ul>
+        }
+        <div class="foot">
+          <a class="all-alerts" routerLink="/alerts">All alerts
+            <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 1.75 6.75 5 3.5 8.25"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+}

@@ -1,0 +1,100 @@
+:host { display: contents; }
+
+.anchor {
+  position: absolute; top: -1px; right: 0;
+  z-index: 6;
+}
+
+.counter {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 32px; padding: 0 11px 0 4px; border-radius: 11px;
+  background: color-mix(in srgb, var(--tone) 15%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 22%, transparent);
+  color: var(--tone-ink);
+  transition: transform 160ms var(--glide), background-color 200ms var(--glide);
+}
+.counter:active { transform: scale(0.95); }
+.counter[aria-expanded="true"] { background: color-mix(in srgb, var(--tone) 24%, transparent); }
+
+.count {
+  min-width: 24px; height: 24px; padding: 0 6px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-family: var(--numeral-font);
+  font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+  background: var(--tone);
+  color: #fff;
+}
+/* Amber needs dark digits to stay readable. */
+[data-tone="service"] .count { color: rgb(46, 26, 0); }
+.label { font-size: 12.5px; font-weight: 700; letter-spacing: 0.01em; }
+
+.card {
+  position: absolute; top: calc(100% + 11px); right: 0;
+  width: min(352px, calc(100vw - 32px));
+  max-height: min(62vh, 520px);
+  display: flex; flex-direction: column;
+  border-radius: 18px;
+  background: var(--surface-card);
+  box-shadow:
+    inset 0 0 0 1px var(--card-border),
+    0 24px 48px -16px rgba(0, 0, 0, 0.6),
+    0 4px 12px rgba(0, 0, 0, 0.18);
+  transform-origin: calc(100% - var(--caret-right)) -10px;
+  animation: pop 260ms var(--spring) both;
+}
+:host-context([data-theme="light"]) .card {
+  box-shadow:
+    inset 0 0 0 1px var(--card-border),
+    0 24px 48px -16px rgba(20, 20, 40, 0.28),
+    0 4px 12px rgba(20, 20, 40, 0.08);
+}
+@keyframes pop { from { opacity: 0; transform: scale(0.92) translateY(-6px); } }
+
+/* The caret: a rotated square sharing the card's fill and its hairline on the two visible sides. */
+.card::before {
+  content: '';
+  position: absolute; top: -6px; right: calc(var(--caret-right) - 6px);
+  width: 12px; height: 12px;
+  background: var(--surface-card);
+  border-top-left-radius: 3px;
+  transform: rotate(45deg);
+  box-shadow: inset 1px 1px 0 0 var(--card-border);
+}
+
+.card-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 14px 16px 10px;
+}
+.card-title { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--text-secondary); }
+
+/* Scrolls inside the card; the last few pixels fade out so a clipped row reads as "more below". */
+.list {
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 0 6px 18px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+}
+/* Inset hairline, starting where the text does, as in an iOS grouped list. */
+.item + .item::before {
+  content: ''; display: block; height: 1px;
+  margin-left: 49px; margin-right: 10px;
+  background: var(--card-border);
+}
+.item-head {
+  display: flex; align-items: flex-start; gap: 11px;
+  width: 100%; padding: 12px 10px; border-radius: 12px;
+}
+.item-head:hover { background: color-mix(in srgb, var(--text-tertiary) 8%, transparent); }
+.item-head:focus-visible { outline-offset: -2px; }
+.item-glyph {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: grid; place-items: center;
+  font-size: 15px; color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  --glyph-ink: var(--surface-card);
+}
+.item-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-top: 1px; }
+.item-headline { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--text-primary); text-wrap: pretty; }
+.item-kicker { font-size: 12px; color: var(--text-tertiary); }
+.item-head > .chevron { color: var(--text-tertiary); margin-top: 7px; }
+.item-detail { padding: 0 10px 14px 49px; }
