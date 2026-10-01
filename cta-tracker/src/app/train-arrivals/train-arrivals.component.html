@@ -18,6 +18,7 @@
     }
   </div>
 </div>
+<app-alerts-banner class="cols-4" [alerts]="alerts()" />
 @defer (on idle) {
   @if (isInitialLoading()) {
     @if (prefs.arrivalsLayout() === 'columns') {

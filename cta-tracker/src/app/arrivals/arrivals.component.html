@@ -5,6 +5,7 @@
     <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
   }
 </div>
+<app-alerts-banner class="cols-4" [alerts]="alerts()" />
 <ul class="cols-4 arrivals-list">
   @defer (on idle) {
     @if (isInitialLoading()) {

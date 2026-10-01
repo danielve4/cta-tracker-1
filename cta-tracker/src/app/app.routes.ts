@@ -38,6 +38,10 @@ export const routes: Routes = [
     loadComponent: () => import('./train-follow/train-follow.component').then(m => m.TrainFollowComponent)
   },
   {
+    path: 'alerts',
+    loadComponent: () => import('./alerts/alerts.component').then(m => m.AlertsComponent)
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./settings/settings.component').then(m => m.SettingsComponent)
   },
