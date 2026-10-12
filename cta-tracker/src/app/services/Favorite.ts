@@ -3,5 +3,7 @@ export interface Favorite {
   stopId: number,
   stopName: string,
   direction: string,
-  type?: 'bus' | 'train'
+  type?: 'bus' | 'train',
+  /** Train only: the mapid of the station picked for the destination ETA. */
+  destStationId?: string
 }

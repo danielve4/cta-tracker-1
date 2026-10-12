@@ -146,6 +146,19 @@ cta-tracker-1/
     casing, lane assignment) are in `train-arrivals/arrival-visuals.ts`. The layouts order the same groups
     differently (A-Z for the list, CTA's `trDr` for the side-by-side layouts, so a direction keeps
     the same side at every station on a line).
+- **Destination ETA**: a "Destination" chip in the stop header picks a station on the same line.
+  `/trainstoparrivals?stopId=origin,dest` passes the comma list straight to CTA's `mapid` (it takes
+  up to four), so one request covers both and the node proxy needs nothing. Things to know:
+  - The response then mixes both stations: `processed` filters the listed trains to
+    `staId === stationId` or the destination's predictions show up as arrivals.
+  - A train's destination time is the same `rn` + `rt` at the destination with the earliest `arrT`
+    **after** the origin's (`matchDestinationArrival` in `train-arrivals/destination-eta.ts`). A
+    Loop run appears at a Brown/Purple/Orange/Pink station twice, once on the trip it is finishing.
+    Trains that never get there stay listed without an ETA line.
+  - The pick is saved as `destStationId` on the favorite only, restored whenever that stop opens,
+    and lives in memory for any other stop. It rides the `'favorites'` key, so it survives Clear
+    Cache and server sync with no extra key.
+  - Shown in the list, Approach's list and Headway; the other column styles do not show it yet.
 
 ### Service Alerts
 
@@ -308,7 +321,8 @@ Things to know before changing any of it:
 
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
 dependency-free logic — `services/prediction/`, `services/alerts/`, `services/arrivals-layout.ts`,
-`train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts` and
+`train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts`,
+`train-arrivals/destination-eta.ts` and
 `train-arrivals/led-matrix.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never

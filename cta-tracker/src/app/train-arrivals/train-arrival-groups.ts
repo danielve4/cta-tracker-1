@@ -1,4 +1,5 @@
 import { TrainEta, TRAIN_DIRECTION_MAP } from '../trainResponse';
+import { DestinationEta } from './destination-eta';
 
 /** A CTA arrival prediction with the presentation values the arrivals screens derive from it. */
 export interface TrainArrivalDisplay extends TrainEta {
@@ -12,6 +13,8 @@ export interface TrainArrivalDisplay extends TrainEta {
   apiArrivalTime: string;
   distance: string;
   lineColor: string;
+  /** Set only when the rider picked a destination and this run is predicted to reach it. */
+  destination?: DestinationEta;
 }
 
 export interface ArrivalGroup {

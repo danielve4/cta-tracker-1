@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { Favorite } from './Favorite';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
@@ -83,6 +83,27 @@ export class FavoritesService {
         return -1;
       })
     );
+  }
+
+  /** The stored favorite matching `stop`, which carries fields `stop` itself may not (a destination). */
+  findFavorite(stop: Favorite): Observable<Favorite | undefined> {
+    return this.search(stop).pipe(
+      switchMap((index: number) => this.getFavorites().pipe(map(favorites => favorites[index])))
+    );
+  }
+
+  /** Saves or clears a train favorite's destination. A stop that is not a favorite is left alone. */
+  setDestination(stop: Favorite, destStationId: string | null): void {
+    this.search(stop).pipe(
+      switchMap((index: number) => this.getFavorites().pipe(map(favorites => ({ index, favorites }))))
+    ).subscribe(({ index, favorites }) => {
+      if (index < 0) {
+        return;
+      }
+      const { destStationId: _previous, ...rest } = favorites[index];
+      favorites[index] = destStationId ? { ...rest, destStationId } : rest;
+      this.storeFavorites(favorites);
+    });
   }
 
   reorderFavorites(favorites: Array<Favorite>): void {

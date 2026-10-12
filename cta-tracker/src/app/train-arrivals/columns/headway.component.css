@@ -34,6 +34,7 @@
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
+.hw-dest-eta { margin-top: 4px; color: var(--text-primary); font-weight: 700; }
 .hw-box {
   display: inline-block;
   margin-top: 8px;
@@ -135,6 +136,7 @@
   text-transform: uppercase;
   color: var(--text-secondary);
 }
+.hw-row-dest { color: var(--text-primary); font-weight: 700; }
 .hw-row[data-status="delayed"] .hw-row-eta { color: var(--pink); }
 .hw-row[data-status="scheduled"] .hw-row-eta { color: var(--status-scheduled); }
 

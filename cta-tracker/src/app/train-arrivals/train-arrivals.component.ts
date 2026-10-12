@@ -14,6 +14,7 @@ import { Favorite } from '../services/Favorite';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 import { StopViewTrackerService } from '../services/prediction/stop-view-tracker.service';
 import { ArrivalGroup, TrainArrivalDisplay, groupTrainArrivals } from './train-arrival-groups';
+import { destinationStations, destinationTimeLabel, matchDestinationArrival, shortStationName } from './destination-eta';
 import { TrainArrivalColumnsComponent } from './columns/train-arrival-columns.component';
 import { ApproachComponent } from './approach/approach.component';
 import { isSideBySide } from '../services/arrivals-layout';
@@ -49,9 +50,15 @@ export class TrainArrivalsComponent {
   stationId = computed(() => this.routeParams().get('stationId') ?? '');
   stationName = computed(() => this.routeParams().get('stationName') ?? '');
 
+  /**
+   * The rider's pick. Favorites restore and save it; any other stop keeps it only for the visit.
+   * Read through `destination`, which drops a stored id that is no longer on this line.
+   */
+  private readonly destinationId = signal<string | null>(null);
+
   private readonly arrivalsResource = httpResource<TrainApiResponse>(() => {
     const stationId = this.stationId();
-    return stationId ? this.trainService.arrivalsUrl(stationId) : undefined;
+    return stationId ? this.trainService.arrivalsUrl(stationId, this.destination()?.id) : undefined;
   });
 
   // By line rather than station: CTA cannot filter on both, and a station query would miss
@@ -82,6 +89,18 @@ export class TrainArrivalsComponent {
   private readonly station = computed(() =>
     this.comprehensiveData()?.stations?.[this.stationId()] ?? null);
 
+  destinationOptions = computed(() =>
+    destinationStations(this.comprehensiveData(), this.routeId(), this.stationId()));
+  destination = computed(() => {
+    const id = this.destinationId();
+    return id ? this.destinationOptions().find(option => option.id === id) ?? null : null;
+  });
+  readonly destinationTimeLabel = destinationTimeLabel;
+  destinationChipText = computed(() => {
+    const destination = this.destination();
+    return destination ? `To ${shortStationName(destination.name)}` : 'Destination';
+  });
+
   private readonly processed = computed<{ groups: ArrivalGroup[] | null; error: string | undefined }>(() => {
     const response = this.arrivalsResource.hasValue() ? this.arrivalsResource.value() : undefined;
     if (!response) {
@@ -91,7 +110,13 @@ export class TrainArrivalsComponent {
       return { groups: null, error: response.ctatt.errNm };
     }
     if (response.ctatt.eta && response.ctatt.eta.length > 0) {
-      const filtered = response.ctatt.eta.filter(eta => eta.rt === this.routeId());
+      // With a destination the response holds both stations; only this one's trains are listed.
+      const filtered = response.ctatt.eta.filter(eta =>
+        eta.rt === this.routeId() && eta.staId === this.stationId());
+      const destination = this.destination();
+      const destinationEtas = destination
+        ? response.ctatt.eta.filter(eta => eta.staId === destination.id)
+        : [];
       if (filtered.length === 0) {
         return { groups: null, error: 'No arrivals found' };
       }
@@ -109,13 +134,22 @@ export class TrainArrivalsComponent {
         const arrivalEpochMs = receivedAt + (arrivalTime - apiNow);
         const countdown = eta.isApp === '1' ? 'DUE' : countdownLabel(arrivalEpochMs - now);
         const lineColor = this.lineColorFor(eta.rt) || this.lineColorFor(this.routeId());
+        const atDestination = destination && matchDestinationArrival(eta, destinationEtas);
+        const destinationTime = atDestination ? parseTrainTime(atDestination.arrT) : NaN;
         return {
           ...eta,
           countdown,
           arrivalEpochMs,
           apiArrivalTime: formatClockTime(arrivalTime),
           distance: trainDistanceLabel(station, eta.lat, eta.lon),
-          lineColor
+          lineColor,
+          ...(destination && !isNaN(destinationTime) && {
+            destination: {
+              name: shortStationName(destination.name),
+              epochMs: receivedAt + (destinationTime - apiNow),
+              rideMinutes: Math.round((destinationTime - arrivalTime) / 60_000)
+            }
+          })
         };
       });
 
@@ -162,11 +196,15 @@ export class TrainArrivalsComponent {
       }
     });
 
+    // Runs on every station change, so it also clears the last station's destination.
     effect(() => {
       const stop = this.favoriteStop();
-      this.favoritesService.search(stop)
+      this.favoritesService.findFavorite(stop)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe((index: number) => this.isFavorite.set(index >= 0));
+        .subscribe(favorite => {
+          this.isFavorite.set(!!favorite);
+          this.destinationId.set(favorite?.destStationId ?? null);
+        });
     });
 
     const intervalId = setInterval(() => this.reload(), this.refreshInterval);
@@ -189,13 +227,24 @@ export class TrainArrivalsComponent {
     this.prefs.toggleLineSwapped(this.routeId());
   }
 
+  setDestination(id: string): void {
+    const destinationId = id || null;
+    this.destinationId.set(destinationId);
+    if (this.isFavorite()) {
+      this.favoritesService.setDestination(this.favoriteStop(), destinationId);
+    }
+  }
+
   private lineColorFor(rt: string): string {
     const cssVar = TRAIN_LINE_CSS_MAP[rt];
     return cssVar ? `var(${cssVar})` : '';
   }
 
   addToFavorite(): void {
-    this.favoritesService.addToFavorites(this.favoriteStop())
+    // A destination picked before favoriting is kept with the new favorite.
+    const destination = this.destination();
+    const stop = destination ? { ...this.favoriteStop(), destStationId: destination.id } : this.favoriteStop();
+    this.favoritesService.addToFavorites(stop)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((wasAdded: boolean) => {
         this.favorited.set(wasAdded);

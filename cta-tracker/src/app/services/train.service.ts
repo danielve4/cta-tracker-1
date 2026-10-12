@@ -26,8 +26,9 @@ export class TrainService {
       }));
   }
 
-  arrivalsUrl(mapId: string): string {
-    return `${this.arrivalsURL}?stopId=${mapId}`;
+  /** With a destination, one request covers both stations: CTA takes up to four comma-separated mapids. */
+  arrivalsUrl(mapId: string, destinationId?: string | null): string {
+    return `${this.arrivalsURL}?stopId=${destinationId ? `${mapId},${destinationId}` : mapId}`;
   }
 
   followUrl(runNumber: string): string {
