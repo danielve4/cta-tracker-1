@@ -8,6 +8,7 @@
 .stop-header > app-alerts-banner[data-active] { margin-top: 16px; }
 .stop-subheader {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -20,8 +21,10 @@
   font-weight: 500;
 }
 
-/* Swap Columns */
-.swap-columns {
+/* Header chips: Destination and Swap */
+.header-chips { display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 0; }
+.swap-columns,
+.header-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -43,8 +46,26 @@
   cursor: pointer;
   transition: transform var(--duration-short) var(--ease-standard);
 }
-.swap-columns:active { transform: scale(0.95); }
-.swap-icon { width: 14px; height: 14px; flex-shrink: 0; }
+.swap-columns:active,
+.header-chip:active { transform: scale(0.95); }
+.swap-icon,
+.chip-icon { width: 14px; height: 14px; flex-shrink: 0; }
+
+/* The select is invisible and covers the chip: the chip shows the pick, the native picker does the choosing. */
+.destination-chip { position: relative; flex-shrink: 1; min-width: 0; max-width: 200px; }
+.destination-chip.active { color: var(--text-primary); }
+.chip-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.destination-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  /* iOS zooms into a focused control under 16px. */
+  font-size: 16px;
+}
+.destination-chip:has(.destination-select:focus-visible) { outline: 2px solid var(--focus-color); outline-offset: 2px; }
 
 /* Direction Label */
 .direction-label {
@@ -122,6 +143,8 @@
 .arrival-details { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .arrival-destination { font-weight: 700; font-size: 15px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .arrival-time { color: var(--text-tertiary); font-size: 13px; font-weight: 500; }
+.arrival-dest-eta { color: var(--text-secondary); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.arrival-dest-eta .nowrap { white-space: nowrap; }
 .arrival-meta { display: flex; gap: 8px; color: var(--text-tertiary); font-size: 11px; font-weight: 500; opacity: 0.75; font-variant-numeric: tabular-nums; }
 .arrival-meta:empty { display: none; }
 .arrival-meta > span:not(:first-child)::before { content: '· '; }

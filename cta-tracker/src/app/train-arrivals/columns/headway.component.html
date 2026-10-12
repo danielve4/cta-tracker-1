@@ -34,6 +34,9 @@
                [queryParams]="{from: stationId(), rt: hero.rt}">
               <span class="hw-t">T–</span><span class="hw-big">{{ countdownDigits(hero) }}</span><span class="hw-unit">MIN</span>
               <span class="hw-dest">{{ hero.destNm }} · {{ clock24(hero.arrivalEpochMs) }}</span>
+              @if (hero.destination; as destination) {
+                <span class="hw-dest hw-dest-eta">→ {{ destination.name }} · {{ clock24(destination.epochMs) }} · {{ destination.rideMinutes }} min ride</span>
+              }
               <span class="hw-box">
                 @switch (statusOf(hero)) {
                   @case ('due') { [ ARRIVING ] }
@@ -78,6 +81,9 @@
                     <span class="hw-row-gap" [class.wide]="gap !== null && gap >= wideGapMin">{{ gap === null ? '' : '+' + gap }}</span>
                     @if (panel.mixed && arrival.destNm !== panel.hero?.destNm) {
                       <span class="hw-row-alt">To {{ arrival.destNm }}</span>
+                    }
+                    @if (arrival.destination; as destination) {
+                      <span class="hw-row-alt hw-row-dest">→ {{ destination.name }} {{ clock24(destination.epochMs) }}</span>
                     }
                   </a>
                 </li>

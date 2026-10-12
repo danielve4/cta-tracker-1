@@ -116,6 +116,8 @@
 .list-text { display: flex; flex-direction: column; min-width: 0; }
 .list-dest { font-size: 12.5px; line-height: 1.25; color: var(--text-secondary); overflow-wrap: break-word; }
 .list-dest b { margin-right: 4px; font-weight: 800; color: var(--text-primary); }
+.list-dest-eta { font-size: 12px; font-weight: 600; line-height: 1.25; color: var(--text-primary); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.list-dest-eta .nowrap { white-space: nowrap; }
 .list-row .meta { font-size: 11px; }
 .list-row[data-status="due"] .num { color: var(--bus-due); }
 .list-row[data-status="delayed"] .num { color: var(--pink); }

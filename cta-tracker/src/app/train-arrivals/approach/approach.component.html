@@ -62,6 +62,7 @@
             <li>
               <a class="arrival-link list-row"
                  [attr.data-status]="statusOf(arrival)"
+                 [attr.aria-label]="arrivalLabel(group, arrival)"
                  [routerLink]="['/train-follow', arrival.rn]"
                  [queryParams]="{from: stationId(), rt: arrival.rt}">
                 <span class="list-count">
@@ -73,6 +74,9 @@
                 </span>
                 <span class="list-text">
                   <span class="list-dest">@if (mixedByGroup().get(group.key)) {<b>{{ arrival.destNm.charAt(0) }}</b>}{{ arrival.destNm }}</span>
+                  @if (arrival.destination; as destination) {
+                    <span class="list-dest-eta">→ {{ destination.name }} <span class="nowrap">{{ destinationTimeLabel(destination) }}</span></span>
+                  }
                   <span class="meta">
                     {{ arrival.countdown | timeuntil:'time' }}
                     @if (arrival.isDly === '1') {

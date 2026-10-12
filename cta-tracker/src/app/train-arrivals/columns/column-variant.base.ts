@@ -2,6 +2,8 @@ import { Directive, inject, input } from '@angular/core';
 import { TRAIN_LINE_TEXT_COLOR_MAP } from '../../trainResponse';
 import { DisplayPreferencesService } from '../../services/display-preferences.service';
 import { ArrivalGroup, TrainArrivalDisplay } from '../train-arrival-groups';
+import { destinationTimeLabel } from '../destination-eta';
+import { formatClockTime } from '../../services/arrival-time';
 
 /** The one status a row shows. A due train is due whatever else the API says about it. */
 export type ArrivalStatus = 'due' | 'delayed' | 'scheduled' | '';
@@ -27,6 +29,7 @@ export abstract class ColumnVariantBase {
   protected readonly prefs = inject(DisplayPreferencesService);
 
   readonly skeletonColumns = [[0, 1, 2], [0, 1, 2]];
+  readonly destinationTimeLabel = destinationTimeLabel;
 
   /**
    * Every style marks the second direction differently from the first — a double rule, a hollow
@@ -68,6 +71,9 @@ export abstract class ColumnVariantBase {
   arrivalLabel(group: ArrivalGroup, arrival: TrainArrivalDisplay): string {
     const when = arrival.countdown === 'DUE' ? 'due now' : `${arrival.countdown} min`;
     const status = arrival.isDly === '1' ? ', delayed' : arrival.isSch === '1' ? ', scheduled' : '';
-    return `${group.directionLabel}: ${when} to ${arrival.destNm}${status}`;
+    const reaches = arrival.destination
+      ? `, reaches ${arrival.destination.name} at ${formatClockTime(arrival.destination.epochMs)}`
+      : '';
+    return `${group.directionLabel}: ${when} to ${arrival.destNm}${status}${reaches}`;
   }
 }

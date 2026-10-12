@@ -4,6 +4,23 @@
     @if (lastRefreshed(); as lastRefreshed) {
       <span class="last-refreshed">Last refreshed at {{ lastRefreshed | date:'h:mm:ss a' }}</span>
     }
+    <div class="header-chips">
+    @if (destinationOptions().length) {
+      <label class="header-chip destination-chip" [class.active]="!!destination()">
+        <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span class="chip-text">{{ destinationChipText() }}</span>
+        <select class="destination-select" aria-label="Destination station"
+                [value]="destination()?.id ?? ''" (change)="setDestination($any($event.target).value)">
+          <option value="" [selected]="!destination()">No destination</option>
+          @for (option of destinationOptions(); track option.id) {
+            <option [value]="option.id" [selected]="option.id === destination()?.id">{{ option.name }}</option>
+          }
+        </select>
+      </label>
+    }
     @if (canSwap()) {
       <button class="swap-columns" type="button" (click)="swapColumns()"
               [attr.aria-pressed]="isSwapped()" aria-label="Swap direction columns">
@@ -16,6 +33,7 @@
         Swap
       </button>
     }
+    </div>
   </div>
   <app-alerts-banner [alerts]="alerts()" />
 </div>
@@ -89,6 +107,9 @@
                     <div class="arrival-details">
                       <span class="arrival-destination">To {{ arrival.destNm }}</span>
                       <span class="arrival-time">{{ arrival.countdown | timeuntil:'time' }}</span>
+                      @if (arrival.destination; as destination) {
+                        <span class="arrival-dest-eta">→ {{ destination.name }} <span class="nowrap">{{ destinationTimeLabel(destination) }}</span></span>
+                      }
                       <span class="arrival-meta">
                         @if (prefs.showApiTimestamp()) {
                           <span>API {{ arrival.apiArrivalTime }}</span>
