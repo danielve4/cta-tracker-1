@@ -169,9 +169,9 @@ describe('GET /follow', () => {
       line: 'Blue',
       to: "O'Hare",
       stops: [
-        { name: 'Division', min: 0 },
-        { name: 'Grand', min: 4 },
-        { name: 'Damen', min: 8 }
+        { id: '40320', name: 'Division', min: 0 },
+        { id: '40490', name: 'Grand', min: 4 },
+        { id: '40590', name: 'Damen', min: 8 }
       ]
     });
   });

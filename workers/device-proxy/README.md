@@ -49,7 +49,7 @@ Runs on the Workers free plan (100k requests/day, no cold starts). Will be deplo
   "run": "141",
   "line": "Blue",
   "to": "O'Hare",
-  "stops": [{ "name": "Grand", "min": 2 }, { "name": "Clark/Lake", "min": 4 }]
+  "stops": [{ "id": "40490", "name": "Grand", "min": 2 }, { "id": "40380", "name": "Clark/Lake", "min": 4 }]
 }
 ```
 

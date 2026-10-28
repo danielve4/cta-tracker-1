@@ -77,6 +77,7 @@ export interface DeviceTrains {
 }
 
 export interface FollowStop {
+  id: string;
   name: string;
   min: number;
 }
@@ -217,7 +218,7 @@ export function compactFollow(run: string, tmst: string, eta: CtaEta | CtaEta[] 
     run,
     line: etas[0] ? lineName(etas[0].rt) : '',
     to: etas[0]?.destNm ?? '',
-    stops: etas.slice(0, FOLLOW_STOPS).map(e => ({ name: e.staNm, min: minutesUntil(e, now) }))
+    stops: etas.slice(0, FOLLOW_STOPS).map(e => ({ id: e.staId, name: e.staNm, min: minutesUntil(e, now) }))
   };
 }
 
