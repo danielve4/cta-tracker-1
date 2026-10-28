@@ -1,8 +1,9 @@
 # cta-device-proxy
 
-Cloudflare Worker that serves CTA train arrivals to **eLBus**, the ESP32-S3 e-ink keychain. It calls
-the [CTA Train Tracker API](https://www.transitchicago.com/developers/ttdocs/) with a key kept as a
-Worker secret, and answers with a payload small enough to parse comfortably on the device.
+Cloudflare Worker that serves CTA train and bus arrivals to **eLBus**, the ESP32-S3 e-ink keychain. It calls
+the [CTA Train Tracker API](https://www.transitchicago.com/developers/ttdocs/) and the
+[CTA Bus Tracker API](https://www.transitchicago.com/developers/bustracker/) with keys kept as
+Worker secrets, and answers with a payload small enough to parse comfortably on the device.
 
 Runs on the Workers free plan (100k requests/day, no cold starts). Will be deployed at
 `https://cta-device-proxy.danve4.workers.dev`.
@@ -57,14 +58,40 @@ Runs on the Workers free plan (100k requests/day, no cold starts). Will be deplo
 - Once CTA no longer tracks the run (it reached the end of the line), `200` with `"stops": []`.
 - `run` must be 1–4 digits, else `400 {"error":"Invalid run."}`. Other CTA errors → `502` as above.
 
+`GET /buses?stop=8388&rt=49`
+
+Same shape as `/trains`, so the keychain parses both with the same code. The stop is the one
+"station"; buses are grouped by route and destination.
+
+```json
+{
+  "updated": "02:09",
+  "stations": [
+    { "id": "8388", "name": "Western & Chicago",
+      "trains": [{ "line": "#49", "to": "Berwyn", "min": [6, 27], "runs": [8923, 8862] }] }
+  ]
+}
+```
+
+- `stop` is a Bus Tracker stop id (1–6 digits). `rt` is optional and limits it to one route.
+- `line` is the route with a `#`. `runs` are vehicle ids, for `/busfollow`. `DUE` is `0`.
+- No buses coming (Bus Tracker's "No arrival times") → `200` with an empty `trains` and
+  `"name": ""`, and `updated` from the Chicago clock.
+
+`GET /busfollow?vid=8923`
+
+Same shape as `/follow`: the bus's next stops on the trip it's on now, soonest first, at most 12.
+`run` is the vehicle id. Once Bus Tracker has nothing for the bus, `200` with `"stops": []`.
+
 ## Develop
 
 ```bash
 npm install
 npm test                            # vitest; the handler takes env and its upstream fetch as parameters
 npm run typecheck
-echo 'CTA_TRAIN_KEY=...' > .dev.vars # git-ignored, used by wrangler dev
+printf 'CTA_TRAIN_KEY=...\nCTA_BUS_KEY=...\n' > .dev.vars # git-ignored, used by wrangler dev
 npm run dev                         # wrangler dev on http://localhost:8787
 npx wrangler secret put CTA_TRAIN_KEY  # once, before the first deploy
+npx wrangler secret put CTA_BUS_KEY    # once, before the first deploy with buses
 npm run deploy                      # wrangler deploy (needs `npx wrangler login` first)
 ```
