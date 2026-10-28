@@ -1,10 +1,15 @@
-// Serves CTA train arrivals to the eLBus e-ink keychain (an ESP32-S3) in a payload small enough to
-// parse on the device. The CTA key stays here as a Worker secret, never on the device.
+// Serves CTA train and bus arrivals to the eLBus e-ink keychain (an ESP32-S3) in a payload small
+// enough to parse on the device. The CTA keys stay here as Worker secrets, never on the device.
+
+import {
+  BUS_ROUTE_PATTERN, BUS_STOP_PATTERN, VEHICLE_PATTERN, callBusTracker, compactBusFollow, compactBuses
+} from './bus';
 
 export type Upstream = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface Env {
   CTA_TRAIN_KEY: string;
+  CTA_BUS_KEY: string;
 }
 
 const CTA_ARRIVALS_URL = 'https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx';
@@ -97,11 +102,45 @@ export async function handleRequest(request: Request, env: Env, upstream: Upstre
   }
 
   const url = new URL(request.url);
-  if (url.pathname !== '/trains' && url.pathname !== '/follow') {
+  if (!['/trains', '/follow', '/buses', '/busfollow'].includes(url.pathname)) {
     return jsonError(404, 'Not found.');
   }
   if (request.method !== 'GET') {
     return jsonError(405, 'Method not allowed.', { Allow: ALLOWED_METHODS });
+  }
+
+  if (url.pathname === '/buses') {
+    const stop = url.searchParams.get('stop') ?? '';
+    const route = url.searchParams.get('rt') ?? '';
+    if (!BUS_STOP_PATTERN.test(stop)) {
+      return jsonError(400, 'Invalid stop.');
+    }
+    if (route && !BUS_ROUTE_PATTERN.test(route)) {
+      return jsonError(400, 'Invalid route.');
+    }
+    const answer = await callBusTracker(route ? { stpid: stop, rt: route } : { stpid: stop }, env, upstream);
+    if ('unreachable' in answer) {
+      return jsonError(502, 'Unable to reach CTA services.');
+    }
+    if ('failure' in answer) {
+      return jsonError(502, answer.failure);
+    }
+    return json(compactBuses(stop, answer.predictions));
+  }
+
+  if (url.pathname === '/busfollow') {
+    const vid = url.searchParams.get('vid') ?? '';
+    if (!VEHICLE_PATTERN.test(vid)) {
+      return jsonError(400, 'Invalid vehicle.');
+    }
+    const answer = await callBusTracker({ vid }, env, upstream);
+    if ('unreachable' in answer) {
+      return jsonError(502, 'Unable to reach CTA services.');
+    }
+    if ('failure' in answer) {
+      return jsonError(502, answer.failure);
+    }
+    return json(compactBusFollow(vid, answer.predictions));
   }
 
   if (url.pathname === '/follow') {

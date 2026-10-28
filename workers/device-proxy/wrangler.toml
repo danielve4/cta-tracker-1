@@ -2,5 +2,6 @@ name = "cta-device-proxy"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 
-# The CTA Train Tracker key is a secret, never committed:
+# The CTA Train and Bus Tracker keys are secrets, never committed:
 #   npx wrangler secret put CTA_TRAIN_KEY
+#   npx wrangler secret put CTA_BUS_KEY
