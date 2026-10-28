@@ -9,6 +9,7 @@ The project is split into two parts:
 - **Frontend** (`cta-tracker/`): An Angular single-page application
 - **Backend** (`node/`): A Node.js Express API server that proxies CTA public APIs and manages favorites persistence
 - **Alerts proxy** (`workers/alerts-proxy/`): A Cloudflare Worker in front of the CTA Customer Alerts API, which sends no CORS headers
+- **Device proxy** (`workers/device-proxy/`): A Cloudflare Worker that serves compact train arrivals to the eLBus e-ink keychain (firmware lives in its own repo)
 
 The frontend is built and its output is copied into the backend's `public/` directory for serving as static files in production.
 
@@ -37,6 +38,7 @@ The frontend is built and its output is copied into the backend's `public/` dire
 - Google Cloud App Engine (runtime: `nodejs22`)
 - Configuration in `node/app.yaml`
 - Alerts proxy: Cloudflare Workers (`cta-alerts-proxy.danve4.workers.dev`), configured in `workers/alerts-proxy/wrangler.toml`
+- Device proxy: Cloudflare Workers (`cta-device-proxy.danve4.workers.dev`), configured in `workers/device-proxy/wrangler.toml`; needs the `CTA_TRAIN_KEY` secret
 
 ## Project Structure
 
@@ -81,7 +83,8 @@ cta-tracker-1/
 │   ├── app.yaml                  # App Engine deployment config
 │   └── package.json              # Backend dependencies
 ├── workers/
-│   └── alerts-proxy/             # Cloudflare Worker: CORS + edge cache for CTA alerts (own package, tests)
+│   ├── alerts-proxy/             # Cloudflare Worker: CORS + edge cache for CTA alerts (own package, tests)
+│   └── device-proxy/             # Cloudflare Worker: compact train arrivals for the eLBus keychain (own package, tests)
 ├── build_and_move.sh             # Build script: compiles Angular, copies to node/public
 └── AGENTS.md                     # This file
 ```
