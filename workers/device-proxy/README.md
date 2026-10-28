@@ -19,8 +19,8 @@ Runs on the Workers free plan (100k requests/day, no cold starts). Will be deplo
       "id": "40570",
       "name": "California",
       "trains": [
-        { "line": "Blue", "to": "O'Hare", "min": [0, 11, 18] },
-        { "line": "Blue", "to": "Forest Park", "min": [3] }
+        { "line": "Blue", "to": "O'Hare", "min": [0, 11, 18], "runs": [141, 152, 160] },
+        { "line": "Blue", "to": "Forest Park", "min": [3], "runs": [228] }
       ]
     }
   ]
@@ -38,7 +38,24 @@ Runs on the Workers free plan (100k requests/day, no cold starts). Will be deplo
 - CTA's response is edge-cached for 20 s, and the answer carries `Cache-Control: public, max-age=20`.
 - CTA unreachable or non-2xx → `502 {"error":"Unable to reach CTA services."}`. A CTA error code
   (`errCd` other than `0`, e.g. a bad key) → `502` with CTA's `errNm` as the error.
+- `runs` is each train's CTA run number, in the same order as `min`, for `/follow`.
 - `OPTIONS` → 204. Other methods → 405. Other paths → 404.
+
+`GET /follow?run=141`
+
+```json
+{
+  "updated": "21:44",
+  "run": "141",
+  "line": "Blue",
+  "to": "O'Hare",
+  "stops": [{ "id": "40490", "name": "Grand", "min": 2 }, { "id": "40380", "name": "Clark/Lake", "min": 4 }]
+}
+```
+
+- The run's next stops from CTA's `ttfollow`, soonest first, at most 12.
+- Once CTA no longer tracks the run (it reached the end of the line), `200` with `"stops": []`.
+- `run` must be 1–4 digits, else `400 {"error":"Invalid run."}`. Other CTA errors → `502` as above.
 
 ## Develop
 

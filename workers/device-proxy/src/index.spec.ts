@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { compact, handleRequest, type Upstream } from './index';
+import { compact, compactFollow, handleRequest, type Upstream } from './index';
 
 const CTA_ARRIVALS = 'https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx';
+const CTA_FOLLOW = 'https://lapi.transitchicago.com/api/1.0/ttfollow.aspx';
 const BASE = 'https://cta-device-proxy.example.workers.dev';
 const ENV = { CTA_TRAIN_KEY: 'test-key' };
 const TMST = '2026-10-27T21:44:44';
 
-function eta(staId: string, staNm: string, rt: string, destNm: string, arrT: string, isApp = '0') {
-  return { staId, staNm, rt, destNm, arrT: `2026-10-27T${arrT}`, isApp };
+function eta(staId: string, staNm: string, rt: string, destNm: string, arrT: string, isApp = '0', rn = '100') {
+  return { staId, staNm, rn, rt, destNm, arrT: `2026-10-27T${arrT}`, isApp };
 }
 
 const CALIFORNIA_AND_MONROE = {
@@ -16,12 +17,12 @@ const CALIFORNIA_AND_MONROE = {
     errCd: '0',
     errNm: null,
     eta: [
-      eta('40570', 'California', 'Blue', "O'Hare", '21:56:10'),
-      eta('40570', 'California', 'Blue', 'Forest Park', '21:47:50'),
-      eta('40570', 'California', 'Blue', "O'Hare", '21:45:30', '1'),
-      eta('40570', 'California', 'Blue', "O'Hare", '22:03:00'),
-      eta('40570', 'California', 'Blue', "O'Hare", '22:15:00'),
-      eta('40790', 'Monroe', 'Blue', 'Forest Park', '21:51:00')
+      eta('40570', 'California', 'Blue', "O'Hare", '21:56:10', '0', '112'),
+      eta('40570', 'California', 'Blue', 'Forest Park', '21:47:50', '0', '201'),
+      eta('40570', 'California', 'Blue', "O'Hare", '21:45:30', '1', '111'),
+      eta('40570', 'California', 'Blue', "O'Hare", '22:03:00', '0', '113'),
+      eta('40570', 'California', 'Blue', "O'Hare", '22:15:00', '0', '114'),
+      eta('40790', 'Monroe', 'Blue', 'Forest Park', '21:51:00', '0', '202')
     ]
   }
 };
@@ -58,11 +59,11 @@ describe('GET /trains', () => {
           id: '40570',
           name: 'California',
           trains: [
-            { line: 'Blue', to: "O'Hare", min: [0, 11, 18] },
-            { line: 'Blue', to: 'Forest Park', min: [3] }
+            { line: 'Blue', to: "O'Hare", min: [0, 11, 18], runs: [111, 112, 113] },
+            { line: 'Blue', to: 'Forest Park', min: [3], runs: [201] }
           ]
         },
-        { id: '40790', name: 'Monroe', trains: [{ line: 'Blue', to: 'Forest Park', min: [6] }] }
+        { id: '40790', name: 'Monroe', trains: [{ line: 'Blue', to: 'Forest Park', min: [6], runs: [202] }] }
       ]
     });
   });
@@ -126,7 +127,7 @@ describe('GET /trains', () => {
 describe('compact', () => {
   it('accepts a single prediction as an object rather than an array', () => {
     const result = compact(['40790'], TMST, eta('40790', 'Monroe', 'Red', 'Howard', '21:50:00'));
-    expect(result.stations[0].trains).toEqual([{ line: 'Red', to: 'Howard', min: [5] }]);
+    expect(result.stations[0].trains).toEqual([{ line: 'Red', to: 'Howard', min: [5], runs: [100] }]);
   });
 
   it('lists a station with no predictions with an empty name and no trains', () => {
@@ -135,6 +136,78 @@ describe('compact', () => {
 
   it('spells out short line codes and never goes below zero minutes', () => {
     const result = compact(['41320'], TMST, eta('41320', 'Belmont', 'Brn', 'Loop', '21:40:00'));
-    expect(result.stations[0].trains).toEqual([{ line: 'Brown', to: 'Loop', min: [0] }]);
+    expect(result.stations[0].trains).toEqual([{ line: 'Brown', to: 'Loop', min: [0], runs: [100] }]);
+  });
+});
+
+const FOLLOW_142 = {
+  ctatt: {
+    tmst: TMST,
+    errCd: '0',
+    errNm: null,
+    eta: [
+      eta('40490', 'Grand', 'Blue Line', "O'Hare", '21:49:00', '0', '142'),
+      eta('40320', 'Division', 'Blue Line', "O'Hare", '21:45:10', '1', '142'),
+      eta('40590', 'Damen', 'Blue Line', "O'Hare", '21:52:50', '0', '142')
+    ]
+  }
+};
+
+describe('GET /follow', () => {
+  it('asks ttfollow for the run and lists its next stops, soonest first', async () => {
+    const upstream = okUpstream(FOLLOW_142);
+    const response = await handleRequest(get('/follow?run=142'), ENV, upstream);
+
+    const url = new URL(upstream.mock.calls[0][0]);
+    expect(url.origin + url.pathname).toBe(CTA_FOLLOW);
+    expect(url.searchParams.get('runnumber')).toBe('142');
+    expect(url.searchParams.get('key')).toBe('test-key');
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      updated: '21:44',
+      run: '142',
+      line: 'Blue',
+      to: "O'Hare",
+      stops: [
+        { id: '40320', name: 'Division', min: 0 },
+        { id: '40490', name: 'Grand', min: 4 },
+        { id: '40590', name: 'Damen', min: 8 }
+      ]
+    });
+  });
+
+  it('answers an empty stop list once CTA no longer tracks the run', async () => {
+    const upstream = okUpstream({
+      ctatt: { tmst: TMST, errCd: '501', errNm: 'No trains with runnumber 142 were found.' }
+    });
+    const response = await handleRequest(get('/follow?run=142'), ENV, upstream);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ updated: '21:44', run: '142', line: '', to: '', stops: [] });
+  });
+
+  it.each(['', 'abc', '12345', '1,2'])('rejects run=%j with a 400 and never calls CTA', async run => {
+    const upstream = okUpstream(FOLLOW_142);
+    const response = await handleRequest(get(`/follow?run=${run}`), ENV, upstream);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'Invalid run.' });
+    expect(upstream).not.toHaveBeenCalled();
+  });
+
+  it("passes CTA's other errors through as a 502", async () => {
+    const upstream = okUpstream({ ctatt: { tmst: TMST, errCd: '101', errNm: 'Invalid API key' } });
+    const response = await handleRequest(get('/follow?run=142'), ENV, upstream);
+
+    expect(response.status).toBe(502);
+    expect(await response.json()).toEqual({ error: 'Invalid API key' });
+  });
+});
+
+describe('compactFollow', () => {
+  it('keeps at most 12 stops', () => {
+    const many = Array.from({ length: 20 }, (_, i) =>
+      eta(`4${String(i).padStart(4, '0')}`, `Stop ${i}`, 'Red Line', 'Howard', `21:${String(45 + i).padStart(2, '0')}:00`));
+    expect(compactFollow('900', TMST, many).stops).toHaveLength(12);
   });
 });
