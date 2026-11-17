@@ -4,7 +4,7 @@ import { compact, compactFollow, handleRequest, type Upstream } from './index';
 const CTA_ARRIVALS = 'https://lapi.transitchicago.com/api/1.0/ttarrivals.aspx';
 const CTA_FOLLOW = 'https://lapi.transitchicago.com/api/1.0/ttfollow.aspx';
 const BASE = 'https://cta-device-proxy.example.workers.dev';
-const ENV = { CTA_TRAIN_KEY: 'test-key' };
+const ENV = { CTA_TRAIN_KEY: 'test-key', CTA_BUS_KEY: 'bus-key' };
 const TMST = '2026-10-27T21:44:44';
 
 function eta(staId: string, staNm: string, rt: string, destNm: string, arrT: string, isApp = '0', rn = '100') {
