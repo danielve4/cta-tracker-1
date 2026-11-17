@@ -12,7 +12,7 @@
 // between events, their order and their entry sources feed the features under test.
 
 import { describe, expect, it } from 'vitest';
-import { didYouMean, pickAutoOpen } from './auto-open';
+import { AUTO_OPEN_MARGIN, didYouMean, pickAutoOpen } from './auto-open';
 import { MIN_CONFIDENT_SCORE, MIN_EVENTS_FOR_SUGGESTION, ScoredCandidate, rankCandidates } from './baseline-scorer';
 import { buildCandidates, isUserDriven, mostRecentlyUsed } from './candidates';
 import { CandidateFeatures, PredictionContext, buildHistoryIndex, candidateFeatures, distanceRanks } from './features';
@@ -226,15 +226,27 @@ describe('auto-open and "did you mean" against the same log', () => {
   // These are the replay that AUTO_OPEN_MARGIN and the two affinity bars in auto-open.ts were set
   // from. A change to the weights or the features that moves any of them should show up here first.
 
-  it('auto-opens only where the ranking is decisive, and is right on most of them', () => {
+  it('auto-opens every launch in this log, and is right on most of them', () => {
     const opened = replayEligibleSessions()
       .map(replay => ({ ...replay, pick: pickAutoOpen(replay.ranked) }))
       .filter(replay => replay.pick !== null);
 
-    // s5 and s6 were near-ties (a lead of ~0.36) and fall back to the chip — one of them wrong.
-    expect(opened.map(replay => replay.sessionId)).toEqual(['s7', 's8', 's9']);
-    // s7 opened a stop the user had never viewed before, which no bar on the ranking could foresee.
-    expect(opened.filter(replay => replay.pick === replay.actual).map(r => r.sessionId)).toEqual(['s8', 's9']);
+    // s5 and s6 lead by only ~0.36. They stayed on the chip while the margin was 0.4 and open now
+    // that it is 0.2, which is the point of lowering it.
+    expect(opened.map(replay => replay.sessionId)).toEqual(['s5', 's6', 's7', 's8', 's9']);
+    // s6 is the near-tie that goes the other way, the price of the lower margin. s7 opened a stop
+    // the user had never viewed before, which no bar on the ranking could foresee.
+    expect(opened.filter(replay => replay.pick === replay.actual).map(r => r.sessionId)).toEqual(['s5', 's8', 's9']);
+  });
+
+  it('still leaves a true coin flip to the chip', () => {
+    // The smallest lead in the log is ~0.36, so nothing here exercises the fallback; this pins that
+    // the same rankings would not open if the runner-up were close enough to be a toss-up.
+    for (const replay of replayEligibleSessions()) {
+      const [top, ...rest] = replay.ranked;
+      const tied = [top, { ...rest[0], score: top.score - AUTO_OPEN_MARGIN / 2 }, ...rest.slice(1)];
+      expect(pickAutoOpen(tied)).toBeNull();
+    }
   });
 
   it('never asks "did you mean" in a log with no mistakes in it', () => {

@@ -44,6 +44,11 @@ describe('pickAutoOpen', () => {
     expect(pickAutoOpen(scored(['bus:1', 2.2], ['bus:2', 1.6]))).toBe('bus:1');
   });
 
+  it('opens on a modest lead, not only a runaway one', () => {
+    // The size of lead the real log's near-ties had (~0.36), which the old 0.4 margin kept on the chip.
+    expect(pickAutoOpen(scored(['bus:1', 2.16], ['bus:2', 1.8]))).toBe('bus:1');
+  });
+
   it('never auto-opens a near-tie, however high both score', () => {
     expect(pickAutoOpen(scored(['bus:1', 2.3], ['bus:2', 2.3 - AUTO_OPEN_MARGIN + 0.01]))).toBeNull();
   });

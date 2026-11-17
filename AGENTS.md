@@ -270,9 +270,11 @@ Things to know before changing any of it:
   there meant the feature could not fire at all, which is how it shipped and why nobody saw it.
 - **Settings → "When You're Back" picks the chip or auto-open** (`predict-suggestion-mode`). In
   auto mode a cold launch at `/` holds the `LS_SAVED_ROUTE` restore for up to 500 ms while the
-  ranking runs, and opens the top stop instead when `pickAutoOpen` agrees. That bar is deliberately
-  stricter than the chip's: a floor above `MIN_CONFIDENT_SCORE` and a **lead over the runner-up**,
-  because a near-tie is exactly where opening one stop is a coin flip and the chip can show both.
+  ranking runs, and opens the top stop instead when `pickAutoOpen` agrees. That bar is stricter
+  than the chip's: a floor above `MIN_CONFIDENT_SCORE` (`MIN_AUTO_OPEN_SCORE`, 1.2) and a **lead
+  over the runner-up** (`AUTO_OPEN_MARGIN`, 0.2), because a true coin flip is where the chip, which
+  can show both, does better. Both were lowered (from 1.5 and 0.4) to open more often, accepting
+  that a modest lead is sometimes wrong; `real-world-log.spec.ts` pins what that costs.
   When it declines, the chip is shown instead. `armAutoOpen` / `claimAutoOpen` / `disarmAutoOpen`
   agree on a single winner between the ranking and the timeout, so a slow ranking can never redirect
   a launch that has already restored, and the chip is held back while armed so it cannot flash up on
