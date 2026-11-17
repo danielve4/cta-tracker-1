@@ -1,12 +1,13 @@
 import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TrainService } from '../services/train.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
 import { parseTrainTime, formatClockTime, countdownLabel } from '../services/arrival-time';
 import { trainDistanceLabel } from '../services/distance';
+import { trainStationCommands } from '../services/follow-stop-link';
 import { TrainApiResponse, TrainEta, TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
@@ -21,7 +22,7 @@ interface TrainStopDisplay extends TrainEta {
   templateUrl: './train-follow.component.html',
   styleUrls: ['./train-follow.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TimeuntilPipe]
+  imports: [TimeuntilPipe, RouterLink]
 })
 export class TrainFollowComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -132,6 +133,11 @@ export class TrainFollowComponent {
 
     const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
     this.destroyRef.onDestroy(() => clearInterval(intervalId));
+  }
+
+  /** Where tapping a station row goes: that station's arrivals on this train's line. */
+  protected stopCommands(prediction: TrainEta): string[] | null {
+    return trainStationCommands(prediction, this.routeCode());
   }
 
   getFollowData(): void {

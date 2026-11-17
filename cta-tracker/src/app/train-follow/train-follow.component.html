@@ -11,7 +11,7 @@
     @if (predictions(); as predictions) {
       @for (prediction of predictions; track prediction.stpId) {
         <li class="a-prediction" [class.loading]="refreshing()" [class.from-stop]="prediction.staId === fromStationId()">
-          <div class="prediction-row">
+          <a class="prediction-row" [routerLink]="stopCommands(prediction)">
             <div class="prediction-left">
               <span class="stop-name">{{ prediction.staNm }}</span>
               <span class="stop-desc">
@@ -31,7 +31,7 @@
                 <span class="distance">{{ prediction.distance }}</span>
               }
             </div>
-          </div>
+          </a>
         </li>
       }
     }

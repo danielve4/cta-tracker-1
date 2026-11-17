@@ -1,12 +1,13 @@
 import { Component, ChangeDetectionStrategy, signal, computed, effect, inject, DestroyRef } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { httpResource } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BusService } from '../services/bus.service';
 import { ClockService } from '../services/clock.service';
 import { DisplayPreferencesService } from '../services/display-preferences.service';
 import { busArrivalTimes } from '../services/arrival-time';
 import { formatDistance } from '../services/distance';
+import { busStopCommands } from '../services/follow-stop-link';
 import { BustimeResponse, Prd, Error } from '../busResponse';
 import { TimeuntilPipe } from '../timeuntil.pipe';
 
@@ -20,7 +21,7 @@ interface BusPredictionDisplay extends Prd {
   templateUrl: './follow-vehicle.component.html',
   styleUrls: ['./follow-vehicle.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TimeuntilPipe]
+  imports: [TimeuntilPipe, RouterLink]
 })
 export class FollowVehicleComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -89,6 +90,11 @@ export class FollowVehicleComponent {
 
     const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
     this.destroyRef.onDestroy(() => clearInterval(intervalId));
+  }
+
+  /** Where tapping a stop row goes: that stop's arrivals, for the route and direction of this bus. */
+  protected stopCommands(prediction: Prd): string[] | null {
+    return busStopCommands(prediction);
   }
 
   getFollowData(): void {

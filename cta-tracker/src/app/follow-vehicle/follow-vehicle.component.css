@@ -63,6 +63,23 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
+  /* The row is a link to the stop's arrivals; it should read as a row, not as link text. */
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+a.prediction-row[href] {
+  cursor: pointer;
+}
+
+a.prediction-row[href]:active {
+  background-color: var(--surface-card-hover);
+}
+
+a.prediction-row:focus-visible {
+  outline: 2px solid var(--cta-blue);
+  outline-offset: -2px;
 }
 
 .prediction-left {
