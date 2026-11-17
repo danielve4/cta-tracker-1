@@ -2,7 +2,7 @@
 // whether the stop on screen looks like a mistake worth questioning.
 //
 // Both are plain functions over the scorer's output so they can be tested without Angular, and both
-// are deliberately stricter than the chip. A chip that is wrong costs a glance; opening the wrong
+// are stricter than the chip. A chip that is wrong costs a glance; opening the wrong
 // stop costs a back-tap and some trust, and a "did you mean" on a stop the user chose on purpose is
 // a nag. Each bar below was set by replaying `real-world-log.spec.ts`, and `auto-open.spec.ts` pins
 // what that replay showed.
@@ -31,16 +31,23 @@ export function parseSuggestionMode(raw: string | null): SuggestionMode {
  * Above the chip's floor, because being wrong here costs more than a glance. Real top scores sit
  * around 2.1-2.3 against the chip's 0.80, so the floor alone filters almost nothing; it is here to
  * keep a thin history (a handful of views, all weak) from ever auto-opening.
+ *
+ * Lowered from 1.5 together with the margin below, to open more often. It still sits well clear of
+ * the chip's floor, so a stop that only just earns a chip is offered rather than opened.
  */
-export const MIN_AUTO_OPEN_SCORE = 1.5;
+export const MIN_AUTO_OPEN_SCORE = 1.2;
 
 /**
- * The lead the top stop needs over the runner-up. This is the bar that does the work: in the
- * replayed log, the two launches the ranking got wrong because two stops were a near-tie led by
- * 0.36, and the ones it got right led by 0.50 and 0.67. A near-tie should fall back to the chip,
- * which can show both.
+ * The lead the top stop needs over the runner-up, and the bar that does the work.
+ *
+ * Lowered from 0.4, which was set to keep every near-tie on the chip: in the replayed log the two
+ * launches where two stops led by ~0.36 fell back to it, and only the leads of 0.50 and up opened.
+ * That turned out to be more cautious than the ranking deserves. At 0.2 those two launches open as
+ * well, one of them right and one wrong, which is the trade being made on purpose: a wrong open
+ * costs a back-tap, and the right ones save a tap on every launch. A genuine coin flip (a lead under
+ * 0.2) still falls back to the chip, which can show both.
  */
-export const AUTO_OPEN_MARGIN = 0.4;
+export const AUTO_OPEN_MARGIN = 0.2;
 
 /** The stop to open without asking, or null when the ranking is not decisive enough to. */
 export function pickAutoOpen(ranked: ScoredCandidate[]): StopKey | null {
