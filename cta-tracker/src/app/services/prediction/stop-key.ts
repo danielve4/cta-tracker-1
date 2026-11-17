@@ -23,7 +23,7 @@ export function parseStopKey(key: StopKey): { kind: StopKind; stopId: string } {
  *
  * This makes the name in the URL lossy, which is why nothing here ever keys on the name.
  */
-function urlSafeName(name: string): string {
+export function urlSafeName(name: string): string {
   return name.replace(/\//g, '-');
 }
 
