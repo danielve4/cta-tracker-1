@@ -1,0 +1,370 @@
+/* The dark hero card that the Holiday Train and the Holiday Bus share. It stays dark in both
+   themes, like a Live Activity on the lock screen: a lit sign, tinted through `--line` (the train's
+   line, or CTA red for the bus) and evergreen when nothing is out. Listed first in `styleUrls`. */
+
+:host {
+  --festive-red: #ff5a5f;
+  --festive-gold: #f5c86a;
+  --evergreen: #1f6f43;
+}
+
+:host-context([data-theme="light"]) {
+  --festive-red: var(--cta-red);
+  --festive-gold: #b07a12;
+}
+
+/* ── Hero ── */
+
+.hero {
+  --accent: var(--line, var(--evergreen));
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin: 16px 0 28px;
+  border-radius: 28px;
+  color: #fff;
+  background:
+    radial-gradient(120% 90% at 88% -10%, color-mix(in srgb, var(--accent) 65%, transparent), transparent 62%),
+    radial-gradient(90% 70% at 0% 110%, rgba(198, 12, 48, 0.28), transparent 60%),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 34%, #0b0d12) 0%, #06070a 100%);
+  box-shadow:
+    0 24px 48px -24px color-mix(in srgb, var(--accent) 70%, transparent),
+    0 0 0 0.5px rgba(255, 255, 255, 0.10) inset;
+  transition: box-shadow var(--duration-long) var(--ease-standard);
+}
+
+.hero-lights {
+  position: absolute;
+  inset: 0 14px auto;
+  z-index: 1;
+}
+
+/* Two drifting layers of snow at different sizes and speeds, faded out toward the bottom so they
+   never sit behind the countdown. */
+.snow,
+.snow::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.6px 1.6px at 18px 24px, rgba(255, 255, 255, 0.9) 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 74px 62px, rgba(255, 255, 255, 0.7) 50%, transparent 52%),
+    radial-gradient(2px 2px at 118px 18px, rgba(255, 255, 255, 0.8) 50%, transparent 52%),
+    radial-gradient(1.4px 1.4px at 52px 112px, rgba(255, 255, 255, 0.6) 50%, transparent 52%);
+  background-size: 140px 140px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 85%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 85%);
+  animation: snowfall 16s linear infinite;
+}
+
+.snow::after {
+  content: '';
+  background-size: 90px 90px;
+  opacity: 0.6;
+  animation-duration: 24s;
+}
+
+@keyframes snowfall {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 20px 140px, -10px 140px, 14px 140px, -6px 140px; }
+}
+
+.hero-body {
+  position: relative;
+  padding: 34px 20px 20px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px 5px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14) inset;
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .status-pill {
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+  }
+}
+
+.status-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.hero[data-state="running"] .status-dot {
+  background: #34c759;
+}
+
+.hero[data-state="running"] .status-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #34c759;
+  animation: pulse 2s var(--ease-decelerate) infinite;
+}
+
+.hero[data-state="resting"] .status-dot { background: var(--festive-gold); }
+.hero[data-state="unknown"] .status-dot { background: #ff9f0a; }
+
+@keyframes pulse {
+  from { transform: scale(1); opacity: 0.7; }
+  to { transform: scale(2.8); opacity: 0; }
+}
+
+/* A run number reads like the sign in a train's front window. */
+.run-tag {
+  font-family: var(--mono-font);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.24) inset;
+}
+
+.line-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* CTA's own rounded-rectangle line sign. */
+.line-pill {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--line-ink, #fff);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 6px 16px -6px var(--accent);
+}
+
+.toward {
+  font-size: 17px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.next-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.next-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kicker {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.next-name {
+  font-size: 28px;
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.next-clock {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.late {
+  color: #ffb340;
+  font-weight: 600;
+}
+
+.countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  flex-shrink: 0;
+  font-family: var(--numeral-font);
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown .num {
+  font-size: 60px;
+  line-height: 0.9;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.countdown .unit {
+  font-size: 17px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.countdown.due .num {
+  font-size: 44px;
+  color: #7dffa1;
+  text-shadow: 0 0 18px rgba(52, 199, 89, 0.55);
+}
+
+.hero-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.16) inset;
+  transition: background var(--duration-short) var(--ease-standard), transform 80ms ease;
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .hero-action {
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+}
+
+.hero-action:hover { background: rgba(255, 255, 255, 0.2); }
+.hero-action:active { transform: scale(0.98); }
+
+.chevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.7;
+}
+
+.hero-title {
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.hero-copy {
+  font-size: 15px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.78);
+  max-width: 36em;
+}
+
+.ornament {
+  width: 56px;
+  margin: -4px 0 14px;
+  transform-origin: 50% 0;
+  animation: sway 5s ease-in-out infinite;
+  filter: drop-shadow(0 8px 16px rgba(224, 40, 63, 0.45));
+}
+
+.ornament svg { display: block; width: 100%; }
+.ornament-cap { fill: var(--festive-gold); }
+.ornament-hook { fill: none; stroke: var(--festive-gold); stroke-width: 2; stroke-linecap: round; }
+.ornament-band { fill: none; stroke: #f5c86a; stroke-width: 2.4; opacity: 0.9; }
+.ornament-band.thin { stroke-width: 1.2; opacity: 0.6; }
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+
+.hero-skeleton {
+  display: grid;
+  gap: 10px;
+}
+
+.hero-skeleton span {
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.1);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+.hero-skeleton span:nth-child(1) { width: 40%; }
+.hero-skeleton span:nth-child(2) { width: 75%; height: 30px; }
+.hero-skeleton span:nth-child(3) { width: 55%; }
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* The vehicle's name, like an app name at the top of a Live Activity. */
+.hero-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 10px;
+}
+
+.hero[data-state="scheduled"] .status-dot { background: var(--festive-gold); }
+
+.plan { margin-bottom: 10px; }
+
+.hero-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.hero-actions .hero-action { margin-top: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .snow, .snow::after, .ornament, .status-dot::after, .hero-skeleton span {
+    animation: none !important;
+  }
+}
+
+@media (min-width: 720px) {
+  .hero-body { padding: 40px 32px 28px; }
+  .countdown .num { font-size: 72px; }
+  .next-name { font-size: 34px; }
+}

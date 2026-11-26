@@ -54,7 +54,7 @@ cta-tracker-1/
 │   │   │   ├── alerts-banner/    # Route alerts in the stop header, in one of six styles (styles/)
 │   │   │   ├── alert-item/       # One alert, expanding in place; shared by the two above
 │   │   │   ├── follow-vehicle/   # Individual vehicle tracking
-│   │   │   ├── holiday-train/    # Live CTA Holiday Train (run #1225) screen and seasonal card
+│   │   │   ├── holiday-train/    # Live CTA Holiday Train (run #1225) and Holiday Bus (#4374), seasonal card
 │   │   │   ├── routes/           # Route listing with search
 │   │   │   ├── stops/            # Stop listing for a route/direction
 │   │   │   ├── services/         # BusService, FavoritesService, AlertsService
@@ -164,15 +164,23 @@ cta-tracker-1/
     Cache and server sync with no extra key.
   - Shown in the list, Approach's list and Headway; the other column styles do not show it yet.
 
-### Holiday Train
+### Holiday Train & Bus
 
-`/holiday-train` follows the CTA Holiday Train live. CTA runs it as **run #1225** (for December 25)
+`/holiday-train` (the "Holiday Train & Bus" screen) follows the CTA Holiday Train and Holiday Bus live. CTA runs it as **run #1225** (for December 25)
 on whichever line it visits that day, so the screen polls the existing `/trainfollow?vehicleId=1225`
 every 30 s; the node proxy needs nothing new. A seasonal card (`holiday-train-card.component`) sits
-under the suggestion chip on Routes and Favorites from 15 November to 31 December and checks the
-same run once a minute.
+under the suggestion chip on Routes and Favorites and checks the same run once a minute.
 
 Things to know before changing any of it:
+
+- **Everything follows CTA's published schedule** (transitchicago.com/holidayfleet), copied into
+  `holiday-train/holiday-schedule.ts` (`HOLIDAY_TRAIN_SCHEDULE`, `HOLIDAY_BUS_SCHEDULE`, Chicago
+  wall-clock, unit-tested). The trackers are only asked inside a day's watch window (train: 30 min
+  before its first departure to 90 min after its last; bus: 30 min before to 45 min after CTA's
+  approximate times). Outside it each hero shows the next scheduled day instead, and the card only
+  shows on scheduled days until that day's run is over. **The tables are for one season
+  (`HOLIDAY_SCHEDULE_YEAR`) and need replacing each year**; after the last day nothing shows.
+  Times are converted with `chicagoEpoch`, so they are right wherever the device is.
 
 - **Reading the response is Angular-free and unit-tested** in `holiday-train/holiday-train.ts`.
   `errCd 501` (run not found) is "not running"; `502`/`503` or an empty `eta` is "resting" (in
@@ -183,13 +191,24 @@ Things to know before changing any of it:
   first two upcoming stops along `stopSequences`, trying every position because Loop lines list
   some stations twice. With one upcoming stop it shows nothing rather than guess.
 - **The card renders nothing until `afterNextRender`.** Routes and Favorites are prerendered, and
-  the season and the train depend on when the page is opened, not when it was built.
+  the schedule and the train depend on when the page is opened, not when it was built.
 - **The hero stays dark in both themes** (a lit sign, like a Live Activity), tinted with the line's
-  colour through `--line`, evergreen when the train is out of service. The journey strip in
-  `holiday-journey.component` follows the theme. Snow, the lights (`holiday-lights.component`, one
+  colour through `--line`, evergreen when the train is out of service. The train and the bus share
+  one hero stylesheet, `holiday-hero.css`, listed first in both components' `styleUrls`, and one
+  journey strip, `holiday-journey.component` (its `vehicle` input picks the glyph), so the two look
+  alike; the bus is tinted CTA red. The journey strip follows the theme. Snow, the lights (`holiday-lights.component`, one
   bulb per line colour), the pulse and the train's bob all stop under `prefers-reduced-motion`.
 - On the season's last day CTA splits the train into three two-car trains on the Yellow Line;
   their run numbers are not known, so they may not show up.
+- **The Holiday Bus is bus 4374**, followed on the same screen (`holiday-bus.component`) through the
+  existing `/busfollow?vehicleId=4374`, 30 s tick, with a button into the regular `/follow/4374`.
+  Wording that covers both says "Holiday Train & Bus"; each hero names its own vehicle.
+  `readHolidayBus` treats Bus Tracker's "No data found" / "No service scheduled" messages as not
+  running and any other error as unknown.
+- **The card badges a favorite stop** when either one is due there within `NEAR_STOP_MINUTES` (30):
+  `holidayHitsForFavorites` matches train favorites by station `mapid` (ttfollow `staId`) and bus
+  favorites by `stpid`. Favorites are read in `afterNextRender`; a bus hit links to `/follow/4374`,
+  everything else to `/holiday-train`.
 
 ### Service Alerts
 
@@ -355,7 +374,8 @@ Things to know before changing any of it:
 `npm test` runs Vitest (`vitest run`) over `src/app/**/*.spec.ts`. Scoped deliberately to the
 dependency-free logic — `services/prediction/`, `services/alerts/`, `services/arrivals-layout.ts`,
 `train-arrivals/train-arrival-groups.ts`, `train-arrivals/arrival-visuals.ts`,
-`train-arrivals/destination-eta.ts`, `holiday-train/holiday-train.ts` and
+`train-arrivals/destination-eta.ts`, `holiday-train/holiday-train.ts`,
+`holiday-train/holiday-schedule.ts` and
 `train-arrivals/led-matrix.ts`. Those modules import nothing from Angular, so the runner
 needs no TestBed, no jsdom and no Angular Vite plugin. Typecheck specs with
 `npx tsc -p tsconfig.spec.json --noEmit`; `tsconfig.app.json` does not include them, so they never
