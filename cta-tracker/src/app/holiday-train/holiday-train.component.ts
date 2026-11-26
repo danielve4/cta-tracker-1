@@ -17,6 +17,16 @@ import {
   holidayCountdown,
   readHolidayTrain
 } from './holiday-train';
+import {
+  HOLIDAY_SCHEDULE_YEAR,
+  HOLIDAY_TRAIN_SCHEDULE,
+  TRAIN_LINE_SHORT_NAMES,
+  TRAIN_WATCH_PADDING,
+  scheduleDayLabel,
+  scheduleView,
+  timeSpanLabel,
+  trainLinesLabel
+} from './holiday-schedule';
 
 /**
  * The Holiday Train & Bus screen. Follows the train, run #1225, through the existing
@@ -37,8 +47,38 @@ export class HolidayTrainComponent {
   private readonly refreshInterval = 30 * 1000;
   readonly run = HOLIDAY_TRAIN_RUN;
 
+  readonly scheduleYear = HOLIDAY_SCHEDULE_YEAR;
+
+  /** CTA's published schedule; Train Tracker is only asked inside today's window. */
+  readonly schedule = computed(() =>
+    scheduleView(HOLIDAY_TRAIN_SCHEDULE, this.clock.now(), TRAIN_WATCH_PADDING));
+  readonly watching = computed(() => this.schedule().watching);
+
+  /** The next scheduled run, today's included, as the hero shows it outside the live window. */
+  readonly plan = computed(() => {
+    const view = this.schedule();
+    const next = view.next;
+    if (!next) {
+      return null;
+    }
+    return {
+      day: scheduleDayLabel(next.startMs, this.clock.now()),
+      time: timeSpanLabel(next.startMs, next.endMs),
+      linesLabel: trainLinesLabel(next.day.lines),
+      lines: next.day.lines.map(code => ({
+        code,
+        name: TRAIN_LINE_SHORT_NAMES[code] ?? code,
+        color: TRAIN_LINE_CSS_MAP[code] ? `var(${TRAIN_LINE_CSS_MAP[code]})` : '',
+        ink: TRAIN_LINE_TEXT_COLOR_MAP[code] ?? '#FFFFFF'
+      })),
+      photos: next.day.photos ?? '',
+      note: next.day.note ?? '',
+      isToday: view.today?.day.date === next.day.date
+    };
+  });
+
   private readonly followResource = httpResource<TrainApiResponse>(() =>
-    this.trainService.followUrl(HOLIDAY_TRAIN_RUN));
+    this.watching() ? this.trainService.followUrl(HOLIDAY_TRAIN_RUN) : undefined);
 
   /** Station names and stop order, for "just left" on the journey. */
   private readonly comprehensiveData = toSignal(this.trainService.getComprehensiveData(),
@@ -47,6 +87,9 @@ export class HolidayTrainComponent {
   readonly lastRefreshed = signal<Date | null>(null);
 
   readonly status = computed<HolidayTrainStatus | null>(() => {
+    if (!this.watching()) {
+      return null;
+    }
     if (this.followResource.error()) {
       return { state: 'unknown', message: "Couldn't reach Train Tracker." };
     }
@@ -80,19 +123,21 @@ export class HolidayTrainComponent {
 
   readonly nextStop = computed(() => this.stops()[0] ?? null);
 
-  /** The line the train is on today, as a CSS colour; the festive red when it is not out. */
-  readonly lineColor = computed(() => {
+  /** The line the train is on, or is next scheduled on, as a CSS colour; '' (evergreen) otherwise. */
+  private readonly heroLine = computed(() => {
     const status = this.status();
-    const code = status && (status.state === 'running' || status.state === 'resting') ? status.routeCode : '';
-    const cssVar = TRAIN_LINE_CSS_MAP[code];
+    if (status && (status.state === 'running' || status.state === 'resting')) {
+      return status.routeCode;
+    }
+    return this.watching() ? '' : (this.plan()?.lines[0]?.code ?? '');
+  });
+
+  readonly lineColor = computed(() => {
+    const cssVar = TRAIN_LINE_CSS_MAP[this.heroLine()];
     return cssVar ? `var(${cssVar})` : '';
   });
 
-  readonly lineInk = computed(() => {
-    const status = this.status();
-    const code = status && (status.state === 'running' || status.state === 'resting') ? status.routeCode : '';
-    return TRAIN_LINE_TEXT_COLOR_MAP[code] ?? '#FFFFFF';
-  });
+  readonly lineInk = computed(() => TRAIN_LINE_TEXT_COLOR_MAP[this.heroLine()] ?? '#FFFFFF');
 
   readonly christmasLabel = computed(() => christmasCountdownLabel(new Date(this.clock.now())));
   readonly updatedLabel = computed(() => {
@@ -108,11 +153,17 @@ export class HolidayTrainComponent {
       }
     });
 
-    const intervalId = setInterval(() => this.followResource.reload(), this.refreshInterval);
+    const intervalId = setInterval(() => {
+      if (this.watching()) {
+        this.followResource.reload();
+      }
+    }, this.refreshInterval);
     inject(DestroyRef).onDestroy(() => clearInterval(intervalId));
   }
 
   refresh(): void {
-    this.followResource.reload();
+    if (this.watching()) {
+      this.followResource.reload();
+    }
   }
 }

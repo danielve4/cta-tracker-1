@@ -9,10 +9,19 @@ import { BustimeResponse } from '../busResponse';
 import { HolidayLightsComponent } from './holiday-lights.component';
 import { HolidayJourneyComponent, HolidayStopRow } from './holiday-journey.component';
 import { HOLIDAY_BUS_VEHICLE, HolidayBusStatus, holidayCountdown, readHolidayBus } from './holiday-train';
+import {
+  BUS_WATCH_PADDING,
+  HOLIDAY_BUS_SCHEDULE,
+  HOLIDAY_SCHEDULE_YEAR,
+  busRoutesLabel,
+  scheduleDayLabel,
+  scheduleView,
+  timeSpanLabel
+} from './holiday-schedule';
 
 /**
  * The Holiday Bus on the Holiday Train & Bus screen: bus 4374, followed through the existing
- * `/busfollow` proxy on the same 30 s tick, drawn with the train's hero (`holiday-hero.css`) and
+ * `/busfollow` proxy on the same 30 s tick inside its scheduled windows, drawn with the train's hero (`holiday-hero.css`) and
  * journey strip, tinted CTA red, with one tap into the regular bus follow screen.
  */
 @Component({
@@ -25,8 +34,8 @@ import { HOLIDAY_BUS_VEHICLE, HolidayBusStatus, holidayCountdown, readHolidayBus
     .journey { margin-bottom: 20px; }
   `,
   template: `
-    <section class="hero" [attr.data-state]="status()?.state ?? 'loading'"
-             [style.--line]="running() ? null : 'var(--evergreen)'">
+    <section class="hero" [attr.data-state]="watching() ? (status()?.state ?? 'loading') : 'scheduled'"
+             [style.--line]="running() || (!watching() && plan()) ? null : 'var(--evergreen)'">
       <app-holiday-lights class="hero-lights" [count]="14" />
       <div class="snow" aria-hidden="true"></div>
 
@@ -35,16 +44,41 @@ import { HOLIDAY_BUS_VEHICLE, HolidayBusStatus, holidayCountdown, readHolidayBus
         <div class="hero-meta">
           <span class="status-pill" aria-live="polite">
             <span class="status-dot" aria-hidden="true"></span>
-            @switch (status()?.state) {
-              @case ('running') { Live }
-              @case ('not-running') { Not running }
-              @case ('unknown') { Can't check }
-              @default { Checking… }
+            @if (!watching()) {
+              {{ plan() ? (plan()!.isToday ? 'Later today' : 'Scheduled') : 'Season over' }}
+            } @else {
+              @switch (status()?.state) {
+                @case ('running') { Live }
+                @case ('not-running') { Not out yet }
+                @case ('unknown') { Can't check }
+                @default { Checking… }
+              }
             }
           </span>
           <span class="run-tag" aria-label="Bus number {{ vehicle }}">Bus {{ vehicle }}</span>
         </div>
 
+        @if (!watching()) {
+          @if (plan(); as plan) {
+            <div class="line-row">
+              @for (route of plan.routes; track route.route) {
+                <span class="line-pill">#{{ route.route }} {{ route.name }}</span>
+              }
+            </div>
+            <div class="next-text plan">
+              <span class="kicker">{{ plan.day }}</span>
+              <span class="next-name">{{ plan.time }}</span>
+            </div>
+            <p class="hero-copy">
+              {{ plan.isToday ? 'Scheduled' : 'Next out' }} on {{ plan.routesLabel }}. CTA gives these times as approximate.
+              @if (plan.photos) { Photos with Santa {{ plan.photos }}. }
+              This goes live half an hour before.
+            </p>
+          } @else {
+            <h3 class="hero-title">That's a wrap for {{ scheduleYear }}</h3>
+            <p class="hero-copy">The Holiday Bus has finished its season. See you next year.</p>
+          }
+        } @else {
         @switch (status()?.state) {
           @case ('running') {
             @if (running(); as bus) {
@@ -104,8 +138,11 @@ import { HOLIDAY_BUS_VEHICLE, HolidayBusStatus, holidayCountdown, readHolidayBus
                 <ellipse cx="23" cy="33" rx="6" ry="3.5" fill="#fff" opacity="0.35" transform="rotate(-30 23 33)"/>
               </svg>
             </div>
-            <h3 class="hero-title">Not on the road right now</h3>
-            <p class="hero-copy">The Holiday Bus visits different routes through the season. Keep this open and it lights up the moment bus {{ vehicle }} shows up in Bus Tracker.</p>
+            <h3 class="hero-title">Not on the road yet</h3>
+            <p class="hero-copy">
+              @if (plan(); as plan) { Scheduled today on {{ plan.routesLabel }}, {{ plan.time }}. }
+              It lights up here the moment bus {{ vehicle }} shows up in Bus Tracker.
+            </p>
           }
           @case ('unknown') {
             <h3 class="hero-title">Can't check right now</h3>
@@ -116,6 +153,7 @@ import { HOLIDAY_BUS_VEHICLE, HolidayBusStatus, holidayCountdown, readHolidayBus
               <span></span><span></span><span></span>
             </div>
           }
+        }
         }
       </div>
     </section>
@@ -131,12 +169,37 @@ export class HolidayBusComponent {
   private readonly busService = inject(BusService);
   private readonly clock = inject(ClockService);
   readonly vehicle = HOLIDAY_BUS_VEHICLE;
+  readonly scheduleYear = HOLIDAY_SCHEDULE_YEAR;
+
+  /** CTA's published schedule; Bus Tracker is only asked inside today's window. */
+  private readonly schedule = computed(() =>
+    scheduleView(HOLIDAY_BUS_SCHEDULE, this.clock.now(), BUS_WATCH_PADDING));
+  readonly watching = computed(() => this.schedule().watching);
+
+  readonly plan = computed(() => {
+    const view = this.schedule();
+    const next = view.next;
+    if (!next) {
+      return null;
+    }
+    return {
+      day: scheduleDayLabel(next.startMs, this.clock.now()),
+      time: timeSpanLabel(next.startMs, next.endMs),
+      routes: next.day.routes,
+      routesLabel: busRoutesLabel(next.day.routes),
+      photos: next.day.photos ?? '',
+      isToday: view.today?.day.date === next.day.date
+    };
+  });
 
   private readonly followResource = httpResource<BustimeResponse>(() =>
-    this.busService.followUrl(+HOLIDAY_BUS_VEHICLE));
+    this.watching() ? this.busService.followUrl(+HOLIDAY_BUS_VEHICLE) : undefined);
   private readonly lastRefreshed = signal<number | null>(null);
 
   readonly status = computed<HolidayBusStatus | null>(() => {
+    if (!this.watching()) {
+      return null;
+    }
     if (this.followResource.error()) {
       return { state: 'unknown', message: "Couldn't reach Bus Tracker." };
     }
@@ -170,11 +233,17 @@ export class HolidayBusComponent {
         this.lastRefreshed.set(Date.now());
       }
     });
-    const intervalId = setInterval(() => this.followResource.reload(), 30 * 1000);
+    const intervalId = setInterval(() => {
+      if (this.watching()) {
+        this.followResource.reload();
+      }
+    }, 30 * 1000);
     inject(DestroyRef).onDestroy(() => clearInterval(intervalId));
   }
 
   refresh(): void {
-    this.followResource.reload();
+    if (this.watching()) {
+      this.followResource.reload();
+    }
   }
 }

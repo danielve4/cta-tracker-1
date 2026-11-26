@@ -345,6 +345,10 @@
   margin-bottom: 10px;
 }
 
+.hero[data-state="scheduled"] .status-dot { background: var(--festive-gold); }
+
+.plan { margin-bottom: 10px; }
+
 .hero-actions {
   display: grid;
   gap: 8px;

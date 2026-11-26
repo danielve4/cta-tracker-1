@@ -14,16 +14,27 @@ import {
   HOLIDAY_TRAIN_RUN,
   favoriteHitLabel,
   holidayHitsForFavorites,
-  isHolidaySeason,
   readHolidayBus,
   readHolidayTrain
 } from './holiday-train';
+import {
+  BUS_WATCH_PADDING,
+  HOLIDAY_BUS_SCHEDULE,
+  HOLIDAY_TRAIN_SCHEDULE,
+  TRAIN_WATCH_PADDING,
+  busRoutesLabel,
+  scheduleView,
+  scheduledToday,
+  timeSpanLabel,
+  trainLinesLabel
+} from './holiday-schedule';
 
 /**
  * The seasonal way into the Holiday Train & Bus screen, on Routes and Favorites (the two screens a
- * launch lands on). It renders nothing outside the season, and nothing at all until after the
- * first render: Routes and Favorites are prerendered, and the season and both vehicles depend on
- * when the page is opened, not when it was built.
+ * launch lands on). It shows only on days CTA's Holiday Fleet schedule has the train or the bus
+ * out, until that day's run is over, and asks the live trackers only inside their scheduled
+ * windows. It renders nothing until after the first render: Routes and Favorites are prerendered,
+ * and the schedule and both vehicles depend on when the page is opened, not when it was built.
  */
 @Component({
   selector: 'app-holiday-train-card',
@@ -47,7 +58,7 @@ import {
             } @else if (busRoute(); as route) {
               <span class="live-dot" aria-hidden="true"></span> Holiday Bus running on route {{ route }}
             } @else {
-              Track them live this season
+              {{ todayLabel() }}
             }
           </span>
         </span>
@@ -133,23 +144,30 @@ export class HolidayTrainCardComponent {
   private readonly clock = inject(ClockService);
 
   /** Set after the first render, so the prerendered page and its hydration match. */
-  private readonly inSeason = signal(false);
+  private readonly ready = signal(false);
 
-  /** One look when the card appears, then once a minute while it stays on screen. */
+  private readonly trainSchedule = computed(() =>
+    scheduleView(HOLIDAY_TRAIN_SCHEDULE, this.clock.now(), TRAIN_WATCH_PADDING));
+  private readonly busSchedule = computed(() =>
+    scheduleView(HOLIDAY_BUS_SCHEDULE, this.clock.now(), BUS_WATCH_PADDING));
+  private readonly watchingTrain = computed(() => this.ready() && this.trainSchedule().watching);
+  private readonly watchingBus = computed(() => this.ready() && this.busSchedule().watching);
+
+  /** One look when a scheduled window opens, then once a minute while the card stays on screen. */
   private readonly followResource = httpResource<TrainApiResponse>(() =>
-    this.inSeason() ? this.trainService.followUrl(HOLIDAY_TRAIN_RUN) : undefined);
+    this.watchingTrain() ? this.trainService.followUrl(HOLIDAY_TRAIN_RUN) : undefined);
 
   private readonly busResource = httpResource<BustimeResponse>(() =>
-    this.inSeason() ? this.busService.followUrl(+HOLIDAY_BUS_VEHICLE) : undefined);
+    this.watchingBus() ? this.busService.followUrl(+HOLIDAY_BUS_VEHICLE) : undefined);
 
   /** Read from localStorage after the first render, like the season. */
   private readonly favorites = signal<Favorite[]>([]);
 
-  private readonly status = computed(() => this.followResource.hasValue()
+  private readonly status = computed(() => this.watchingTrain() && this.followResource.hasValue()
     ? readHolidayTrain(this.followResource.value(), Date.now(), null)
     : null);
 
-  private readonly busStatus = computed(() => this.busResource.hasValue()
+  private readonly busStatus = computed(() => this.watchingBus() && this.busResource.hasValue()
     ? readHolidayBus(this.busResource.value(), Date.now())
     : null);
 
@@ -172,7 +190,26 @@ export class HolidayTrainCardComponent {
     return bus?.state === 'running' ? bus.route : '';
   });
 
-  readonly visible = this.inSeason.asReadonly();
+  readonly visible = computed(() => {
+    const now = this.clock.now();
+    return this.ready() && (scheduledToday(this.trainSchedule(), now) || scheduledToday(this.busSchedule(), now));
+  });
+
+  /** Today's scheduled run that ends soonest and is not over: `Holiday Train today, 3:00 to 5:17 PM, Orange & Green Lines`. */
+  readonly todayLabel = computed(() => {
+    const now = this.clock.now();
+    const train = this.trainSchedule();
+    const bus = this.busSchedule();
+    const runs = [
+      scheduledToday(train, now) && train.today
+        ? { at: train.today.watchUntilMs, label: `Holiday Train today, ${timeSpanLabel(train.today.startMs, train.today.endMs)}, ${trainLinesLabel(train.today.day.lines)}` }
+        : null,
+      scheduledToday(bus, now) && bus.today
+        ? { at: bus.today.watchUntilMs, label: `Holiday Bus today, ${timeSpanLabel(bus.today.startMs, bus.today.endMs)}, ${busRoutesLabel(bus.today.day.routes)}` }
+        : null
+    ].filter(run => run !== null).sort((a, b) => a.at - b.at);
+    return runs[0]?.label ?? '';
+  });
 
   readonly lineName = computed(() => {
     const status = this.status();
@@ -192,14 +229,15 @@ export class HolidayTrainCardComponent {
   constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      if (!isHolidaySeason(new Date())) {
-        return;
-      }
       this.favoritesService.getFavorites().subscribe(favorites => this.favorites.set(favorites));
-      this.inSeason.set(true);
+      this.ready.set(true);
       const intervalId = setInterval(() => {
-        this.followResource.reload();
-        this.busResource.reload();
+        if (this.watchingTrain()) {
+          this.followResource.reload();
+        }
+        if (this.watchingBus()) {
+          this.busResource.reload();
+        }
       }, 60 * 1000);
       destroyRef.onDestroy(() => clearInterval(intervalId));
     });

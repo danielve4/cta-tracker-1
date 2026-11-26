@@ -242,15 +242,6 @@ export function favoriteHitLabel(hit: FavoriteHit, nowMs: number): string {
   return `${vehicle} at ${hit.stopName} ${minutes > 1 ? `in ${minutes} min` : 'now'}`;
 }
 
-/**
- * Mid-November through New Year's Eve: when the seasonal card shows on Routes and Favorites.
- * The train's first run is usually Black Friday, so this opens a little early on purpose.
- */
-export function isHolidaySeason(date: Date): boolean {
-  const month = date.getMonth();
-  return (month === 10 && date.getDate() >= 15) || month === 11;
-}
-
 /** Whole days until Christmas Day, 0 on the day itself, null once it has passed this year. */
 export function daysUntilChristmas(date: Date): number | null {
   const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());

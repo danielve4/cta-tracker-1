@@ -10,7 +10,6 @@ import {
   holidayHitsForFavorites,
   HolidayTrainStatus,
   readHolidayBus,
-  isHolidaySeason,
   previousStation,
   readHolidayTrain
 } from './holiday-train';
@@ -116,13 +115,6 @@ describe('previousStation', () => {
 });
 
 describe('season helpers', () => {
-  it('opens mid-November and runs through December', () => {
-    expect(isHolidaySeason(new Date(2026, 10, 14))).toBe(false);
-    expect(isHolidaySeason(new Date(2026, 10, 15))).toBe(true);
-    expect(isHolidaySeason(new Date(2026, 11, 31))).toBe(true);
-    expect(isHolidaySeason(new Date(2027, 0, 1))).toBe(false);
-  });
-
   it('counts whole days to Christmas', () => {
     expect(daysUntilChristmas(new Date(2026, 10, 26, 23, 59))).toBe(29);
     expect(daysUntilChristmas(new Date(2026, 11, 25, 8))).toBe(0);

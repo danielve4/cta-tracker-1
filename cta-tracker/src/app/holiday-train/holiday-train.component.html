@@ -7,7 +7,7 @@
 </header>
 
 <section class="hero cols-4"
-         [attr.data-state]="status()?.state ?? 'loading'"
+         [attr.data-state]="watching() ? (status()?.state ?? 'loading') : 'scheduled'"
          [style.--line]="lineColor() || null"
          [style.--line-ink]="lineInk()">
   <app-holiday-lights class="hero-lights" [count]="14" />
@@ -18,17 +18,43 @@
     <div class="hero-meta">
       <span class="status-pill" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
-        @switch (status()?.state) {
-          @case ('running') { Live }
-          @case ('resting') { Between trips }
-          @case ('not-running') { Not running }
-          @case ('unknown') { Can't check }
-          @default { Checking… }
+        @if (!watching()) {
+          {{ plan() ? (plan()!.isToday ? 'Later today' : 'Scheduled') : 'Season over' }}
+        } @else {
+          @switch (status()?.state) {
+            @case ('running') { Live }
+            @case ('resting') { Between trips }
+            @case ('not-running') { Not out yet }
+            @case ('unknown') { Can't check }
+            @default { Checking… }
+          }
         }
       </span>
       <span class="run-tag" aria-label="Run number {{ run }}">Run {{ run }}</span>
     </div>
 
+    @if (!watching()) {
+      @if (plan(); as plan) {
+        <div class="line-row">
+          @for (line of plan.lines; track line.code) {
+            <span class="line-pill" [style.--accent]="line.color || null" [style.--line-ink]="line.ink">{{ line.name }}</span>
+          }
+        </div>
+        <div class="next-text plan">
+          <span class="kicker">{{ plan.day }}</span>
+          <span class="next-name">{{ plan.time }}</span>
+        </div>
+        <p class="hero-copy">
+          {{ plan.isToday ? 'Scheduled' : 'Next out' }} on the {{ plan.linesLabel }}, from its first departure to its last.
+          @if (plan.photos) { Photos with Santa {{ plan.photos }}. }
+          {{ plan.note }}
+          This goes live half an hour before.
+        </p>
+      } @else {
+        <h3 class="hero-title">That's a wrap for {{ scheduleYear }}</h3>
+        <p class="hero-copy">The Holiday Train has finished its season. See you next year.</p>
+      }
+    } @else {
     @switch (status()?.state) {
       @case ('running') {
         @if (running(); as train) {
@@ -95,8 +121,11 @@
             <ellipse cx="23" cy="33" rx="6" ry="3.5" fill="#fff" opacity="0.35" transform="rotate(-30 23 33)"/>
           </svg>
         </div>
-        <h3 class="hero-title">Not on the tracks right now</h3>
-        <p class="hero-copy">The Holiday Train visits a different line on select days from late November through December. Keep this open and it lights up the moment run {{ run }} shows up in Train Tracker.</p>
+        <h3 class="hero-title">Not on the tracks yet</h3>
+        <p class="hero-copy">
+          @if (plan(); as plan) { Scheduled today on the {{ plan.linesLabel }}, {{ plan.time }}. {{ plan.note }} }
+          It lights up here the moment run {{ run }} shows up in Train Tracker.
+        </p>
       }
       @case ('unknown') {
         @if (status(); as failed) {
@@ -110,6 +139,7 @@
         </div>
       }
     }
+    }
   </div>
 </section>
 
@@ -122,7 +152,7 @@
 <app-holiday-bus #bus />
 
 <p class="footnote cols-4">
-  Spotted live in Train Tracker as run {{ run }} and in Bus Tracker as bus {{ bus.vehicle }}.
+  Times from CTA's {{ scheduleYear }} Holiday Fleet schedule. Spotted live in Train Tracker as run {{ run }} and in Bus Tracker as bus {{ bus.vehicle }}.
   @if (updatedLabel(); as updated) {
     <span class="updated">{{ updated }}</span>
   }
