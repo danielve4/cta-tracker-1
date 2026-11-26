@@ -6,13 +6,14 @@ import { FavoritesService } from '../services/favorites.service';
 import { Favorite } from '../services/Favorite';
 import { TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { SuggestedStopComponent } from '../suggested-stop/suggested-stop.component';
+import { HolidayTrainCardComponent } from '../holiday-train/holiday-train-card.component';
 
 @Component({
   selector: 'app-favorites',
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, SlicePipe, SuggestedStopComponent]
+  imports: [RouterLink, SlicePipe, SuggestedStopComponent, HolidayTrainCardComponent]
 })
 export class FavoritesComponent {
   private readonly favoritesService = inject(FavoritesService);

@@ -5,13 +5,14 @@ import { TrainService } from '../services/train.service';
 import { BustimeResponse, Route, Error } from '../busResponse';
 import { CTALine } from '../trainResponse';
 import { SuggestedStopComponent } from '../suggested-stop/suggested-stop.component';
+import { HolidayTrainCardComponent } from '../holiday-train/holiday-train-card.component';
 
 @Component({
   selector: 'app-routes',
   templateUrl: './routes.component.html',
   styleUrls: ['./routes.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, SuggestedStopComponent]
+  imports: [RouterLink, SuggestedStopComponent, HolidayTrainCardComponent]
 })
 export class RoutesComponent {
   private readonly busService = inject(BusService);

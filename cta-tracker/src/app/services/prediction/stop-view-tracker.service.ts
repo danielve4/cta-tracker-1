@@ -202,7 +202,7 @@ export class StopViewTrackerService {
     }
     if (from.startsWith('/favorites')) return 'favorites';
     if (from.startsWith('/stops/') || from.startsWith('/train-stops/')) return 'browse';
-    if (from.startsWith('/follow/') || from.startsWith('/train-follow/')) return 'follow';
+    if (from.startsWith('/follow/') || from.startsWith('/train-follow/') || from.startsWith('/holiday-train')) return 'follow';
     if (from === '/' || from.startsWith('/routes')) return 'search';
     return 'unknown';
   }
