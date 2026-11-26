@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { CTAComprehensiveData, TrainApiResponse, TrainEta } from '../trainResponse';
+import { Prd } from '../busResponse';
+import { Favorite } from '../services/Favorite';
 import {
   christmasCountdownLabel,
   daysUntilChristmas,
+  favoriteHitLabel,
   holidayCountdown,
+  holidayHitsForFavorites,
+  HolidayTrainStatus,
+  readHolidayBus,
   isHolidaySeason,
   previousStation,
   readHolidayTrain
@@ -134,5 +140,68 @@ describe('holidayCountdown', () => {
     expect(holidayCountdown(now + 50_000, now, false)).toBe('Due');
     expect(holidayCountdown(now + 9 * 60_000, now, true)).toBe('Due');
     expect(holidayCountdown(NaN, now, false)).toBe('--');
+  });
+});
+
+function prd(overrides: Partial<Prd> = {}): Prd {
+  return {
+    tmstmp: '20261202 14:00:00', typ: 'V', stpnm: 'Michigan & Ohio', stpid: '1100', vid: '4374',
+    dstp: 1200, rt: '151', rtdd: '151', rtdir: 'Southbound', des: 'Union Station',
+    prdtm: '20261202 14:05:00', tablockid: '', tatripid: '', dly: false, prdctdn: '5', zone: '',
+    ...overrides
+  };
+}
+
+describe('readHolidayBus', () => {
+  const landed = new Date(2026, 11, 2, 14, 0, 20).getTime();
+
+  it('reads a bus with predictions as running', () => {
+    const status = readHolidayBus({ prd: [prd(), prd({ stpid: '1101', stpnm: 'Michigan & Grand', prdtm: '20261202 14:07:30' })] }, landed);
+    expect(status.state).toBe('running');
+    if (status.state !== 'running') return;
+    expect(status.route).toBe('151');
+    expect(status.direction).toBe('Southbound');
+    expect(status.destination).toBe('Union Station');
+    expect(status.stops.map(stop => stop.arrivalEpochMs - landed)).toEqual([5 * 60_000, 7.5 * 60_000]);
+  });
+
+  it('times a delayed bus from prdtm, not its unusable countdown', () => {
+    const status = readHolidayBus({ prd: [prd({ dly: true, prdctdn: 'DLY', prdtm: '20261202 14:12:00' })] }, landed);
+    expect(status.state === 'running' && status.stops[0].arrivalEpochMs - landed).toBe(12 * 60_000);
+  });
+
+  it('reads "no data" and "no service" as not running, anything else as unknown', () => {
+    expect(readHolidayBus({ error: [{ stpid: '', msg: 'No data found for parameter' }] }, landed).state).toBe('not-running');
+    expect(readHolidayBus({ error: [{ stpid: '', msg: 'No service scheduled' }] }, landed).state).toBe('not-running');
+    expect(readHolidayBus({}, landed).state).toBe('not-running');
+    expect(readHolidayBus({ error: [{ stpid: '', msg: 'Invalid API access key supplied' }] }, landed))
+      .toEqual({ state: 'unknown', message: 'Invalid API access key supplied' });
+  });
+});
+
+describe('holidayHitsForFavorites', () => {
+  const now = new Date(2026, 11, 2, 14, 0).getTime();
+  const train: HolidayTrainStatus = readHolidayTrain(response({
+    eta: [eta(), eta({ staId: WESTERN, staNm: 'Western (Brown Line)', arrT: '2026-12-02T14:40:00' })]
+  }), now, data);
+  const bus = readHolidayBus({ prd: [prd({ prdtm: '20261202 14:03:00' })] }, now);
+  const favorite = (stopId: number, type?: 'bus' | 'train'): Favorite =>
+    ({ route: '', stopId, stopName: '', direction: '', type });
+
+  it('finds favorites either vehicle is headed to, soonest first', () => {
+    const hits = holidayHitsForFavorites([favorite(+ROCKWELL, 'train'), favorite(1100)], train, bus, now);
+    expect(hits.map(hit => [hit.kind, hit.stopName])).toEqual([['bus', 'Michigan & Ohio'], ['train', 'Rockwell']]);
+    expect(favoriteHitLabel(hits[1], now)).toBe('Holiday Train at Rockwell in 4 min');
+  });
+
+  it('ignores stops past the horizon, the wrong kind, and vehicles that are not out', () => {
+    expect(holidayHitsForFavorites([favorite(+WESTERN, 'train')], train, bus, now)).toEqual([]);
+    expect(holidayHitsForFavorites([favorite(+ROCKWELL, 'bus')], train, bus, now)).toEqual([]);
+    expect(holidayHitsForFavorites([favorite(1100, 'bus')], null, { state: 'not-running' }, now)).toEqual([]);
+  });
+
+  it('reads now at a minute or less', () => {
+    expect(favoriteHitLabel({ kind: 'bus', stopName: 'Michigan & Ohio', arrivalEpochMs: now + 40_000 }, now))
+      .toBe('Holiday Bus at Michigan & Ohio now');
   });
 });

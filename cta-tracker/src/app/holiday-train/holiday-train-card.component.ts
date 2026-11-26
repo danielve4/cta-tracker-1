@@ -2,9 +2,22 @@ import { Component, ChangeDetectionStrategy, computed, inject, signal, afterNext
 import { httpResource } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TrainService } from '../services/train.service';
+import { BusService } from '../services/bus.service';
+import { ClockService } from '../services/clock.service';
+import { FavoritesService } from '../services/favorites.service';
+import { Favorite } from '../services/Favorite';
+import { BustimeResponse } from '../busResponse';
 import { TrainApiResponse, TRAIN_LINE_CSS_MAP } from '../trainResponse';
 import { HolidayLightsComponent } from './holiday-lights.component';
-import { HOLIDAY_TRAIN_RUN, isHolidaySeason, readHolidayTrain } from './holiday-train';
+import {
+  HOLIDAY_BUS_VEHICLE,
+  HOLIDAY_TRAIN_RUN,
+  favoriteHitLabel,
+  holidayHitsForFavorites,
+  isHolidaySeason,
+  readHolidayBus,
+  readHolidayTrain
+} from './holiday-train';
 
 /**
  * The seasonal way into the Holiday Train screen, on Routes and Favorites (the two screens a
@@ -18,17 +31,21 @@ import { HOLIDAY_TRAIN_RUN, isHolidaySeason, readHolidayTrain } from './holiday-
   imports: [RouterLink, HolidayLightsComponent],
   template: `
     @if (visible()) {
-      <a class="card" routerLink="/holiday-train" [attr.data-live]="lineName() ? '' : null"
+      <a class="card" [routerLink]="link()" [attr.data-live]="lineName() ? '' : null"
          [style.--line]="lineColor() || null">
         <app-holiday-lights class="lights" [count]="10" />
         <span class="glyph" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path class="tree" d="M12 4.5l4.5 6h-2.6l3.6 5h-2.8l3.3 4.5H6l3.3-4.5H6.5l3.6-5H7.5z"/><rect class="trunk" x="10.8" y="20" width="2.4" height="2.5" rx="0.6"/><path class="star" d="M12 .8l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 2.9l2-.3z"/></svg>
         </span>
         <span class="text">
-          <span class="title">Holiday Train</span>
+          <span class="title">{{ hitLabel() ? 'Coming to your stop' : 'Holiday Train' }}</span>
           <span class="sub">
-            @if (lineName(); as line) {
+            @if (hitLabel(); as hit) {
+              <span class="live-dot" aria-hidden="true"></span> {{ hit }}
+            } @else if (lineName(); as line) {
               <span class="live-dot" aria-hidden="true"></span> Running now on the {{ line }}
+            } @else if (busRoute(); as route) {
+              <span class="live-dot" aria-hidden="true"></span> Holiday Bus out on the {{ route }}
             } @else {
               Track it live this season
             }
@@ -111,6 +128,9 @@ import { HOLIDAY_TRAIN_RUN, isHolidaySeason, readHolidayTrain } from './holiday-
 })
 export class HolidayTrainCardComponent {
   private readonly trainService = inject(TrainService);
+  private readonly busService = inject(BusService);
+  private readonly favoritesService = inject(FavoritesService);
+  private readonly clock = inject(ClockService);
 
   /** Set after the first render, so the prerendered page and its hydration match. */
   private readonly inSeason = signal(false);
@@ -119,9 +139,38 @@ export class HolidayTrainCardComponent {
   private readonly followResource = httpResource<TrainApiResponse>(() =>
     this.inSeason() ? this.trainService.followUrl(HOLIDAY_TRAIN_RUN) : undefined);
 
+  private readonly busResource = httpResource<BustimeResponse>(() =>
+    this.inSeason() ? this.busService.followUrl(+HOLIDAY_BUS_VEHICLE) : undefined);
+
+  /** Read from localStorage after the first render, like the season. */
+  private readonly favorites = signal<Favorite[]>([]);
+
   private readonly status = computed(() => this.followResource.hasValue()
     ? readHolidayTrain(this.followResource.value(), Date.now(), null)
     : null);
+
+  private readonly busStatus = computed(() => this.busResource.hasValue()
+    ? readHolidayBus(this.busResource.value(), Date.now())
+    : null);
+
+  /** The soonest of the two headed to one of the user's favorite stops in the next half hour. */
+  private readonly hit = computed(() =>
+    holidayHitsForFavorites(this.favorites(), this.status(), this.busStatus(), this.clock.now())[0] ?? null);
+
+  readonly hitLabel = computed(() => {
+    const hit = this.hit();
+    return hit ? favoriteHitLabel(hit, this.clock.now()) : '';
+  });
+
+  /** The bus near a favorite opens its follow screen; everything else opens the holiday screen. */
+  readonly link = computed(() => this.hit()?.kind === 'bus'
+    ? ['/follow', HOLIDAY_BUS_VEHICLE]
+    : ['/holiday-train']);
+
+  readonly busRoute = computed(() => {
+    const bus = this.busStatus();
+    return bus?.state === 'running' ? bus.route : '';
+  });
 
   readonly visible = this.inSeason.asReadonly();
 
@@ -143,8 +192,12 @@ export class HolidayTrainCardComponent {
       if (!isHolidaySeason(new Date())) {
         return;
       }
+      this.favoritesService.getFavorites().subscribe(favorites => this.favorites.set(favorites));
       this.inSeason.set(true);
-      const intervalId = setInterval(() => this.followResource.reload(), 60 * 1000);
+      const intervalId = setInterval(() => {
+        this.followResource.reload();
+        this.busResource.reload();
+      }, 60 * 1000);
       destroyRef.onDestroy(() => clearInterval(intervalId));
     });
   }

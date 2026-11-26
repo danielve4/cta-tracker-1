@@ -54,7 +54,7 @@ cta-tracker-1/
 │   │   │   ├── alerts-banner/    # Route alerts in the stop header, in one of six styles (styles/)
 │   │   │   ├── alert-item/       # One alert, expanding in place; shared by the two above
 │   │   │   ├── follow-vehicle/   # Individual vehicle tracking
-│   │   │   ├── holiday-train/    # Live CTA Holiday Train (run #1225) screen and seasonal card
+│   │   │   ├── holiday-train/    # Live CTA Holiday Train (run #1225) and Holiday Bus (#4374), seasonal card
 │   │   │   ├── routes/           # Route listing with search
 │   │   │   ├── stops/            # Stop listing for a route/direction
 │   │   │   ├── services/         # BusService, FavoritesService, AlertsService
@@ -190,6 +190,14 @@ Things to know before changing any of it:
   bulb per line colour), the pulse and the train's bob all stop under `prefers-reduced-motion`.
 - On the season's last day CTA splits the train into three two-car trains on the Yellow Line;
   their run numbers are not known, so they may not show up.
+- **The Holiday Bus is bus 4374**, followed on the same screen (`holiday-bus.component`) through the
+  existing `/busfollow?vehicleId=4374`, 30 s tick, with a button into the regular `/follow/4374`.
+  `readHolidayBus` treats Bus Tracker's "No data found" / "No service scheduled" messages as not
+  running and any other error as unknown.
+- **The card badges a favorite stop** when either one is due there within `NEAR_STOP_MINUTES` (30):
+  `holidayHitsForFavorites` matches train favorites by station `mapid` (ttfollow `staId`) and bus
+  favorites by `stpid`. Favorites are read in `afterNextRender`; a bus hit links to `/follow/4374`,
+  everything else to `/holiday-train`.
 
 ### Service Alerts
 

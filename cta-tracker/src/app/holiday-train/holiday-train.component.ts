@@ -9,6 +9,7 @@ import { trainStationCommands } from '../services/follow-stop-link';
 import { TrainApiResponse, TRAIN_LINE_CSS_MAP, TRAIN_LINE_TEXT_COLOR_MAP } from '../trainResponse';
 import { HolidayLightsComponent } from './holiday-lights.component';
 import { HolidayJourneyComponent, HolidayStopRow } from './holiday-journey.component';
+import { HolidayBusComponent } from './holiday-bus.component';
 import {
   HOLIDAY_TRAIN_RUN,
   HolidayTrainStatus,
@@ -26,7 +27,7 @@ import {
   templateUrl: './holiday-train.component.html',
   styleUrls: ['./holiday-train.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, HolidayLightsComponent, HolidayJourneyComponent]
+  imports: [RouterLink, HolidayLightsComponent, HolidayJourneyComponent, HolidayBusComponent]
 })
 export class HolidayTrainComponent {
   private readonly trainService = inject(TrainService);
