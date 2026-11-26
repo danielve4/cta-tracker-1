@@ -19,13 +19,14 @@ import {
 } from './holiday-train';
 
 /**
- * The Holiday Train, live. Follows run #1225 through the existing `/trainfollow` proxy on the
- * same 30 s tick as the other follow screen, and says plainly when it is not out today.
+ * The Holiday Train & Bus screen. Follows the train, run #1225, through the existing
+ * `/trainfollow` proxy on the same 30 s tick as the other follow screen, says plainly when it is
+ * not out today, and hosts the Holiday Bus (`holiday-bus.component`) in the same style below it.
  */
 @Component({
   selector: 'app-holiday-train',
   templateUrl: './holiday-train.component.html',
-  styleUrls: ['./holiday-train.component.css'],
+  styleUrls: ['./holiday-hero.css', './holiday-train.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, HolidayLightsComponent, HolidayJourneyComponent, HolidayBusComponent]
 })
@@ -68,7 +69,9 @@ export class HolidayTrainComponent {
     }
     const now = this.clock.now();
     return running.stops.map(stop => ({
-      ...stop,
+      id: stop.staId,
+      name: stop.name,
+      delayed: stop.delayed,
       countdown: holidayCountdown(stop.arrivalEpochMs, now, stop.approaching),
       clock: formatClockTime(stop.arrivalEpochMs),
       link: trainStationCommands(stop.eta, running.routeCode)

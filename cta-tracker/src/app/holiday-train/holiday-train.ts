@@ -1,4 +1,4 @@
-// The CTA Holiday Train, read out of Train Tracker.
+// The CTA Holiday Train and Holiday Bus, read out of Train Tracker and Bus Tracker.
 //
 // CTA runs the Holiday Train as run #1225 (for December 25) on whichever line it is visiting that
 // day, so it is found by following that run number rather than by scanning every line. The follow

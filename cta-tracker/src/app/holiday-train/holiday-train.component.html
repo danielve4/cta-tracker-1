@@ -1,6 +1,6 @@
 <header class="title-block cols-4">
   <p class="eyebrow">CTA Holiday Service</p>
-  <h1>Holiday Train</h1>
+  <h1>Holiday Train &amp; Bus</h1>
   @if (christmasLabel(); as label) {
     <p class="subtitle">{{ label }}</p>
   }
@@ -14,6 +14,7 @@
   <div class="snow" aria-hidden="true"></div>
 
   <div class="hero-body">
+    <h2 class="hero-name">Holiday Train</h2>
     <div class="hero-meta">
       <span class="status-pill" aria-live="polite">
         <span class="status-dot" aria-hidden="true"></span>
@@ -73,7 +74,7 @@
             </div>
           }
         }
-        <h2 class="hero-title">Taking a breather</h2>
+        <h3 class="hero-title">Taking a breather</h3>
         <p class="hero-copy">It's in service, but Train Tracker hasn't posted its next stops yet. That usually means it's turning around at the end of the line.</p>
       }
       @case ('not-running') {
@@ -94,12 +95,12 @@
             <ellipse cx="23" cy="33" rx="6" ry="3.5" fill="#fff" opacity="0.35" transform="rotate(-30 23 33)"/>
           </svg>
         </div>
-        <h2 class="hero-title">Not on the tracks right now</h2>
+        <h3 class="hero-title">Not on the tracks right now</h3>
         <p class="hero-copy">The Holiday Train visits a different line on select days from late November through December. Keep this open and it lights up the moment run {{ run }} shows up in Train Tracker.</p>
       }
       @case ('unknown') {
         @if (status(); as failed) {
-          <h2 class="hero-title">Can't check right now</h2>
+          <h3 class="hero-title">Can't check right now</h3>
           <p class="hero-copy">{{ failed.state === 'unknown' ? failed.message : '' }} Trying again in a moment.</p>
         }
       }
@@ -113,7 +114,7 @@
 </section>
 
 @if (running(); as train) {
-  <section class="journey cols-4" [style.--line]="lineColor() || null" aria-label="Holiday Train journey">
+  <section class="journey cols-4" [style.--line]="lineColor() || null" aria-label="Holiday Train stops">
     <app-holiday-journey [stops]="stops()" [lastStation]="train.lastStation" />
   </section>
 }
@@ -121,7 +122,7 @@
 <app-holiday-bus #bus />
 
 <p class="footnote cols-4">
-  Spotted live by its Train Tracker run number, {{ run }}, and the Holiday Bus by its bus number.
+  Spotted live in Train Tracker as run {{ run }} and in Bus Tracker as bus {{ bus.vehicle }}.
   @if (updatedLabel(); as updated) {
     <span class="updated">{{ updated }}</span>
   }

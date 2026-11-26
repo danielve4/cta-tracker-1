@@ -20,9 +20,9 @@ import {
 } from './holiday-train';
 
 /**
- * The seasonal way into the Holiday Train screen, on Routes and Favorites (the two screens a
+ * The seasonal way into the Holiday Train & Bus screen, on Routes and Favorites (the two screens a
  * launch lands on). It renders nothing outside the season, and nothing at all until after the
- * first render: Routes and Favorites are prerendered, and the season and the train both depend on
+ * first render: Routes and Favorites are prerendered, and the season and both vehicles depend on
  * when the page is opened, not when it was built.
  */
 @Component({
@@ -31,23 +31,23 @@ import {
   imports: [RouterLink, HolidayLightsComponent],
   template: `
     @if (visible()) {
-      <a class="card" [routerLink]="link()" [attr.data-live]="lineName() ? '' : null"
+      <a class="card" [routerLink]="link()" [attr.data-live]="lineName() || busRoute() ? '' : null"
          [style.--line]="lineColor() || null">
         <app-holiday-lights class="lights" [count]="10" />
         <span class="glyph" aria-hidden="true">
           <svg viewBox="0 0 24 24"><path class="tree" d="M12 4.5l4.5 6h-2.6l3.6 5h-2.8l3.3 4.5H6l3.3-4.5H6.5l3.6-5H7.5z"/><rect class="trunk" x="10.8" y="20" width="2.4" height="2.5" rx="0.6"/><path class="star" d="M12 .8l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2L9.1 2.9l2-.3z"/></svg>
         </span>
         <span class="text">
-          <span class="title">{{ hitLabel() ? 'Coming to your stop' : 'Holiday Train' }}</span>
+          <span class="title">{{ hitLabel() ? 'Coming to your stop' : 'Holiday Train & Bus' }}</span>
           <span class="sub">
             @if (hitLabel(); as hit) {
               <span class="live-dot" aria-hidden="true"></span> {{ hit }}
             } @else if (lineName(); as line) {
-              <span class="live-dot" aria-hidden="true"></span> Running now on the {{ line }}
+              <span class="live-dot" aria-hidden="true"></span> Holiday Train running on the {{ line }}
             } @else if (busRoute(); as route) {
-              <span class="live-dot" aria-hidden="true"></span> Holiday Bus out on the {{ route }}
+              <span class="live-dot" aria-hidden="true"></span> Holiday Bus running on route {{ route }}
             } @else {
-              Track it live this season
+              Track them live this season
             }
           </span>
         </span>
@@ -183,7 +183,10 @@ export class HolidayTrainCardComponent {
     const status = this.status();
     const code = status?.state === 'running' || status?.state === 'resting' ? status.routeCode : '';
     const cssVar = TRAIN_LINE_CSS_MAP[code];
-    return cssVar ? `var(${cssVar})` : '';
+    if (cssVar) {
+      return `var(${cssVar})`;
+    }
+    return this.busRoute() ? 'var(--cta-red)' : '';
   });
 
   constructor() {
