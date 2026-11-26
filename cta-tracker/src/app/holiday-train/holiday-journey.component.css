@@ -1,0 +1,180 @@
+/* An Apple Maps-style transit strip, drawn in the colour of the line the train is on. */
+
+:host {
+  --festive-red: #ff5a5f;
+  --evergreen: #1f6f43;
+  display: block;
+}
+
+:host-context([data-theme="light"]) {
+  --festive-red: var(--cta-red);
+}
+
+
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin: 0 4px 8px;
+}
+
+.timeline {
+  --track: var(--line, var(--evergreen));
+  padding: 6px 0;
+  border-radius: 22px;
+  background: var(--surface-card);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+}
+
+.timeline li {
+  position: relative;
+}
+
+/* The track runs down the first column of every row; the first row starts it at its middle and
+   the last row ends it there. */
+.timeline li::before {
+  content: '';
+  position: absolute;
+  left: 24px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  margin-left: -2.5px;
+  background: var(--track);
+}
+
+.timeline li:first-child::before { top: 50%; }
+.timeline li:last-child::before { bottom: 50%; }
+
+.timeline li.passed::before {
+  background: repeating-linear-gradient(to bottom, var(--track) 0 4px, transparent 4px 8px);
+  opacity: 0.45;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 56px;
+  padding: 8px 16px 8px 0;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+
+a.row:hover { background: var(--surface-card-hover); }
+a.row:active { background: var(--surface-elevated); }
+
+.node {
+  justify-self: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  box-shadow: 0 0 0 3px var(--track);
+  z-index: 1;
+}
+
+.stop.next .node {
+  width: 17px;
+  height: 17px;
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--track), 0 0 0 9px color-mix(in srgb, var(--track) 22%, transparent);
+}
+
+.stop.terminal .node {
+  border-radius: 4px;
+  background: var(--track);
+}
+
+.passed .node {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--track) 45%, transparent);
+}
+
+.stop-name {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stop.next .stop-name { font-weight: 700; }
+.passed .stop-name { color: var(--text-tertiary); font-weight: 500; }
+
+.stop-name .late {
+  display: block;
+  font-size: 12px;
+  color: var(--status-scheduled);
+}
+
+.stop-side {
+  display: grid;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.mins {
+  font-family: var(--numeral-font);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.mins small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.stop.next .mins { color: var(--festive-red); }
+
+.clock {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.train-here .row {
+  min-height: 52px;
+  grid-template-columns: 48px 1fr;
+}
+
+.train-glyph {
+  justify-self: center;
+  width: 38px;
+  height: 38px;
+  z-index: 1;
+  filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--track) 60%, transparent));
+  animation: bob 3s ease-in-out infinite;
+}
+
+.train-glyph svg { display: block; width: 100%; height: 100%; }
+.car { fill: #e9ecf1; stroke: rgba(0, 0, 0, 0.25); stroke-width: 0.6; }
+.car-stripe { fill: var(--track); }
+.windshield { fill: #1b2230; }
+.wreath { fill: none; stroke: #1f8a4c; stroke-width: 2.2; }
+.wreath-berry { fill: #e0283f; }
+.headlight { fill: #fff6c4; }
+.wheels { fill: none; stroke: #7d8592; stroke-width: 2; stroke-linecap: round; }
+
+@keyframes bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.train-caption {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--festive-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .train-glyph { animation: none; }
+}

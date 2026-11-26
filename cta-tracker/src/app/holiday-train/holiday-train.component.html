@@ -1,0 +1,132 @@
+<header class="title-block cols-4">
+  <p class="eyebrow">CTA Holiday Service</p>
+  <h1>Holiday Train</h1>
+  @if (christmasLabel(); as label) {
+    <p class="subtitle">{{ label }}</p>
+  }
+</header>
+
+<section class="hero cols-4"
+         [attr.data-state]="status()?.state ?? 'loading'"
+         [style.--line]="lineColor() || null"
+         [style.--line-ink]="lineInk()">
+  <app-holiday-lights class="hero-lights" [count]="14" />
+  <div class="snow" aria-hidden="true"></div>
+
+  <div class="hero-body">
+    <div class="hero-meta">
+      <span class="status-pill" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        @switch (status()?.state) {
+          @case ('running') { Live }
+          @case ('resting') { Between trips }
+          @case ('not-running') { Not running }
+          @case ('unknown') { Can't check }
+          @default { Checking… }
+        }
+      </span>
+      <span class="run-tag" aria-label="Run number {{ run }}">Run {{ run }}</span>
+    </div>
+
+    @switch (status()?.state) {
+      @case ('running') {
+        @if (running(); as train) {
+          <div class="line-row">
+            <span class="line-pill">{{ train.lineName }}</span>
+            @if (train.destination) {
+              <span class="toward">to {{ train.destination }}</span>
+            }
+          </div>
+          @if (nextStop(); as next) {
+            <div class="next-row">
+              <div class="next-text">
+                <span class="kicker">Next stop</span>
+                <span class="next-name">{{ next.name }}</span>
+                <span class="next-clock">
+                  {{ next.clock }}
+                  @if (next.delayed) {
+                    <span class="late">· Delayed</span>
+                  }
+                </span>
+              </div>
+              <div class="countdown" [class.due]="next.countdown === 'Due'">
+                <span class="num">{{ next.countdown }}</span>
+                @if (next.countdown !== 'Due' && next.countdown !== '--') {
+                  <span class="unit">min</span>
+                }
+              </div>
+            </div>
+            @if (next.link) {
+              <a class="hero-action" [routerLink]="next.link">
+                <span>Arrivals at {{ next.name }}</span>
+                <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+              </a>
+            }
+          }
+        }
+      }
+      @case ('resting') {
+        @if (status(); as resting) {
+          @if (resting.state === 'resting' && resting.lineName) {
+            <div class="line-row">
+              <span class="line-pill">{{ resting.lineName }}</span>
+            </div>
+          }
+        }
+        <h2 class="hero-title">Taking a breather</h2>
+        <p class="hero-copy">It's in service, but Train Tracker hasn't posted its next stops yet. That usually means it's turning around at the end of the line.</p>
+      }
+      @case ('not-running') {
+        <div class="ornament" aria-hidden="true">
+          <svg viewBox="0 0 64 72">
+            <defs>
+              <radialGradient id="bauble" cx="38%" cy="34%" r="70%">
+                <stop offset="0" stop-color="#ffb3b8"/>
+                <stop offset="0.45" stop-color="#e0283f"/>
+                <stop offset="1" stop-color="#7a0717"/>
+              </radialGradient>
+            </defs>
+            <path class="ornament-hook" d="M32 2c-3 0-4 2-4 4s1.5 3 4 3"/>
+            <rect x="25" y="8" width="14" height="9" rx="2" class="ornament-cap"/>
+            <circle cx="32" cy="44" r="26" fill="url(#bauble)"/>
+            <path d="M8 40c8 4 40 4 48 0" class="ornament-band"/>
+            <path d="M7.5 48c8 4 41 4 49 0" class="ornament-band thin"/>
+            <ellipse cx="23" cy="33" rx="6" ry="3.5" fill="#fff" opacity="0.35" transform="rotate(-30 23 33)"/>
+          </svg>
+        </div>
+        <h2 class="hero-title">Not on the tracks right now</h2>
+        <p class="hero-copy">The Holiday Train visits a different line on select days from late November through December. Keep this open and it lights up the moment run {{ run }} shows up in Train Tracker.</p>
+      }
+      @case ('unknown') {
+        @if (status(); as failed) {
+          <h2 class="hero-title">Can't check right now</h2>
+          <p class="hero-copy">{{ failed.state === 'unknown' ? failed.message : '' }} Trying again in a moment.</p>
+        }
+      }
+      @default {
+        <div class="hero-skeleton" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      }
+    }
+  </div>
+</section>
+
+@if (running(); as train) {
+  <section class="journey cols-4" [style.--line]="lineColor() || null" aria-label="Holiday Train journey">
+    <app-holiday-journey [stops]="stops()" [lastStation]="train.lastStation" />
+  </section>
+}
+
+<p class="footnote cols-4">
+  Spotted live by its Train Tracker run number, {{ run }}.
+  @if (updatedLabel(); as updated) {
+    <span class="updated">{{ updated }}</span>
+  }
+</p>
+
+<button class="fab" (click)="refresh()" aria-label="Check again">
+  <svg class="fab-icon" [class.spinning]="refreshing()" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+  </svg>
+</button>
